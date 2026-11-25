@@ -420,7 +420,7 @@ function buildSvg(d, ctx, opts = {}) {
       if (f.style !== 10) curves += drawPolyline(pts, strokeOf(col, f.ep, f.style));
       if (f.show) {
         const xa = evalConst(f.abs, 0), ya = fn(xa);
-        if (Number.isFinite(ya)) curves += `<text x="${f2(g.X(xa) + 1)}" y="${f2(g.Y(ya) - 1)}" font-size="${f2(9 * MM_PER_PT)}" font-family="Arial,sans-serif" fill="${col}">p=${esc(fmtTick(p, 5, false, 1))}</text>`;
+        if (Number.isFinite(ya)) curves += `<text x="${f2(g.X(xa) + 1)}" y="${f2(g.Y(ya) + (f.pos === 0 ? -1.5 : f.pos === 2 ? 3.5 : 1))}" font-size="${f2(9 * MM_PER_PT)}" font-family="Arial,sans-serif" fill="${col}">p=${esc(fmtTick(p, 5, false, 1))}</text>`;
       }
     }
   }

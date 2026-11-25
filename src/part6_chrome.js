@@ -79,13 +79,19 @@ function chromeSpec() {
     aide: ['Aide', 'Aide', showHelp], apropos: ['À propos', 'À propos', () => toast('Sine qua non en ligne — réécriture du logiciel de Patrice Rabiller et Patrick Pradeau. Les dessins .sqn de la version Windows s’ouvrent directement.', 7000)]
   };
   const D = (label, title, fn, icon) => [label, title, fn, icon];
+  const unitStep = k => () => { const d = state.doc; d.lx = Math.max(1, d.lx + k); d.ly = Math.max(1, d.ly + k); redraw(); commit(); };
   const menus = [
-    ['Fichier', [A.nouveau, A.ouvrir, A.enreg, A.sqn, '-', A.copier, A.png, A.svg, A.imprimer]],
-    ['Définir', [D('Page…', 'Page', go('Page')), D('Repère…', 'Repère', go('Repère')), D('Fonctions f(x)…', '', go('Fonctions f(x)')), D('Courbes paramétrées…', '', go('Courbes paramétrées')), D('Courbes polaires…', '', go('Courbes polaires')),
-      D('Droites…', '', go('Droites')), D('Famille de fonctions…', '', go('Famille de fonctions')), D('Points et segments…', '', go('Points et segments')), '-', D('Texte', '', addText), D('Expression LaTeX', '', addLatex), D('Rapporteur trigonométrique…', '', go('Rapporteur trigonométrique')), D('Rapporteur de collège…', '', ex('rapcol')), D('Simulations statistiques…', '', ex('stat1', null, 'Simulations statistiques')), D('Tableau de variations (modèles Var1 à Var8)…', '', ex('tab', 'manuel'))]],
-    ['Outils', [A.undo, A.redo, '-', A.zin, A.zout, A.zfit, A.z100, '-', ...Object.entries(EX).map(([k, T]) => D('Ajouter : ' + T.label, '', ex(k)))]],
-    ['Calculs', [D('Résoudre une équation…', '', go('Calculs', 'Calculs')), D('Table de valeurs…', '', go('Calculs', 'Calculs')), D('Intégrale approchée…', '', go('Calculs', 'Calculs')), '-', D('Dérivée', '', ex('deriv')), D('Primitive', '', ex('prim')), D('Statistiques à une variable', '', ex('stat1')), D('Statistiques à deux variables', '', ex('stat2')), D('Lois de probabilité', '', ex('loi')), D('Simulation', '', () => { ex('stat1')(); })]],
-    ['?', [A.aide, A.apropos]]
+    ['Fichier', [A.nouveau, A.ouvrir, A.enreg, D('Enregistrer sous…', 'Enregistrer le dessin', saveSqn), D('Enregistrer l’image…', 'Image PNG', exportPng), D('Enregistrer l’image vectorielle (SVG)…', '', exportSvg), A.sqn, '-', A.imprimer, D('Mise en page…', 'Page', go('Page'))]],
+    ['Définir', [D('Repère…', 'Repère', go('Repère')), '-', D('Fonction f(x)', '', go('Fonctions f(x)')), D('Représentation paramétrique x(t), y(t)', '', go('Courbes paramétrées')), D('Courbe polaire r=f(t)', '', go('Courbes polaires')),
+      D('Courbe définie point par point', '', ex('pbp')), D('Dérivée d’une fonction donnée', '', ex('deriv')), D('Primitive d’une fonction donnée', '', ex('prim')), '-', D('Famille de fonctions fp(x)', '', go('Famille de fonctions')), '-',
+      D('Droite', '', go('Droites')), D('Schéma', '', ex('shape', null, 'Objets du schéma')), D('Texte', '', addText), '-',
+      D('Série statistique simple …', '', ex('stat1')), D('Série statistique double …', '', ex('stat2')), D('Simulations …', '', ex('stat1', null, 'Simulations statistiques')), '-',
+      D('Loi binomiale', '', ex('loi', 'bin', 'Loi binomiale')), D('Loi de Poisson', '', ex('loi', 'poi', 'Loi de Poisson')), D('Loi normale', '', ex('loi', 'nor', 'Loi normale')), D('Loi exponentielle', '', ex('loi', 'exp', 'Loi exponentielle')),
+      D('Arbre de probabilités', '', ex('arbre')), D('Tableau de signes ou de variations', '', ex('tab')), '-',
+      D('Suite numérique …', '', ex('suite')), D('Inéquations …', '', ex('ineq')), D('Intégrale …', '', ex('integ')), D('Expression LaTeX', '', addLatex), D('Rapporteur', '', go('Rapporteur trigonométrique')), D('Courbe d’équation F(x,y)=0 (coniques)', '', ex('impl'))]],
+    ['Outils', [D('Copier la sélection', 'Copier', copyPng), D('Copier tout', 'Copier', copyPng), '-', D('Augmenter les unités de 0,5 cm', '', unitStep(5)), D('Diminuer les unités de 0,5 cm', '', unitStep(-5)), D('Zoomer sur la sélection', '', fitZoom), D('Autres paramètres', '', go('Page')), '-', A.undo, A.redo, A.zin, A.zout, A.zfit, A.z100]],
+    ['Calculs', [D('Résoudre une équation …', '', go('Calculs', 'Calculs')), D('Table de valeurs …', '', go('Calculs', 'Calculs')), D('Intégration : méthode des rectangles, trapèzes, …', '', ex('integ'))]],
+    ['?', [A.apropos, A.aide]]
   ];
   const B = (title, icon, fn) => ({ title, icon, fn }), SEP = { sep: 1 };
   const bar = [A.nouveau, A.ouvrir, A.imprimer, A.enreg, A.sqn, SEP, B('Copier le dessin comme image', 'copy', copyPng), SEP,

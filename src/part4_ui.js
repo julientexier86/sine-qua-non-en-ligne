@@ -246,7 +246,8 @@ function buildPanel() {
       h('div', { class: 'row' }, fNum('épaisseur', f, 'ep', { min: 1, max: 10, cls: 'w2' }), fSel('style', f, 'style', STYLE_OPTS, { num: true, cls: 'w2' })),
       h('div', { class: 'row' }, fChk('couleur différente pour chaque p', { v: f.couleur === -1 }, 'v', {}),
         fColor('couleur unique', f, 'couleur')),
-      h('div', { class: 'row' }, fChk('afficher les valeurs de p', f, 'show'), fText('à l’abscisse', f, 'abs', { cls: 'w2' }))));
+      h('div', { class: 'row' }, fChk('afficher les valeurs de p', f, 'show'), fText('à l’abscisse', f, 'abs', { cls: 'w2' }), fSel('position', f, 'pos', [[0, 'Au-dessus de chaque courbe'], [1, 'Sur chaque courbe'], [2, 'En-dessous de chaque courbe']], { num: true, cls: 'grow' })),
+      h('div', { class: 'row' }, fChk('voir la progression courbe par courbe', f, 'anim'), fChk('progression détaillée de chaque courbe', f, 'animDet'), fNum('vitesse', f, 'vitesse', { min: 0, max: 10, cls: 'w2' }))));
     // case « couleur multicolore » : liée à couleur = -1
     const chk = famSec[0].querySelector('input[type=checkbox]'); chk.checked = f.couleur === -1;
     chk.onchange = e => { f.couleur = e.target.checked ? -1 : 0; redraw(); commit(); };

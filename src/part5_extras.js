@@ -61,7 +61,7 @@ EX.prim = { label: 'Primitive passant par un point', def: () => ({ src: 'f1', x0
 
 /* --- point par point --- */
 EX.pbp = { label: 'Courbe point par point', def: () => ({ data: '0;0\n1;2\n2;1\n3;3\n4;2', mode: 'lisse', marks: true, mk: 'x', msz: 1.1, k: 1, closed: false, nums: false, couleur: 16711680, ep: 2, style: 0 }),
-  fields: [['data', 'points (x;y, un par ligne)', 'area', 'grow'], 'br', ['mode', 'tracé', 'sel', 'w2', [['seg', 'Segments'], ['lisse', 'Courbe lissée']]], ['marks', 'marquer les points', 'chk'], ['mk', 'marque', 'sel', 'w2', [['x', 'Croix'], ['plus', 'Plus'], ['dot', 'Point'], ['circ', 'Cercle'], ['sq', 'Carré']]], ['msz', 'taille', 'num', 'w3', { step: 0.1 }], 'br',
+  fields: [['data', 'points (x;y, un par ligne)', 'area', 'grow'], 'br', ['mode', 'tracé', 'sel', 'w2', [['seg', 'Segments'], ['lisse', 'Courbe lissée']]], ['marks', 'marquer les points', 'chk'], ['mk', 'marque', 'sel', 'w2', [['x', 'Croix'], ['plus', 'Plus'], ['dot', 'Point'], ['star', 'Étoile'], ['sq', 'Carré'], ['lo', 'Losange'], ['circ', 'Rond'], ['sq2', 'Carré 2'], ['lo2', 'Losange 2']]], ['msz', 'taille', 'num', 'w3', { step: 0.1 }], 'br',
     ['k', 'coefficient de lissage (0 = segments, 1 = normal, 2 = arrondi fort)', 'num', 'w3', { step: 0.1, min: 0, max: 3 }], ['closed', 'courbe fermée', 'chk'], ['nums', 'numéroter les points', 'chk'], 'br',
     ['couleur', 'couleur', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY]],
   render(e, d, g) {
@@ -83,7 +83,9 @@ EX.pbp = { label: 'Courbe point par point', def: () => ({ data: '0;0\n1;2\n2;1\n
     }
     if (e.marks) { const m = e.msz || 1.1; P.forEach(p => { const [x, y] = p; s += e.mk === 'plus' ? `<path d="M${f2(x - m)} ${f2(y)}h${f2(2 * m)}M${f2(x)} ${f2(y - m)}v${f2(2 * m)}" stroke="${st.col}" stroke-width="0.3"/>`
         : e.mk === 'dot' ? `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(m * 0.6)}" fill="${st.col}"/>` : e.mk === 'circ' ? `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(m)}" fill="#fff" stroke="${st.col}" stroke-width="0.3"/>`
-        : e.mk === 'sq' ? `<rect x="${f2(x - m)}" y="${f2(y - m)}" width="${f2(2 * m)}" height="${f2(2 * m)}" fill="#fff" stroke="${st.col}" stroke-width="0.3"/>`
+        : e.mk === 'star' ? `<path d="M${f2(x - m)} ${f2(y)}h${f2(2 * m)}M${f2(x)} ${f2(y - m)}v${f2(2 * m)}M${f2(x - m * 0.7)} ${f2(y - m * 0.7)}l${f2(1.4 * m)} ${f2(1.4 * m)}M${f2(x - m * 0.7)} ${f2(y + m * 0.7)}l${f2(1.4 * m)} ${f2(-1.4 * m)}" stroke="${st.col}" stroke-width="0.3"/>`
+        : e.mk === 'lo' || e.mk === 'lo2' ? `<path d="M${f2(x)} ${f2(y - m * 1.2)}L${f2(x + m * 1.2)} ${f2(y)}L${f2(x)} ${f2(y + m * 1.2)}L${f2(x - m * 1.2)} ${f2(y)}Z" fill="${e.mk === 'lo2' ? st.col : '#fff'}" stroke="${st.col}" stroke-width="0.3"/>`
+        : e.mk === 'sq' || e.mk === 'sq2' ? `<rect x="${f2(x - m)}" y="${f2(y - m)}" width="${f2(2 * m)}" height="${f2(2 * m)}" fill="${e.mk === 'sq2' ? st.col : '#fff'}" stroke="${st.col}" stroke-width="0.3"/>`
         : `<path d="M${f2(x - m)} ${f2(y - m)}l${f2(2 * m)} ${f2(2 * m)}M${f2(x - m)} ${f2(y + m)}l${f2(2 * m)} ${f2(-2 * m)}" stroke="${st.col}" stroke-width="0.3"/>`; }); }
     if (e.nums) P.forEach((p, i) => { s += T_(p[0] + 1.5, p[1] - 1.5, 'M' + (i + 1), { size: 8 }); });
     return s;
@@ -147,7 +149,7 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
   fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['cumul', 'Polygone des effectifs cumulés croissants'], ['cumulf', 'Polygone des fréquences cumulées (classes  a;b;effectif)'], ['multi', 'Boîtes à moustaches multiples  (nom;valeurs…)'], ['barres', 'Caractère qualitatif : barres  (modalité;effectif)'], ['camem', 'Caractère qualitatif : secteurs  (modalité;effectif)']]],
     ['data', 'données (une ligne par valeur)', 'area', 'grow'], 'br', ['ky', 'échelle verticale', 'num', 'w2', { step: 0.1 }], ['y0', 'boîte : y', 'num', 'w3', { step: 0.5 }], ['h', 'boîte : hauteur', 'num', 'w3', { step: 0.1 }], 'br',
     ['couleur', 'trait', 'color'], ['couleur2', 'remplissage', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['showStats', 'afficher moyenne, médiane, écart-type', 'chk'], ['sx', 'x', 'num', 'w3', { step: 0.1 }], ['sy', 'y', 'num', 'w3', { step: 0.1 }], 'br', ['table', 'afficher le tableau statistique (effectifs, fréquences, cumuls)', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], 'br',
-    ['sim', 'simulation', 'sel', 'w2', [['bin', 'Binomiale (n;p)'], ['unif', 'Uniforme entière (1..A)'], ['bern', 'Bernoulli (p)'], ['norm', 'Normale (μ;σ)'], ['geo', 'Géométrique (p)'], ['pois', 'Poisson (λ)'], ['coin', 'Pièce : nombre de « face » sur n lancers (n ; p)'], ['de2', 'Somme de deux dés à A faces']]],
+    ['sim', 'simulation', 'sel', 'w2', [['unif', 'Loi uniforme discrète (1 à A)'], ['unifc', 'Loi uniforme continue (0 à A)'], ['bern', 'Loi de Bernoulli (p = A)'], ['bin', 'Loi binomiale (n = A ; p = B)'], ['geo', 'Loi géométrique (p = A)'], ['pois', 'Loi de Poisson (λ = A)'], ['norm', 'Loi normale (μ = A ; σ = B)'], ['exp', 'Loi exponentielle (λ = A)'], ['coin', 'Pièce : nombre de « face » sur A lancers'], ['de2', 'Somme de deux dés à A faces']]],
     ['simN', 'nb tirages', 'num', 'w3'], ['simA', 'A / n / μ / λ', 'num', 'w3', { step: 0.1 }], ['simB', 'p / σ', 'num', 'w3', { step: 0.05 }],
     ['@sim', 'Simuler → remplir les données', 'btn']],
   action(e, name) {
@@ -156,10 +158,10 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
     for (let i = 0; i < N; i++) {
       let v; if (e.sim === 'bin') { v = 0; for (let k = 0; k < e.simA; k++) v += rnd() < e.simB ? 1 : 0; } else if (e.sim === 'unif') v = 1 + Math.floor(rnd() * e.simA);
       else if (e.sim === 'bern') v = rnd() < e.simA ? 1 : 0; else if (e.sim === 'norm') v = Math.round((e.simA + e.simB * norm()) * 100) / 100;
-      else if (e.sim === 'coin') { v = 0; for (let k = 0; k < e.simA; k++) v += rnd() < (e.simB || 0.5) ? 1 : 0; } else if (e.sim === 'de2') v = 2 + Math.floor(rnd() * e.simA) + Math.floor(rnd() * e.simA); else if (e.sim === 'geo') { v = 1; while (rnd() > e.simA && v < 1e4) v++; } else { let L = Math.exp(-e.simA), k = 0, p = 1; do { k++; p *= rnd(); } while (p > L); v = k - 1; }
+      else if (e.sim === 'unifc') v = Math.round(rnd() * e.simA * 100) / 100; else if (e.sim === 'exp') v = Math.round(-Math.log(1 - rnd()) / e.simA * 100) / 100; else if (e.sim === 'coin') { v = 0; for (let k = 0; k < e.simA; k++) v += rnd() < (e.simB || 0.5) ? 1 : 0; } else if (e.sim === 'de2') v = 2 + Math.floor(rnd() * e.simA) + Math.floor(rnd() * e.simA); else if (e.sim === 'geo') { v = 1; while (rnd() > e.simA && v < 1e4) v++; } else { let L = Math.exp(-e.simA), k = 0, p = 1; do { k++; p *= rnd(); } while (p > L); v = k - 1; }
       out.push(v);
     }
-    if (e.sim === 'norm') { e.data = out.map(v => v).join('\n'); e.mode = 'boite'; } else { const m = new Map(); out.forEach(v => m.set(v, (m.get(v) || 0) + 1)); e.data = [...m.entries()].sort((a, b) => a[0] - b[0]).map(([k, n]) => k + ';' + n).join('\n'); e.mode = 'batons'; }
+    if (e.sim === 'norm' || e.sim === 'unifc' || e.sim === 'exp') { const mn = Math.min(...out), mx = Math.max(...out), k = Math.max(5, Math.round(Math.sqrt(out.length))), w = (mx - mn) / k || 1, c = Array(k).fill(0); out.forEach(v => c[Math.min(k - 1, Math.floor((v - mn) / w))]++); e.data = c.map((n, i) => `${fmtC(mn + i * w, 5)};${fmtC(mn + (i + 1) * w, 5)};${n}`.replace(/,/g, '.')).join('\n'); e.mode = 'histo'; e.ky = 1; } else { const m = new Map(); out.forEach(v => m.set(v, (m.get(v) || 0) + 1)); e.data = [...m.entries()].sort((a, b) => a[0] - b[0]).map(([k, n]) => k + ';' + n).join('\n'); e.mode = 'batons'; }
   },
   render(e, d, g) {
     const D = stat1Data(e), st = exStroke(e), fillc = tcolor(e.couleur2); let s = '', all = D.all, info = '';
@@ -374,20 +376,24 @@ EX.ineq = { label: 'Système d’inéquations', def: () => ({ data: 'y>x^2-2\nx+
   } };
 
 
-/* --- rapporteur de collège (demi-cercle gradué de 0 à 180°) --- */
-EX.rapcol = { label: 'Rapporteur de collège (demi-cercle gradué)', def: () => ({ cx: 0, cy: 0, R: 70, rot: 0, both: true, ticks: 1, nums: 10, inv: false, fill: true, couleur: 0, couleur2: 16777215, ep: 1 }),
-  fields: [['cx', 'centre x', 'num', 'w3', { step: 0.1 }], ['cy', 'centre y', 'num', 'w3', { step: 0.1 }], ['R', 'rayon (mm)', 'num', 'w3', { step: 1 }], ['rot', 'rotation (°)', 'num', 'w3', { step: 5 }], 'br',
-    ['both', 'deux graduations (dans les deux sens)', 'chk'], ['fill', 'fond translucide', 'chk'], ['nums', 'valeurs tous les (°)', 'num', 'w3', { step: 5 }], ['couleur', 'trait', 'color'], ['couleur2', 'fond', 'color'], ['ep', 'ép.', 'num', 'w3']],
+/* --- rapporteur de collège (options de la boîte Windows : modèle 180 / 180+ / 360, graduation intérieure, rayons, cercle intérieur) --- */
+EX.rapcol = { label: 'Rapporteur de collège', def: () => ({ cx: 0, cy: 0, R: 65, rot: 0, model: '180', inner: true, fine: true, rays: false, innerCircle: true, couleur: 0, couleur2: 8421504, couleur3: 32768, ep: 1 }),
+  fields: [['model', 'modèle', 'sel', 'w2', [['180', '180°'], ['200', '180+ (de −20° à 200°)'], ['360', '360°']]], ['cx', 'centre x', 'num', 'w3', { step: 0.1 }], ['cy', 'centre y', 'num', 'w3', { step: 0.1 }], ['R', 'rayon (mm)', 'num', 'w3', { step: 1 }], ['rot', 'rotation (°)', 'num', 'w3', { step: 5 }], 'br',
+    ['inner', 'graduation intérieure', 'chk'], ['fine', 'graduations fines (de 1° en 1°)', 'chk'], ['rays', 'rayons (tous les 10°)', 'chk'], ['innerCircle', 'cercle intérieur', 'chk'], 'br', ['couleur', 'traits', 'color'], ['couleur2', 'chiffres', 'color'], ['couleur3', 'multiples de 90°', 'color'], ['ep', 'ép.', 'num', 'w3']],
   render(e, d, g) {
     const cx = g.X(e.cx), cy = g.Y(e.cy), R = e.R, st = exStroke(e), a0 = (e.rot || 0) * Math.PI / 180, P = (r, deg) => { const a = a0 + deg * Math.PI / 180; return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; };
-    let s = '', A = P(R, 0), B = P(R, 180);
-    s += `<path d="M${f2(A[0])} ${f2(A[1])}A${R} ${R} 0 0 0 ${f2(B[0])} ${f2(B[1])}Z" fill="${e.fill ? tcolor(e.couleur2) : 'none'}" fill-opacity="0.45" stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>`;
-    const Ri = R * 0.62; s += `<path d="M${f2(P(Ri, 0)[0])} ${f2(P(Ri, 0)[1])}A${Ri} ${Ri} 0 0 0 ${f2(P(Ri, 180)[0])} ${f2(P(Ri, 180)[1])}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w * 0.3)}"/>`;
-    for (let k = 0; k <= 180; k++) { const L = k % 10 === 0 ? 4 : k % 5 === 0 ? 3 : 1.8, p1 = P(R, k), p2 = P(R - L, k); s += lineSeg(p1, p2, st.col, k % 10 === 0 ? 0.25 : 0.12);
-      if (e.both) { const q1 = P(Ri, k), q2 = P(Ri + (k % 10 === 0 ? 3 : k % 5 === 0 ? 2.2 : 1.4), k); s += lineSeg(q1, q2, st.col, k % 10 === 0 ? 0.25 : 0.12); } }
-    const step = Math.max(5, e.nums | 0 || 10); for (let k = 0; k <= 180; k += step) { const p = P(R - 8, k), rr = [P(Ri - 5, k)]; s += T_(p[0], p[1] + 1, String(k), { size: 7 }).replace('<text ', '<text text-anchor="middle" ');
-      if (e.both) s += T_(rr[0][0], rr[0][1] + 1, String(180 - k), { size: 7 }).replace('<text ', '<text text-anchor="middle" '); }
-    s += lineSeg(P(0, 0), P(R + 3, 0), st.col, 0.2) + lineSeg(P(R + 3, 180), P(R, 180), st.col, 0.2) + lineSeg([cx - 2, cy], [cx + 2, cy], st.col, 0.25).replace(/M[^L]+L[^"]+/, m => m) + `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="0.9" fill="none" stroke="${st.col}" stroke-width="0.25"/>`;
+    const lo = e.model === '200' ? -20 : 0, hi = e.model === '360' ? 360 : e.model === '200' ? 200 : 180, ci = tcolor(e.couleur2), c90 = tcolor(e.couleur3), Ri = R * 0.66; let s = '';
+    const arc = (r, a, b) => { const A = P(r, a), B = P(r, b); return `M${f2(A[0])} ${f2(A[1])}A${r} ${r} 0 ${b - a > 180 ? 1 : 0} 0 ${f2(B[0])} ${f2(B[1])}`; };
+    if (e.model === '360') s += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${R}" fill="#fff" fill-opacity="0.4" stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>`; else s += `<path d="${arc(R, lo, hi)}L${f2(cx)} ${f2(cy)}Z" fill="#fff" fill-opacity="0.4" stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>`;
+    if (e.innerCircle) s += e.model === '360' ? `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(Ri)}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w * 0.3)}"/>` : `<path d="${arc(Ri, lo, hi)}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w * 0.3)}"/>`;
+    const last = e.model === '360' ? 359 : hi;
+    for (let k = lo; k <= last; k++) { const m10 = k % 10 === 0, m5 = k % 5 === 0; if (!m10 && !(e.fine && true)) continue; const L = m10 ? 4 : m5 ? 3 : 1.8, col = k % 90 === 0 ? c90 : st.col;
+      s += lineSeg(P(R, k), P(R - L, k), col, m10 ? 0.25 : 0.12);
+      if (e.inner) { const q = e.model === '360' ? (360 - k) % 360 : hi - k + lo; if (m10 || e.fine) s += lineSeg(P(Ri, k), P(Ri + (m10 ? 3 : m5 ? 2.2 : 1.4), k), col, m10 ? 0.25 : 0.12); } }
+    for (let k = lo; k <= last; k += 10) { const p = P(R - 8, k); s += T_(p[0], p[1] + 1, String(((k % 360) + 360) % 360), { size: 7 }).replace('<text ', `<text text-anchor="middle" `).replace(/fill="[^"]*"/, `fill="${k % 90 === 0 ? c90 : ci}"`);
+      if (e.inner) { const q = e.model === '360' ? (360 - k) % 360 : hi - k + lo, p2 = P(Ri - 5, k); s += T_(p2[0], p2[1] + 1, String(q), { size: 7 }).replace('<text ', '<text text-anchor="middle" ').replace(/fill="[^"]*"/, `fill="${ci}"`); }
+      if (e.rays) s += lineSeg(P(0, k), P(Ri, k), tcolor(12632256), 0.12); }
+    s += lineSeg(P(0, lo), P(R + 3, lo), st.col, 0.2) + lineSeg(P(0, hi % 360 === 0 && e.model === '360' ? 0 : hi), P(R + 3, hi), st.col, 0.2) + `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="0.9" fill="none" stroke="${st.col}" stroke-width="0.25"/>`;
     return s;
   } };
 
