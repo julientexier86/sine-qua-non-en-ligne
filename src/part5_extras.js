@@ -162,7 +162,7 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
 
 /* --- statistiques à deux variables --- */
 EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: () => ({ data: '1;2.1\n2;3.9\n3;6.2\n4;7.8\n5;10.1\n6;12.2', fit: 'lin', cloud: true, gpoint: true, show: true, tx: 0, ty: 0, couleur: 16711680, couleur2: 255, ep: 2 }),
-  fields: [['data', 'points (x;y)', 'area', 'grow'], 'br', ['fit', 'ajustement', 'sel', 'grow', [['none', 'Aucun'], ['lin', 'Droite des moindres carrés'], ['mayer', 'Droite de Mayer'], ['exp', 'Exponentielle  y = a·eᵇˣ'], ['pow', 'Puissance  y = a·xᵇ'], ['par', 'Parabole  y = ax²+bx+c']]],
+  fields: [['data', 'points (x;y)', 'area', 'grow'], 'br', ['fit', 'ajustement', 'sel', 'grow', [['none', 'Aucun'], ['lin', 'Droite des moindres carrés'], ['mayer', 'Droite de Mayer'], ['log', 'Logarithmique  y = a·ln x + b'], ['exp', 'Exponentielle  y = a·eᵇˣ'], ['pow', 'Puissance  y = a·xᵇ'], ['par', 'Polynomiale de degré 2'], ['pol3', 'Polynomiale de degré 3'], ['pol4', 'Polynomiale de degré 4']]],
     ['cloud', 'nuage', 'chk'], ['gpoint', 'point moyen G', 'chk'], ['show', 'afficher l’équation', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'points', 'color'], ['couleur2', 'courbe', 'color'], ['ep', 'épaisseur', 'num', 'w3']],
   render(e, d, g) {
     const P = rowsOf(e.data).filter(r => r.length >= 2 && r.every(Number.isFinite)); let s = ''; if (!P.length) return s;
@@ -175,6 +175,10 @@ EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: ()
       s += [g1, g2].map(G => `<circle cx="${f2(g.X(G[0]))}" cy="${f2(g.Y(G[1]))}" r="1.1" fill="${c2}"/>`).join(''); }
     else if (e.fit === 'exp' && ys.every(v => v > 0) && n >= 2) { const r = lin(xs, ys.map(Math.log)), a = Math.exp(r.b); f = x => a * Math.exp(r.a * x); eq = `y = ${fmtC(a)}·e^(${fmtC(r.a)}x)`; }
     else if (e.fit === 'pow' && ys.every(v => v > 0) && xs.every(v => v > 0) && n >= 2) { const r = lin(xs.map(Math.log), ys.map(Math.log)), a = Math.exp(r.b); f = x => a * Math.pow(x, r.a); eq = `y = ${fmtC(a)}·x^${fmtC(r.a)}`; }
+    else if (e.fit === 'log' && xs.every(v => v > 0) && n >= 2) { const r = lin(xs.map(Math.log), ys); f = x => r.a * Math.log(x) + r.b; eq = `y = ${fmtC(r.a)}·ln x ${r.b < 0 ? '-' : '+'} ${fmtC(Math.abs(r.b))}`; }
+    else if ((e.fit === 'pol3' || e.fit === 'pol4') && n > (e.fit === 'pol3' ? 3 : 4)) { const m = e.fit === 'pol3' ? 3 : 4, S = k => xs.reduce((t, x) => t + Math.pow(x, k), 0), Sy = k => xs.reduce((t, x, i) => t + Math.pow(x, k) * ys[i], 0);
+      const A = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: m + 1 }, (_, j) => S(2 * m - i - j))), c = solveLin(A, Array.from({ length: m + 1 }, (_, i) => Sy(m - i))); f = x => c.reduce((t, k) => t * x + k, 0);
+      eq = 'y = ' + c.map((k, i) => (i && k >= 0 ? '+ ' : i ? '- ' : '') + fmtC(i ? Math.abs(k) : k) + (m - i > 1 ? 'x^' + (m - i) : m - i === 1 ? 'x' : '')).join(' '); }
     else if (e.fit === 'par' && n >= 3) { const S = k => xs.reduce((t, x) => t + Math.pow(x, k), 0), Sy = k => xs.reduce((t, x, i) => t + Math.pow(x, k) * ys[i], 0);
       const [a, b, c] = solveLin([[S(4), S(3), S(2)], [S(3), S(2), S(1)], [S(2), S(1), n]], [Sy(2), Sy(1), Sy(0)]); f = x => a * x * x + b * x + c; eq = `y = ${fmtC(a)}x² ${b < 0 ? '-' : '+'} ${fmtC(Math.abs(b))}x ${c < 0 ? '-' : '+'} ${fmtC(Math.abs(c))}`; }
     if (f) s += drawPolyline(sampleFn(f, d, g, 600), { col: c2, w: lineWidth(e.ep), style: 0 });
@@ -185,7 +189,7 @@ EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: ()
   } };
 
 /* --- lois de probabilité --- */
-EX.loi = { label: 'Loi de probabilité', def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
+EX.loi = { label: 'Loi de probabilité', init(e) { const K = { bin: [10, 0.5, 3, 6, 20], poi: [3, 0, 1, 4, 20], nor: [0, 1, -1, 1, 10], exp: [0.5, 0, 0, 3, 10], uni: [-3, 3, -1, 2, 10] }[e.kind]; if (K) [e.p1, e.p2, e.a, e.b, e.ky] = K; }, def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
   fields: [['kind', 'loi', 'sel', 'grow', [['bin', 'Binomiale B(n ; p)'], ['poi', 'Poisson P(λ)'], ['nor', 'Normale N(μ ; σ)'], ['exp', 'Exponentielle E(λ)'], ['uni', 'Uniforme sur [a ; b]']]],
     ['p1', 'n / λ / μ / a', 'num', 'w3', { step: 0.1 }], ['p2', 'p / σ / b', 'num', 'w3', { step: 0.05 }], 'br', ['zone', 'colorier P(a ≤ X ≤ b)', 'chk'], ['a', 'a', 'num', 'w3', { step: 0.5 }], ['b', 'b', 'num', 'w3', { step: 0.5 }],
     ['ky', 'échelle verticale', 'num', 'w3', { step: 1 }], 'br', ['label', 'afficher la probabilité', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'trait', 'color'], ['couleur2', 'zone', 'color'], ['ep', 'ép.', 'num', 'w3']],
@@ -255,10 +259,15 @@ EX.suite = { label: 'Suite numérique', def: () => ({ mode: 'expl', src: '1/(x+1
   } };
 
 /* --- intégrale --- */
-EX.integ = { label: 'Intégrale (aire, rectangles, trapèzes)', def: () => ({ src: 'f1', a: 0, b: 2, mode: 'aire', n: 8, couleur: 255, couleur2: 16776960, opa: 0.4, ep: 2, label: true, lx: 0, ly: 0 }),
-  fields: [['src', 'f(x)', 'text', 'grow'], ['a', 'a', 'num', 'w3', { step: 0.1 }], ['b', 'b', 'num', 'w3', { step: 0.1 }], 'br', ['mode', 'méthode', 'sel', 'grow', [['aire', 'Aire sous la courbe'], ['gauche', 'Rectangles à gauche'], ['droite', 'Rectangles à droite'], ['milieu', 'Rectangles au milieu'], ['trap', 'Trapèzes']]],
+EX.integ = { label: 'Intégrale (aire, rectangles, trapèzes)', def: () => ({ src2: '', src: 'f1', a: 0, b: 2, mode: 'aire', n: 8, couleur: 255, couleur2: 16776960, opa: 0.4, ep: 2, label: true, lx: 0, ly: 0 }),
+  fields: [['src', 'f(x)', 'text', 'grow'], ['src2', 'g(x) : laisser vide pour l’aire sous la courbe, sinon aire entre f et g', 'text', 'grow'], ['a', 'a', 'num', 'w3', { step: 0.1 }], ['b', 'b', 'num', 'w3', { step: 0.1 }], 'br', ['mode', 'méthode', 'sel', 'grow', [['aire', 'Aire sous la courbe'], ['gauche', 'Rectangles à gauche'], ['droite', 'Rectangles à droite'], ['milieu', 'Rectangles au milieu'], ['trap', 'Trapèzes']]],
     ['n', 'nb de subdivisions', 'num', 'w3'], 'br', ['couleur', 'contour', 'color'], ['couleur2', 'remplissage', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['label', 'afficher la valeur', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }]],
   render(e, d, g, ctx) {
+    if (String(e.src2 || '').trim()) { const f1 = fnOf(e.src, ctx), g2 = fnOf(e.src2, ctx), a = e.a, b = e.b, st = exStroke(e), N = 240, up = [], lo = [];
+      for (let i = 0; i <= N; i++) { const x = a + (b - a) * i / N; up.push(f2(g.X(x)) + ' ' + f2(g.Y(f1(x)))); lo.push(f2(g.X(x)) + ' ' + f2(g.Y(g2(x)))); }
+      let v = 0; const M = 2000, hh = (b - a) / M; for (let i = 0; i < M; i++) { const x0 = a + i * hh; v += hh / 6 * ((f1(x0) - g2(x0)) + 4 * (f1(x0 + hh / 2) - g2(x0 + hh / 2)) + (f1(x0 + hh) - g2(x0 + hh))); }
+      let s2 = `<path d="M${up.join('L')}L${lo.reverse().join('L')}Z" fill="${tcolor(e.couleur2)}" fill-opacity="${e.opa}" stroke="none"/>` + drawPolyline(sampleFn(f1, d, g, 600), st) + drawPolyline(sampleFn(g2, d, g, 600), st);
+      if (e.label) s2 += T_(g.X(e.lx), g.Y(e.ly), `∫ (f − g) de ${fmtC(a)} à ${fmtC(b)} ≈ ${fmtC(v, 6)}`, { size: 10 }); return s2; }
     const f = fnOf(e.src, ctx), a = e.a, b = e.b, st = exStroke(e), fill = `fill="${tcolor(e.couleur2)}" fill-opacity="${e.opa}"`; let s = '', approx = 0; const n = clamp(Math.round(e.n), 1, 500);
     let exact = 0; { const M = 2000, hh = (b - a) / M; for (let i = 0; i < M; i += 1) { const x0 = a + i * hh; exact += hh / 6 * (f(x0) + 4 * f(x0 + hh / 2) + f(x0 + hh)); } }
     if (e.mode === 'aire') { const N = 200, pts = []; for (let i = 0; i <= N; i++) { const x = a + (b - a) * i / N; pts.push(f2(g.X(x)) + ' ' + f2(g.Y(f(x)))); }

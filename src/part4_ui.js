@@ -59,10 +59,19 @@ function fNum(label, obj, key, o = {}) {
     onchange: commit });
   return field(label, i, o.cls);
 }
+const PALETTE16 = [0, 128, 32768, 32896, 8388608, 8388736, 8421376, 12632256, 8421504, 255, 65280, 65535, 16711680, 16711935, 16776960, 16777215];
+function palette(obj, key) {
+  return h('div', { class: 'pal' }, PALETTE16.map(c => h('button', { type: 'button', class: 'sw', title: tcolor(c), style: 'background:' + tcolor(c), onclick: () => { obj[key] = c; redraw(); commit(); if (state.dlg) buildPanel(); } })));
+}
 function fColor(label, obj, key, o = {}) {
   const i = h('input', { type: 'color', value: tcolor(obj[key]),
     oninput: e => { obj[key] = fromCss(e.target.value); redraw(); }, onchange: commit });
   return field(label, i, 'color ' + (o.cls || ''));
+}
+function fNumC(label, obj, key, o = {}) { // affiche en cm un champ stocké en mm
+  const i = h('input', { type: 'number', value: Math.round(obj[key]) / 10, min: o.min, max: o.max, step: o.step || 0.1,
+    oninput: e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) { obj[key] = Math.round(v * 100) / 10; redraw(); } }, onchange: commit });
+  return field(label, i, o.cls);
 }
 function fSel(label, obj, key, opts, o = {}) {
   const i = h('select', { onchange: e => { obj[key] = o.num ? +e.target.value : e.target.value; o.after && o.after(); redraw(); commit(); } },
@@ -93,6 +102,7 @@ function exEditor(e, k) {
   for (const f of T.fields) {
     if (f === 'br') { row = h('div', { class: 'row' }); box.append(row); continue; }
     const [key, label, kind, cls = '', opt] = f;
+    if (key === 'kind' && state.dlg && state.dlg.kind) continue;
     if (kind === 'text') row.append(fText(label, e, key, { cls }));
     else if (kind === 'num') row.append(fNum(label, e, key, Object.assign({ cls }, opt || {})));
     else if (kind === 'color') row.append(fColor(label, e, key));
@@ -104,7 +114,7 @@ function exEditor(e, k) {
   box.append(errLine(() => e._err));
   return box;
 }
-function addExtra(type) { const d = state.doc; d.extras.push(Object.assign({ type }, EX[type].def())); openSections.add('Compléments'); buildPanel(); redraw(); commit(); }
+function addExtra(type, kind) { const d = state.doc, e = Object.assign({ type }, EX[type].def()); if (kind) e.kind = kind; if (EX[type].init) EX[type].init(e); d.extras.push(e); buildPanel(); redraw(); commit(); }
 
 /* --- calculs --- */
 function calcSection() {
@@ -125,6 +135,15 @@ function calcSection() {
 }
 
 /* --- panneau --- */
+const KEYS = [['Abs', 'abs('], ['ArcCos', 'arccos('], ['ArcSin', 'arcsin('], ['ArcTan', 'arctan('], ['ArgCh', 'argch('], ['ArgSh', 'argsh('], ['ArgTh', 'argth('], ['Carré', '²'], ['Cos', 'cos('], ['Ch', 'ch('], ['Exp', 'exp('], ['Frac', 'frac('],
+  ['Int', 'int('], ['Ln', 'ln('], ['Log', 'log('], ['Racine', 'racine('], ['Sh', 'sh('], ['Sin', 'sin('], ['Tan', 'tan('], ['Th', 'th('], ['π', 'pi'], ['e', 'e'], ['+', '+'], ['−', '-'], ['×', '*'], ['/', '/'], ['^', '^']];
+function keypad() {
+  return h('div', { class: 'keypad' }, h('p', { class: 'hint' }, 'Pour saisir une fonction : cliquez dans une zone d’expression puis sur ces boutons, ou tapez au clavier.'),
+    h('div', { class: 'keys' }, KEYS.map(([t, ins]) => h('button', { type: 'button', class: 'key', onmousedown: e => e.preventDefault(), onclick: () => {
+      const i = state.lastInput; if (!i) { toast('Cliquez d’abord dans une zone d’expression.'); return; }
+      i.focus(); const a = i.selectionStart ?? i.value.length, b = i.selectionEnd ?? a; i.setRangeText(ins, a, b, 'end'); i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true }));
+    } }, t))));
+}
 function pointEditor(c, kind) {
   const wrap = h('div', { class: 'pts' });
   c.pts.forEach((p, k) => {
@@ -146,7 +165,7 @@ function curveEditor(c, kind, label, onDelete) {
   else rows.push(h('div', { class: 'row' }, h('span', { class: 'lab' }, 'r(t)='), fText('', c, 'expr', { cls: 'grow', title: 'ρ en fonction de t (radians)' }), btn('✕', onDelete, 'x')));
   rows.push(errLine(() => c._err));
   if (kind !== 'fn') rows.push(h('div', { class: 'row' }, fText('t min', c, 'tmin', { cls: 'w2' }), fText('t max', c, 'tmax', { cls: 'w2' }), fNum('nb valeurs', c, 'n', { min: 20, max: 20000, step: 50, cls: 'w2' })));
-  rows.push(h('div', { class: 'row' }, fColor('couleur', c, 'couleur'), fNum('épaisseur', c, 'ep', { min: 1, max: 10, cls: 'w2' }),
+  rows.push(h('div', { class: 'row' }, fColor('Couleur', c, 'couleur'), palette(c, 'couleur'), fNum('Épaisseur (×0,1 mm)', c, 'ep', { min: 1, max: 10, cls: 'w2' }),
     fSel('style', c, 'style', STYLE_OPTS, { num: true, cls: 'w2' })));
   rows.push(h('div', { class: 'row' }, fChk('développée', c, 'dev'), fChk('enveloppe des tangentes', c, 'env')));
   rows.push(pointEditor(c, kind));
@@ -154,7 +173,8 @@ function curveEditor(c, kind, label, onDelete) {
 }
 
 function buildPanel() {
-  const d = state.doc, P = $('#panel'); errEls.length = 0; P.textContent = '';
+  if (!state.dlg) return;
+  const d = state.doc, P = h('div'); errEls.length = 0;
   const paperDims = PAPER[d.orient] || PAPER.portrait;
 
   P.append(section('Page',
@@ -169,26 +189,27 @@ function buildPanel() {
     h('div', { class: 'row' }, fColor('bordure', d, 'cadreCol'), fColor('fond', d, 'fondCol'))));
 
   P.append(section('Repère',
-    h('div', { class: 'row' }, fChk('axes visibles', d, 'axesVis', { rebuild: true }),
+    h('div', { class: 'row' }, fChk('Axes visibles', d, 'axesVis', { rebuild: true }),
       !d.axesVis && fChk('garder Ox', d, 'keepX'), !d.axesVis && fChk('garder Oy', d, 'keepY')),
-    h('div', { class: 'row' }, fSel('graduations', d, 'grad', [['full', 'complètes'], ['first', 'première seulement'], ['none', 'aucune']], { cls: 'w2' }), fChk('basées sur les carreaux', d, 'gradGrille')),
-    h('div', { class: 'row' }, fText('origine Ox', d, 'ox', { cls: 'w2' }), fText('origine Oy', d, 'oy', { cls: 'w2' })),
-    h('div', { class: 'row' }, fText('unité Ox', d, 'ux', { cls: 'w2', title: 'ex. 1 ; 0,5 ; pi/6' }), fText('unité Oy', d, 'uy', { cls: 'w2' })),
+    h('div', { class: 'row' }, fSel('graduations', d, 'grad', [['full', 'complètes'], ['first', 'première seulement'], ['none', 'aucune']], { cls: 'w2' }), fChk('Graduation basée sur les petits carreaux', d, 'gradGrille')),
+    h('div', { class: 'row' }, fText('Origine de l’axe Ox', d, 'ox', { cls: 'w2' }), fText('Origine de l’axe Oy', d, 'oy', { cls: 'w2' })),
+    h('div', { class: 'row' }, fText('Unité de graduation Ox', d, 'ux', { cls: 'w2', title: 'ex. 1 ; 0,5 ; pi/6' }), fText('Unité de graduation Oy', d, 'uy', { cls: 'w2' })),
     h('div', { class: 'row' }, fSel('format Ox', d, 'fmtX', [['normal', 'décimal'], ['trig', 'multiples de π']], { cls: 'w2' }), fSel('format Oy', d, 'fmtY', [['normal', 'décimal'], ['trig', 'multiples de π']], { cls: 'w2' })),
-    h('div', { class: 'row' }, fNum('1 unité Ox = … mm', d, 'lx', { min: 1, step: 0.5, cls: 'w2' }), fNum('1 unité Oy = … mm', d, 'ly', { min: 1, step: 0.5, cls: 'w2' })),
-    h('div', { class: 'row' }, fNum('axe Ox à … mm du haut', d, 'dOx', { step: 5, cls: 'w2' }), fNum('axe Oy à … mm de la gauche', d, 'dOy', { step: 5, cls: 'w2' })),
+    h('div', { class: 'row' }, fNumC('Longueur de l’unité Ox (cm)', d, 'lx', { min: 0.1, step: 0.1, cls: 'w2' }), fNumC('Longueur de l’unité Oy (cm)', d, 'ly', { min: 0.1, step: 0.1, cls: 'w2' })),
+    h('div', { class: 'row' }, fNumC('Distance entre l’axe Ox et le bord supérieur (cm)', d, 'dOx', { step: 0.5, cls: 'w2' }), fNumC('Distance entre l’axe Oy et le bord gauche (cm)', d, 'dOy', { step: 0.5, cls: 'w2' })),
     h('div', { class: 'row' }, fNum('chiffres sign. Ox', d, 'sigX', { min: 3, max: 10, cls: 'w2' }), fNum('chiffres sign. Oy', d, 'sigY', { min: 3, max: 10, cls: 'w2' })),
-    h('div', { class: 'row' }, fText('nom axe Ox', d, 'nameX', { cls: 'w2' }), fText('nom axe Oy', d, 'nameY', { cls: 'w2' })),
-    h('div', { class: 'row' }, fSel('grille', d, 'gridStyle', GRID_NAMES.map((n, i) => [i, n]), { num: true, cls: 'w2' }), fNum('carreau (mm)', d, 'gridSize', { min: 2, max: 20, step: 1, cls: 'w2' })),
+    h('div', { class: 'row' }, fText('Nom de l’axe Ox', d, 'nameX', { cls: 'w2' }), fText('Nom de l’axe Oy', d, 'nameY', { cls: 'w2' })),
+    h('div', { class: 'row' }, fSel('Grille du repère', d, 'gridStyle', [0, 1, 2, 3, 6, 5, 4, 7].map(i => [i, GRID_NAMES[i]]), { num: true, cls: 'w2' }), fNum('Taille des petits carreaux (mm)', d, 'gridSize', { min: 2, max: 20, step: 1, cls: 'w2' })),
     h('div', { class: 'row' }, fColor('couleur grille', d, 'gridCol'), fColor('couleur axes', d, 'repCol')),
-    h('div', { class: 'row' }, fChk('échelle logarithmique sur Ox', d.log, 'x'), fNum('module Ox (mm/décade)', d.log, 'mx', { min: 5, cls: 'w2' })),
-    h('div', { class: 'row' }, fChk('échelle logarithmique sur Oy', d.log, 'y'), fNum('module Oy (mm/décade)', d.log, 'my', { min: 5, cls: 'w2' })),
+    h('div', { class: 'row' }, fChk('Échelle logarithmique sur Ox', d.log, 'x'), fNumC('Longueur du module (cm)', d.log, 'mx', { min: 0.5, cls: 'w2' })),
+    h('div', { class: 'row' }, fChk('Échelle logarithmique sur Oy', d.log, 'y'), fNumC('Longueur du module (cm)', d.log, 'my', { min: 0.5, cls: 'w2' })),
     h('p', { class: 'hint' }, 'Astuce : à la souris, glissez l’origine (rond bleu), les carrés d’unité sur chaque axe, ou le bord droit / bas du dessin. En échelle logarithmique, l’origine doit être positive (0 devient 1).')));
 
   // fonctions
   const fnSec = [];
   d.fns.forEach((c, k) => fnSec.push(curveEditor(c, 'fn', `f${k + 1}(x)=`, () => { d.fns.splice(k, 1); buildPanel(); redraw(); commit(); })));
   if (d.fns.length < 10) fnSec.push(btn('+ Ajouter une fonction', () => { d.fns.push(newCurve({ couleur: [0, 16711680, 255, 32768, 8388736][d.fns.length % 5] })); buildPanel(); commit(); }));
+  fnSec.push(keypad());
   fnSec.push(h('p', { class: 'hint' }, 'Syntaxe « calculatrice » : 3x+4, x², x^2, racine(x), sin x, ln x, exp(x), abs(x), x!, pi. Composition : f1of2(x). Domaine : (3/(x-1))(x>=2).'));
   P.append(section('Fonctions f(x)', fnSec));
 
@@ -263,15 +284,15 @@ function buildPanel() {
   P.append(section('Expressions LaTeX', laSec));
 
   const exSec = [];
-  d.extras.forEach((e, k) => exSec.push(exEditor(e, k)));
-  exSec.push(h('div', { class: 'row' }, h('select', { id: 'exType', class: 'sel' }, Object.entries(EX).map(([k, T]) => h('option', { value: k }, T.label))),
-    btn('+ Ajouter', () => addExtra($('#exType').value), 'small')));
-  exSec.push(h('p', { class: 'hint' }, 'Statistiques, lois de probabilité, arbres, suites, intégrales, inéquations, coniques et tableaux. Les compléments sont enregistrés dans un fichier .sqnw.'));
-  if (d.extras.length) openSections.add('Compléments');
+  const DT = state.dlg.type, DK = state.dlg.kind;
+  d.extras.forEach((e, k) => { if (!DT || (e.type === DT && (!DK || e.kind === DK))) exSec.push(exEditor(e, k)); });
+  if (DT) exSec.push(btn('+ Ajouter', () => { addExtra(DT, DK); }, 'small'));
+  else exSec.push(h('div', { class: 'row' }, h('select', { id: 'exType', class: 'sel' }, Object.entries(EX).map(([k, T]) => h('option', { value: k }, T.label))), btn('+ Ajouter', () => addExtra($('#exType').value), 'small')));
+  exSec.push(h('p', { class: 'hint' }, 'Ces objets sont propres à la version en ligne : ils sont enregistrés dans un fichier .sqnw.'));
   P.append(section('Compléments', exSec));
 
   const rapSec = [];
-  if (!d.rap) rapSec.push(btn('+ Rapporteur trigonométrique', () => { d.rap = RAP_DEF(); openSections.add('Rapporteur trigonométrique'); buildPanel(); redraw(); commit(); }));
+  if (!d.rap) rapSec.push(btn('+ Rapporteur trigonométrique', () => { d.rap = RAP_DEF(); buildPanel(); redraw(); commit(); }));
   else {
     const r = d.rap, onoff = [[0, 'non'], [1, 'oui']];
     rapSec.push(h('div', { class: 'row' }, fNum('rayon (mm)', r, 'R', { min: 10, max: 200, step: 5, cls: 'w2' }), btn('✕ retirer', () => { d.rap = null; buildPanel(); redraw(); commit(); }, 'x')),
@@ -282,6 +303,7 @@ function buildPanel() {
   }
   P.append(section('Rapporteur trigonométrique', rapSec));
   P.append(calcSection());
+  renderDialog(P);
 }
 const g0 = () => geom(state.doc);
 
@@ -350,7 +372,7 @@ function newDocument() {
 }
 function loadDoc(d, name) {
   d.name = name; state.doc = d; state.hist = []; state.histPos = -1; state.dirty = false;
-  buildPanel(); drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle();
+  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle();
 }
 function openFile(file) {
   const r = new FileReader();
@@ -400,6 +422,40 @@ function printDoc() {
   setTimeout(() => window.print(), 50);
 }
 
+/* --- fenêtres modales (comme sous Windows : OK / Annuler / Aide) --- */
+function openDlg(titles, o = {}) {
+  const dlg = $('#dlg');
+  state.dlgSnap = { text: snapshotDoc(state.doc), pos: state.histPos, len: state.hist.length };
+  state.dlg = { titles, type: o.type, kind: o.kind, title: o.title || titles[0], help: o.help };
+  if (o.prep) o.prep(state.doc);
+  state.lastInput = null; buildPanel(); redraw();
+  if (!dlg.open) dlg.showModal();
+}
+function closeDlg(ok) {
+  const dlg = $('#dlg');
+  if (!ok && state.dlgSnap) {
+    const nm = state.doc.name; state.doc = docFromText(state.dlgSnap.text, nm);
+    state.hist = state.hist.slice(0, state.dlgSnap.pos + 1); state.histPos = state.dlgSnap.pos; redraw();
+  } else if (ok) commit();
+  state.dlg = null; state.dlgSnap = null; if (dlg.open) dlg.close();
+}
+function renderDialog(P) {
+  const dlg = $('#dlg'), D = state.dlg; if (!D) return;
+  const body = $('#dlg-body'), keep = body.scrollTop; body.textContent = '';
+  $('#dlg-title').textContent = D.title;
+  const secs = [...P.children].filter(sec => D.titles.includes(sec.querySelector('summary').textContent));
+  secs.forEach(sec => body.append(...sec.querySelector('.body').childNodes));
+  body.scrollTop = keep; updateErrs();
+}
+function initDlg() {
+  const dlg = $('#dlg');
+  $('#dlg-ok').onclick = () => closeDlg(true); $('#dlg-cancel').onclick = () => closeDlg(false);
+  $('#dlg-x').onclick = () => closeDlg(false);
+  $('#dlg-help').onclick = () => { const D = state.dlg; toast((D && D.help) || 'Modifiez les champs : le dessin se met à jour derrière la fenêtre. « OK » valide, « Annuler » revient en arrière.', 7000); };
+  dlg.addEventListener('cancel', e => { e.preventDefault(); closeDlg(false); });
+  dlg.addEventListener('focusin', e => { if (e.target.matches('input[type=text]')) state.lastInput = e.target; });
+}
+
 /* --- zoom --- */
 function setZoom(z) { state.doc.zoom = clamp(Math.round(z), 25, 400); drawNow(); }
 function fitZoom() { const st = $('#stage'); setZoom((st.clientWidth - 48) / (state.doc.W * 96 / 25.4) * 100); }
@@ -410,7 +466,7 @@ function showHelp() { $('#help').showModal(); }
 
 /* --- démarrage --- */
 function init() {
-  buildChrome();
+  buildChrome(); initDlg();
   $('#file').onchange = e => { if (e.target.files[0]) openFile(e.target.files[0]); e.target.value = ''; };
   $('#help-close').onclick = () => $('#help').close();
   document.addEventListener('keydown', e => {

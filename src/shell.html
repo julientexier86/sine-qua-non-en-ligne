@@ -30,6 +30,17 @@ button.t.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
 .fontname{font:13px ui-monospace,Consolas,monospace;color:#777;padding:0 10px}
 #zoomsel{font:13px ui-monospace,Consolas,monospace;border:1px solid #7a9fd6;background:#fff;height:24px;margin:0 4px}
 #coords{font:14px ui-monospace,Consolas,monospace;padding:0 10px;min-width:170px;color:#222}
+#dlg{padding:0;width:min(760px,96vw);max-height:90vh;border:1px solid #6b7785;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.45);background:#f0f0f0;overflow:hidden}
+#dlg[open]{display:flex;flex-direction:column}
+#dlg::backdrop{background:rgba(0,0,0,.18)}
+.dh{display:flex;justify-content:space-between;align-items:center;background:#e6eef8;padding:6px 10px;font-size:13px;border-bottom:1px solid #c5ccd4}
+.dh button{border:0;background:none;font-size:15px;cursor:pointer}.dh button:hover{background:#e81123;color:#fff}
+#dlg-body{padding:10px 14px;overflow:auto;flex:1;max-height:72vh}
+.df{display:flex;gap:8px;padding:8px 12px;border-top:1px solid #c5ccd4;background:#e9eaec}
+.btn.ok{background:var(--acc);color:#fff;border-color:var(--acc);min-width:90px}.df .btn{margin:0;min-width:90px}
+.pal{display:grid;grid-template-columns:repeat(8,15px);gap:2px;align-self:flex-end;margin-bottom:3px}
+.sw{width:15px;height:15px;border:1px solid #666;padding:0;cursor:pointer}.sw:hover{outline:2px solid var(--acc)}
+.keys{display:flex;flex-wrap:wrap;gap:3px}.key{font:12px system-ui;border:1px solid #888;background:#f5f5f5;padding:2px 7px;min-width:42px;cursor:pointer}.key:hover{background:var(--acc2)}
 main{flex:1;display:flex;min-height:0}
 #stage{flex:1;overflow:auto;padding:22px;background:#cfd4da;touch-action:none}
 #paper{margin:0 auto;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.28);position:relative;line-height:0}
@@ -72,7 +83,7 @@ dialog code{background:#eef1f5;padding:1px 5px;border-radius:4px}
 dialog table{border-collapse:collapse;width:100%;font-size:13px}
 dialog td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
 #printArea{display:none}
-@media (max-width:900px){main{flex-direction:column}aside#panel{width:100%;max-width:none;height:46vh;border-left:0;border-top:1px solid var(--line)}}
+
 </style>
 </head>
 <body>
@@ -81,8 +92,9 @@ dialog td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
 <input type="file" id="file" accept=".sqn,.sqnw,.txt" hidden>
 <main>
   <section id="stage"><div id="paper"></div></section>
-  <aside id="panel"></aside>
 </main>
+<dialog id="dlg"><div class="dh"><span id="dlg-title"></span><button id="dlg-x" type="button" title="Fermer">✕</button></div><div id="dlg-body"></div>
+  <div class="df"><button type="button" class="btn" id="dlg-help">Aide</button><span class="grow"></span><button type="button" class="btn" id="dlg-cancel">Annuler</button><button type="button" class="btn ok" id="dlg-ok">OK</button></div></dialog>
 <div id="printArea"></div>
 <div id="toast"></div>
 <dialog id="help">

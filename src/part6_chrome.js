@@ -33,6 +33,8 @@ const IC = {
   fp: '<text x="12" y="17" font-size="15" font-style="italic" text-anchor="middle" font-family="serif">f′</text>',
   F: '<text x="12" y="18" font-size="16" font-weight="bold" text-anchor="middle" font-family="sans-serif">F</text>',
   globe: '<circle cx="12" cy="12" r="9" fill="none" stroke="#0a7a3a" stroke-width="2"/><path d="M12 3v18M3 12h18M5 7c4 2 10 2 14 0M5 17c4-2 10-2 14 0" fill="none" stroke="#1b5fbf" stroke-width="1.2"/>',
+  poi: '<g fill="#7bd88f" stroke="#1d6b34"><rect x="3" y="6" width="3" height="14"/><rect x="7" y="3" width="3" height="17"/><rect x="11" y="8" width="3" height="12"/><rect x="15" y="14" width="3" height="6"/><rect x="19" y="18" width="3" height="2"/></g>',
+  expo: '<path d="M3 4c2 10 6 14 18 15" fill="none" stroke="#d62828" stroke-width="2"/><path d="M3 20h18" stroke="#333"/>',
   zin: '<circle cx="10" cy="10" r="6" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6M10 7v6" stroke="#333" stroke-width="1.6"/>',
   zout: '<circle cx="10" cy="10" r="6" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6" stroke="#333" stroke-width="1.6"/>',
   grid: '<path d="M3 3l18 18M3 9l12 12M9 3l12 12" stroke="#333" stroke-width="1.8"/>',
@@ -41,11 +43,11 @@ const IC = {
 };
 const svgIcon = k => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('width', 23); s.setAttribute('height', 23); s.innerHTML = IC[k]; return s; };
 
-function gotoSection(title) {
-  openSections.add(title); buildPanel();
-  const el = [...document.querySelectorAll('#panel details.sec > summary')].find(s => s.textContent === title);
-  if (el) { el.parentElement.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
-}
+const DLGHELP = {
+  'Fonctions f(x)': 'Saisissez jusqu’à 10 fonctions. Cochez la zone « courbe dessinée » en laissant l’expression non vide ; invisible = style « Invisible ».',
+  'Repère': 'Les longueurs sont en cm, comme dans la version Windows. Vous pouvez aussi glisser l’origine et les unités à la souris dans le dessin.'
+};
+function gotoSection(title, titleDlg) { openDlg([title], { title: titleDlg || title, help: DLGHELP[title] }); }
 function copyPng() {
   const d = state.doc, dpi = 150, wpx = Math.round(d.W / 25.4 * dpi), hpx = Math.round(d.H / 25.4 * dpi);
   const svg = buildSvg(d, buildCtx(d), {}).replace(/width="[^"]*mm" height="[^"]*mm"/, `width="${wpx}" height="${hpx}"`), img = new Image();
@@ -60,10 +62,10 @@ function styleToggle(flag) {
   const t = T[T.length - 1], on = new Set(); if (/gras|bold/.test(t.style || '')) on.add('gras'); if (/ital/.test(t.style || '')) on.add('italique'); if (/soul/.test(t.style || '')) on.add('souligné');
   on.has(flag) ? on.delete(flag) : on.add(flag); t.style = [...on].join(' ') || 'normal'; buildPanel(); redraw(); commit();
 }
-const addText = () => { const d = state.doc, g = geom(d); d.texts.push({ txt: 'Texte', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 10), font: 'Times New Roman', size: 12, col: 0, style: 'normal' }); gotoSection('Textes'); redraw(); commit(); };
-const addLatex = () => { const d = state.doc, g = geom(d); d.latex.push({ pre: '   3$ ', size: 3, src: '\\frac{a}{b}+\\sqrt{x^2+1}', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 20) }); gotoSection('Expressions LaTeX'); redraw(); commit(); };
-const ex = t => () => { addExtra(t); const p = $('#panel'); const sec = [...p.querySelectorAll('details.sec > summary')].find(s => s.textContent === 'Compléments'); if (sec) sec.parentElement.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
-const go = t => () => gotoSection(t);
+const addText = () => openDlg(['Textes'], { prep: d => { const g = geom(d); d.texts.push({ txt: 'Texte', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 10), font: 'Times New Roman', size: 12, col: 0, style: 'normal' }); } });
+const addLatex = () => openDlg(['Expressions LaTeX'], { prep: d => { const g = geom(d); d.latex.push({ pre: '   3$ ', size: 3, src: '\\frac{a}{b}+\\sqrt{x^2+1}', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 20) }); } });
+const ex = (t, kind, title) => () => openDlg(['Compléments'], { type: t, kind, title: title || EX[t].label, prep: d => { if (!d.extras.some(e => e.type === t && (!kind || e.kind === kind))) { const e = Object.assign({ type: t }, EX[t].def()); if (kind) e.kind = kind; if (EX[t].init) EX[t].init(e); d.extras.push(e); } } });
+const go = (t, title) => () => gotoSection(t, title);
 
 function chromeSpec() {
   const A = {
@@ -82,19 +84,21 @@ function chromeSpec() {
     ['Définir', [D('Page…', 'Page', go('Page')), D('Repère…', 'Repère', go('Repère')), D('Fonctions f(x)…', '', go('Fonctions f(x)')), D('Courbes paramétrées…', '', go('Courbes paramétrées')), D('Courbes polaires…', '', go('Courbes polaires')),
       D('Droites…', '', go('Droites')), D('Famille de fonctions…', '', go('Famille de fonctions')), D('Points et segments…', '', go('Points et segments')), '-', D('Texte', '', addText), D('Expression LaTeX', '', addLatex), D('Rapporteur trigonométrique…', '', go('Rapporteur trigonométrique'))]],
     ['Outils', [A.undo, A.redo, '-', A.zin, A.zout, A.zfit, A.z100, '-', ...Object.entries(EX).map(([k, T]) => D('Ajouter : ' + T.label, '', ex(k)))]],
-    ['Calculs', [D('Résoudre une équation…', '', go('Calculs')), D('Table de valeurs…', '', go('Calculs')), D('Intégrale approchée…', '', go('Calculs')), '-', D('Dérivée', '', ex('deriv')), D('Primitive', '', ex('prim')), D('Statistiques à une variable', '', ex('stat1')), D('Statistiques à deux variables', '', ex('stat2')), D('Lois de probabilité', '', ex('loi')), D('Simulation', '', () => { ex('stat1')(); })]],
+    ['Calculs', [D('Résoudre une équation…', '', go('Calculs', 'Calculs')), D('Table de valeurs…', '', go('Calculs', 'Calculs')), D('Intégrale approchée…', '', go('Calculs', 'Calculs')), '-', D('Dérivée', '', ex('deriv')), D('Primitive', '', ex('prim')), D('Statistiques à une variable', '', ex('stat1')), D('Statistiques à deux variables', '', ex('stat2')), D('Lois de probabilité', '', ex('loi')), D('Simulation', '', () => { ex('stat1')(); })]],
     ['?', [A.aide, A.apropos]]
   ];
   const B = (title, icon, fn) => ({ title, icon, fn }), SEP = { sep: 1 };
   const bar = [A.nouveau, A.ouvrir, A.imprimer, A.enreg, A.sqn, SEP, B('Copier le dessin comme image', 'copy', copyPng), SEP,
     B('Expression LaTeX', 'tex', addLatex), B('Texte', 'text', addText), SEP, { fmt: 1 }, SEP,
-    B('Repère', 'axes', go('Repère')), B('Fonctions f(x)', 'fn', go('Fonctions f(x)')), B('Courbes paramétrées', 'param', go('Courbes paramétrées')), B('Courbes polaires', 'polar', go('Courbes polaires')), B('Famille de fonctions', 'fam', go('Famille de fonctions')),
-    B('Figures géométriques (cercle, polygone, vecteur…)', 'shape', ex('shape')), B('Droites, points et segments', 'lines', go('Droites')), B('Courbe point par point', 'prim', ex('pbp')),
-    B('Statistiques à une variable', 'stat1', ex('stat1')), B('Statistiques à deux variables', 'stat2', ex('stat2')), B('Histogramme', 'histo', () => { ex('stat1')(); const e = state.doc.extras[state.doc.extras.length - 1]; e.mode = 'histo'; e.data = '0;2;3\n2;4;8\n4;6;5\n6;8;2'; buildPanel(); redraw(); }),
-    B('Lois de probabilité', 'loi', ex('loi')), B('Arbre de probabilités', 'arbre', ex('arbre')), B('Simulation', 'de', ex('stat1')), B('Suites numériques', 'suite', ex('suite')),
-    B('Intégrale', 'integ', ex('integ')), B('Inéquations', 'ineq', ex('ineq')), B('Courbes implicites, coniques', 'impl', ex('impl')), B('Tableaux de signes et de variations', 'tab', ex('tab')),
-    B('Rapporteur trigonométrique', 'rap', go('Rapporteur trigonométrique')), B('Calculs', 'calc', go('Calculs')), B('Courbe dérivée', 'fp', ex('deriv')), B('Primitive', 'F', ex('prim')), B('Échelle logarithmique', 'globe', go('Repère')), SEP,
-    { zoom: 1 }, B('Quadrillage', 'grid', go('Repère')), A.zin, A.zout, { coords: 1 }];
+    B('Définir le repère', 'axes', go('Repère', 'Définir le repère')), B('Liste des fonctions', 'fn', go('Fonctions f(x)', 'Liste des fonctions')), B('Liste des courbes paramétrées', 'param', go('Courbes paramétrées', 'Liste des courbes paramétrées')),
+    B('Liste des courbes polaires r=f(t)', 'polar', go('Courbes polaires', 'Liste des courbes polaires r=f(t)')), B('Famille de fonctions', 'fam', go('Famille de fonctions')),
+    B('Objets du schéma : figures géométriques', 'shape', ex('shape', null, 'Objets du schéma')), B('Droites', 'lines', go('Droites')), B('Courbe point par point', 'prim', ex('pbp')),
+    B('Statistiques à une variable', 'stat1', ex('stat1')), B('Statistiques à 2 variables', 'stat2', ex('stat2')),
+    B('Loi binomiale', 'histo', ex('loi', 'bin', 'Loi binomiale')), B('Loi de Poisson', 'poi', ex('loi', 'poi', 'Loi de Poisson')), B('Loi normale', 'loi', ex('loi', 'nor', 'Loi normale')), B('Loi exponentielle', 'expo', ex('loi', 'exp', 'Loi exponentielle')),
+    B('Simulations statistiques', 'de', ex('stat1', null, 'Simulations statistiques')), B('Tableau de signes ou de variations', 'tab', ex('tab')), B('Suites numériques', 'suite', ex('suite')),
+    B('Intégrale d’une fonction', 'integ', ex('integ')), B('Inéquations', 'ineq', ex('ineq')), B('Courbe dérivée', 'fp', ex('deriv')), B('Primitive', 'F', ex('prim')),
+    B('Rapporteur trigonométrique ou géométrique', 'rap', go('Rapporteur trigonométrique', 'Rapporteur trigonométrique ou géométrique')), SEP,
+    { zoom: 1 }, B('Quadrillage', 'grid', go('Repère', 'Définir le repère')), A.zin, A.zout, { coords: 1 }];
   return { menus, bar };
 }
 

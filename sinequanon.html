@@ -30,6 +30,17 @@ button.t.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
 .fontname{font:13px ui-monospace,Consolas,monospace;color:#777;padding:0 10px}
 #zoomsel{font:13px ui-monospace,Consolas,monospace;border:1px solid #7a9fd6;background:#fff;height:24px;margin:0 4px}
 #coords{font:14px ui-monospace,Consolas,monospace;padding:0 10px;min-width:170px;color:#222}
+#dlg{padding:0;width:min(760px,96vw);max-height:90vh;border:1px solid #6b7785;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.45);background:#f0f0f0;overflow:hidden}
+#dlg[open]{display:flex;flex-direction:column}
+#dlg::backdrop{background:rgba(0,0,0,.18)}
+.dh{display:flex;justify-content:space-between;align-items:center;background:#e6eef8;padding:6px 10px;font-size:13px;border-bottom:1px solid #c5ccd4}
+.dh button{border:0;background:none;font-size:15px;cursor:pointer}.dh button:hover{background:#e81123;color:#fff}
+#dlg-body{padding:10px 14px;overflow:auto;flex:1;max-height:72vh}
+.df{display:flex;gap:8px;padding:8px 12px;border-top:1px solid #c5ccd4;background:#e9eaec}
+.btn.ok{background:var(--acc);color:#fff;border-color:var(--acc);min-width:90px}.df .btn{margin:0;min-width:90px}
+.pal{display:grid;grid-template-columns:repeat(8,15px);gap:2px;align-self:flex-end;margin-bottom:3px}
+.sw{width:15px;height:15px;border:1px solid #666;padding:0;cursor:pointer}.sw:hover{outline:2px solid var(--acc)}
+.keys{display:flex;flex-wrap:wrap;gap:3px}.key{font:12px system-ui;border:1px solid #888;background:#f5f5f5;padding:2px 7px;min-width:42px;cursor:pointer}.key:hover{background:var(--acc2)}
 main{flex:1;display:flex;min-height:0}
 #stage{flex:1;overflow:auto;padding:22px;background:#cfd4da;touch-action:none}
 #paper{margin:0 auto;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.28);position:relative;line-height:0}
@@ -72,7 +83,7 @@ dialog code{background:#eef1f5;padding:1px 5px;border-radius:4px}
 dialog table{border-collapse:collapse;width:100%;font-size:13px}
 dialog td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
 #printArea{display:none}
-@media (max-width:900px){main{flex-direction:column}aside#panel{width:100%;max-width:none;height:46vh;border-left:0;border-top:1px solid var(--line)}}
+
 </style>
 </head>
 <body>
@@ -81,8 +92,9 @@ dialog td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
 <input type="file" id="file" accept=".sqn,.sqnw,.txt" hidden>
 <main>
   <section id="stage"><div id="paper"></div></section>
-  <aside id="panel"></aside>
 </main>
+<dialog id="dlg"><div class="dh"><span id="dlg-title"></span><button id="dlg-x" type="button" title="Fermer">✕</button></div><div id="dlg-body"></div>
+  <div class="df"><button type="button" class="btn" id="dlg-help">Aide</button><span class="grow"></span><button type="button" class="btn" id="dlg-cancel">Annuler</button><button type="button" class="btn ok" id="dlg-ok">OK</button></div></dialog>
 <div id="printArea"></div>
 <div id="toast"></div>
 <dialog id="help">
@@ -1578,7 +1590,7 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
 
 /* --- statistiques à deux variables --- */
 EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: () => ({ data: '1;2.1\n2;3.9\n3;6.2\n4;7.8\n5;10.1\n6;12.2', fit: 'lin', cloud: true, gpoint: true, show: true, tx: 0, ty: 0, couleur: 16711680, couleur2: 255, ep: 2 }),
-  fields: [['data', 'points (x;y)', 'area', 'grow'], 'br', ['fit', 'ajustement', 'sel', 'grow', [['none', 'Aucun'], ['lin', 'Droite des moindres carrés'], ['mayer', 'Droite de Mayer'], ['exp', 'Exponentielle  y = a·eᵇˣ'], ['pow', 'Puissance  y = a·xᵇ'], ['par', 'Parabole  y = ax²+bx+c']]],
+  fields: [['data', 'points (x;y)', 'area', 'grow'], 'br', ['fit', 'ajustement', 'sel', 'grow', [['none', 'Aucun'], ['lin', 'Droite des moindres carrés'], ['mayer', 'Droite de Mayer'], ['log', 'Logarithmique  y = a·ln x + b'], ['exp', 'Exponentielle  y = a·eᵇˣ'], ['pow', 'Puissance  y = a·xᵇ'], ['par', 'Polynomiale de degré 2'], ['pol3', 'Polynomiale de degré 3'], ['pol4', 'Polynomiale de degré 4']]],
     ['cloud', 'nuage', 'chk'], ['gpoint', 'point moyen G', 'chk'], ['show', 'afficher l’équation', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'points', 'color'], ['couleur2', 'courbe', 'color'], ['ep', 'épaisseur', 'num', 'w3']],
   render(e, d, g) {
     const P = rowsOf(e.data).filter(r => r.length >= 2 && r.every(Number.isFinite)); let s = ''; if (!P.length) return s;
@@ -1591,6 +1603,10 @@ EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: ()
       s += [g1, g2].map(G => `<circle cx="${f2(g.X(G[0]))}" cy="${f2(g.Y(G[1]))}" r="1.1" fill="${c2}"/>`).join(''); }
     else if (e.fit === 'exp' && ys.every(v => v > 0) && n >= 2) { const r = lin(xs, ys.map(Math.log)), a = Math.exp(r.b); f = x => a * Math.exp(r.a * x); eq = `y = ${fmtC(a)}·e^(${fmtC(r.a)}x)`; }
     else if (e.fit === 'pow' && ys.every(v => v > 0) && xs.every(v => v > 0) && n >= 2) { const r = lin(xs.map(Math.log), ys.map(Math.log)), a = Math.exp(r.b); f = x => a * Math.pow(x, r.a); eq = `y = ${fmtC(a)}·x^${fmtC(r.a)}`; }
+    else if (e.fit === 'log' && xs.every(v => v > 0) && n >= 2) { const r = lin(xs.map(Math.log), ys); f = x => r.a * Math.log(x) + r.b; eq = `y = ${fmtC(r.a)}·ln x ${r.b < 0 ? '-' : '+'} ${fmtC(Math.abs(r.b))}`; }
+    else if ((e.fit === 'pol3' || e.fit === 'pol4') && n > (e.fit === 'pol3' ? 3 : 4)) { const m = e.fit === 'pol3' ? 3 : 4, S = k => xs.reduce((t, x) => t + Math.pow(x, k), 0), Sy = k => xs.reduce((t, x, i) => t + Math.pow(x, k) * ys[i], 0);
+      const A = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: m + 1 }, (_, j) => S(2 * m - i - j))), c = solveLin(A, Array.from({ length: m + 1 }, (_, i) => Sy(m - i))); f = x => c.reduce((t, k) => t * x + k, 0);
+      eq = 'y = ' + c.map((k, i) => (i && k >= 0 ? '+ ' : i ? '- ' : '') + fmtC(i ? Math.abs(k) : k) + (m - i > 1 ? 'x^' + (m - i) : m - i === 1 ? 'x' : '')).join(' '); }
     else if (e.fit === 'par' && n >= 3) { const S = k => xs.reduce((t, x) => t + Math.pow(x, k), 0), Sy = k => xs.reduce((t, x, i) => t + Math.pow(x, k) * ys[i], 0);
       const [a, b, c] = solveLin([[S(4), S(3), S(2)], [S(3), S(2), S(1)], [S(2), S(1), n]], [Sy(2), Sy(1), Sy(0)]); f = x => a * x * x + b * x + c; eq = `y = ${fmtC(a)}x² ${b < 0 ? '-' : '+'} ${fmtC(Math.abs(b))}x ${c < 0 ? '-' : '+'} ${fmtC(Math.abs(c))}`; }
     if (f) s += drawPolyline(sampleFn(f, d, g, 600), { col: c2, w: lineWidth(e.ep), style: 0 });
@@ -1601,7 +1617,7 @@ EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: ()
   } };
 
 /* --- lois de probabilité --- */
-EX.loi = { label: 'Loi de probabilité', def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
+EX.loi = { label: 'Loi de probabilité', init(e) { const K = { bin: [10, 0.5, 3, 6, 20], poi: [3, 0, 1, 4, 20], nor: [0, 1, -1, 1, 10], exp: [0.5, 0, 0, 3, 10], uni: [-3, 3, -1, 2, 10] }[e.kind]; if (K) [e.p1, e.p2, e.a, e.b, e.ky] = K; }, def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
   fields: [['kind', 'loi', 'sel', 'grow', [['bin', 'Binomiale B(n ; p)'], ['poi', 'Poisson P(λ)'], ['nor', 'Normale N(μ ; σ)'], ['exp', 'Exponentielle E(λ)'], ['uni', 'Uniforme sur [a ; b]']]],
     ['p1', 'n / λ / μ / a', 'num', 'w3', { step: 0.1 }], ['p2', 'p / σ / b', 'num', 'w3', { step: 0.05 }], 'br', ['zone', 'colorier P(a ≤ X ≤ b)', 'chk'], ['a', 'a', 'num', 'w3', { step: 0.5 }], ['b', 'b', 'num', 'w3', { step: 0.5 }],
     ['ky', 'échelle verticale', 'num', 'w3', { step: 1 }], 'br', ['label', 'afficher la probabilité', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'trait', 'color'], ['couleur2', 'zone', 'color'], ['ep', 'ép.', 'num', 'w3']],
@@ -1671,10 +1687,15 @@ EX.suite = { label: 'Suite numérique', def: () => ({ mode: 'expl', src: '1/(x+1
   } };
 
 /* --- intégrale --- */
-EX.integ = { label: 'Intégrale (aire, rectangles, trapèzes)', def: () => ({ src: 'f1', a: 0, b: 2, mode: 'aire', n: 8, couleur: 255, couleur2: 16776960, opa: 0.4, ep: 2, label: true, lx: 0, ly: 0 }),
-  fields: [['src', 'f(x)', 'text', 'grow'], ['a', 'a', 'num', 'w3', { step: 0.1 }], ['b', 'b', 'num', 'w3', { step: 0.1 }], 'br', ['mode', 'méthode', 'sel', 'grow', [['aire', 'Aire sous la courbe'], ['gauche', 'Rectangles à gauche'], ['droite', 'Rectangles à droite'], ['milieu', 'Rectangles au milieu'], ['trap', 'Trapèzes']]],
+EX.integ = { label: 'Intégrale (aire, rectangles, trapèzes)', def: () => ({ src2: '', src: 'f1', a: 0, b: 2, mode: 'aire', n: 8, couleur: 255, couleur2: 16776960, opa: 0.4, ep: 2, label: true, lx: 0, ly: 0 }),
+  fields: [['src', 'f(x)', 'text', 'grow'], ['src2', 'g(x) : laisser vide pour l’aire sous la courbe, sinon aire entre f et g', 'text', 'grow'], ['a', 'a', 'num', 'w3', { step: 0.1 }], ['b', 'b', 'num', 'w3', { step: 0.1 }], 'br', ['mode', 'méthode', 'sel', 'grow', [['aire', 'Aire sous la courbe'], ['gauche', 'Rectangles à gauche'], ['droite', 'Rectangles à droite'], ['milieu', 'Rectangles au milieu'], ['trap', 'Trapèzes']]],
     ['n', 'nb de subdivisions', 'num', 'w3'], 'br', ['couleur', 'contour', 'color'], ['couleur2', 'remplissage', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['label', 'afficher la valeur', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }]],
   render(e, d, g, ctx) {
+    if (String(e.src2 || '').trim()) { const f1 = fnOf(e.src, ctx), g2 = fnOf(e.src2, ctx), a = e.a, b = e.b, st = exStroke(e), N = 240, up = [], lo = [];
+      for (let i = 0; i <= N; i++) { const x = a + (b - a) * i / N; up.push(f2(g.X(x)) + ' ' + f2(g.Y(f1(x)))); lo.push(f2(g.X(x)) + ' ' + f2(g.Y(g2(x)))); }
+      let v = 0; const M = 2000, hh = (b - a) / M; for (let i = 0; i < M; i++) { const x0 = a + i * hh; v += hh / 6 * ((f1(x0) - g2(x0)) + 4 * (f1(x0 + hh / 2) - g2(x0 + hh / 2)) + (f1(x0 + hh) - g2(x0 + hh))); }
+      let s2 = `<path d="M${up.join('L')}L${lo.reverse().join('L')}Z" fill="${tcolor(e.couleur2)}" fill-opacity="${e.opa}" stroke="none"/>` + drawPolyline(sampleFn(f1, d, g, 600), st) + drawPolyline(sampleFn(g2, d, g, 600), st);
+      if (e.label) s2 += T_(g.X(e.lx), g.Y(e.ly), `∫ (f − g) de ${fmtC(a)} à ${fmtC(b)} ≈ ${fmtC(v, 6)}`, { size: 10 }); return s2; }
     const f = fnOf(e.src, ctx), a = e.a, b = e.b, st = exStroke(e), fill = `fill="${tcolor(e.couleur2)}" fill-opacity="${e.opa}"`; let s = '', approx = 0; const n = clamp(Math.round(e.n), 1, 500);
     let exact = 0; { const M = 2000, hh = (b - a) / M; for (let i = 0; i < M; i += 1) { const x0 = a + i * hh; exact += hh / 6 * (f(x0) + 4 * f(x0 + hh / 2) + f(x0 + hh)); } }
     if (e.mode === 'aire') { const N = 200, pts = []; for (let i = 0; i <= N; i++) { const x = a + (b - a) * i / N; pts.push(f2(g.X(x)) + ' ' + f2(g.Y(f(x)))); }
@@ -1843,10 +1864,19 @@ function fNum(label, obj, key, o = {}) {
     onchange: commit });
   return field(label, i, o.cls);
 }
+const PALETTE16 = [0, 128, 32768, 32896, 8388608, 8388736, 8421376, 12632256, 8421504, 255, 65280, 65535, 16711680, 16711935, 16776960, 16777215];
+function palette(obj, key) {
+  return h('div', { class: 'pal' }, PALETTE16.map(c => h('button', { type: 'button', class: 'sw', title: tcolor(c), style: 'background:' + tcolor(c), onclick: () => { obj[key] = c; redraw(); commit(); if (state.dlg) buildPanel(); } })));
+}
 function fColor(label, obj, key, o = {}) {
   const i = h('input', { type: 'color', value: tcolor(obj[key]),
     oninput: e => { obj[key] = fromCss(e.target.value); redraw(); }, onchange: commit });
   return field(label, i, 'color ' + (o.cls || ''));
+}
+function fNumC(label, obj, key, o = {}) { // affiche en cm un champ stocké en mm
+  const i = h('input', { type: 'number', value: Math.round(obj[key]) / 10, min: o.min, max: o.max, step: o.step || 0.1,
+    oninput: e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) { obj[key] = Math.round(v * 100) / 10; redraw(); } }, onchange: commit });
+  return field(label, i, o.cls);
 }
 function fSel(label, obj, key, opts, o = {}) {
   const i = h('select', { onchange: e => { obj[key] = o.num ? +e.target.value : e.target.value; o.after && o.after(); redraw(); commit(); } },
@@ -1877,6 +1907,7 @@ function exEditor(e, k) {
   for (const f of T.fields) {
     if (f === 'br') { row = h('div', { class: 'row' }); box.append(row); continue; }
     const [key, label, kind, cls = '', opt] = f;
+    if (key === 'kind' && state.dlg && state.dlg.kind) continue;
     if (kind === 'text') row.append(fText(label, e, key, { cls }));
     else if (kind === 'num') row.append(fNum(label, e, key, Object.assign({ cls }, opt || {})));
     else if (kind === 'color') row.append(fColor(label, e, key));
@@ -1888,7 +1919,7 @@ function exEditor(e, k) {
   box.append(errLine(() => e._err));
   return box;
 }
-function addExtra(type) { const d = state.doc; d.extras.push(Object.assign({ type }, EX[type].def())); openSections.add('Compléments'); buildPanel(); redraw(); commit(); }
+function addExtra(type, kind) { const d = state.doc, e = Object.assign({ type }, EX[type].def()); if (kind) e.kind = kind; if (EX[type].init) EX[type].init(e); d.extras.push(e); buildPanel(); redraw(); commit(); }
 
 /* --- calculs --- */
 function calcSection() {
@@ -1909,6 +1940,15 @@ function calcSection() {
 }
 
 /* --- panneau --- */
+const KEYS = [['Abs', 'abs('], ['ArcCos', 'arccos('], ['ArcSin', 'arcsin('], ['ArcTan', 'arctan('], ['ArgCh', 'argch('], ['ArgSh', 'argsh('], ['ArgTh', 'argth('], ['Carré', '²'], ['Cos', 'cos('], ['Ch', 'ch('], ['Exp', 'exp('], ['Frac', 'frac('],
+  ['Int', 'int('], ['Ln', 'ln('], ['Log', 'log('], ['Racine', 'racine('], ['Sh', 'sh('], ['Sin', 'sin('], ['Tan', 'tan('], ['Th', 'th('], ['π', 'pi'], ['e', 'e'], ['+', '+'], ['−', '-'], ['×', '*'], ['/', '/'], ['^', '^']];
+function keypad() {
+  return h('div', { class: 'keypad' }, h('p', { class: 'hint' }, 'Pour saisir une fonction : cliquez dans une zone d’expression puis sur ces boutons, ou tapez au clavier.'),
+    h('div', { class: 'keys' }, KEYS.map(([t, ins]) => h('button', { type: 'button', class: 'key', onmousedown: e => e.preventDefault(), onclick: () => {
+      const i = state.lastInput; if (!i) { toast('Cliquez d’abord dans une zone d’expression.'); return; }
+      i.focus(); const a = i.selectionStart ?? i.value.length, b = i.selectionEnd ?? a; i.setRangeText(ins, a, b, 'end'); i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true }));
+    } }, t))));
+}
 function pointEditor(c, kind) {
   const wrap = h('div', { class: 'pts' });
   c.pts.forEach((p, k) => {
@@ -1930,7 +1970,7 @@ function curveEditor(c, kind, label, onDelete) {
   else rows.push(h('div', { class: 'row' }, h('span', { class: 'lab' }, 'r(t)='), fText('', c, 'expr', { cls: 'grow', title: 'ρ en fonction de t (radians)' }), btn('✕', onDelete, 'x')));
   rows.push(errLine(() => c._err));
   if (kind !== 'fn') rows.push(h('div', { class: 'row' }, fText('t min', c, 'tmin', { cls: 'w2' }), fText('t max', c, 'tmax', { cls: 'w2' }), fNum('nb valeurs', c, 'n', { min: 20, max: 20000, step: 50, cls: 'w2' })));
-  rows.push(h('div', { class: 'row' }, fColor('couleur', c, 'couleur'), fNum('épaisseur', c, 'ep', { min: 1, max: 10, cls: 'w2' }),
+  rows.push(h('div', { class: 'row' }, fColor('Couleur', c, 'couleur'), palette(c, 'couleur'), fNum('Épaisseur (×0,1 mm)', c, 'ep', { min: 1, max: 10, cls: 'w2' }),
     fSel('style', c, 'style', STYLE_OPTS, { num: true, cls: 'w2' })));
   rows.push(h('div', { class: 'row' }, fChk('développée', c, 'dev'), fChk('enveloppe des tangentes', c, 'env')));
   rows.push(pointEditor(c, kind));
@@ -1938,7 +1978,8 @@ function curveEditor(c, kind, label, onDelete) {
 }
 
 function buildPanel() {
-  const d = state.doc, P = $('#panel'); errEls.length = 0; P.textContent = '';
+  if (!state.dlg) return;
+  const d = state.doc, P = h('div'); errEls.length = 0;
   const paperDims = PAPER[d.orient] || PAPER.portrait;
 
   P.append(section('Page',
@@ -1953,26 +1994,27 @@ function buildPanel() {
     h('div', { class: 'row' }, fColor('bordure', d, 'cadreCol'), fColor('fond', d, 'fondCol'))));
 
   P.append(section('Repère',
-    h('div', { class: 'row' }, fChk('axes visibles', d, 'axesVis', { rebuild: true }),
+    h('div', { class: 'row' }, fChk('Axes visibles', d, 'axesVis', { rebuild: true }),
       !d.axesVis && fChk('garder Ox', d, 'keepX'), !d.axesVis && fChk('garder Oy', d, 'keepY')),
-    h('div', { class: 'row' }, fSel('graduations', d, 'grad', [['full', 'complètes'], ['first', 'première seulement'], ['none', 'aucune']], { cls: 'w2' }), fChk('basées sur les carreaux', d, 'gradGrille')),
-    h('div', { class: 'row' }, fText('origine Ox', d, 'ox', { cls: 'w2' }), fText('origine Oy', d, 'oy', { cls: 'w2' })),
-    h('div', { class: 'row' }, fText('unité Ox', d, 'ux', { cls: 'w2', title: 'ex. 1 ; 0,5 ; pi/6' }), fText('unité Oy', d, 'uy', { cls: 'w2' })),
+    h('div', { class: 'row' }, fSel('graduations', d, 'grad', [['full', 'complètes'], ['first', 'première seulement'], ['none', 'aucune']], { cls: 'w2' }), fChk('Graduation basée sur les petits carreaux', d, 'gradGrille')),
+    h('div', { class: 'row' }, fText('Origine de l’axe Ox', d, 'ox', { cls: 'w2' }), fText('Origine de l’axe Oy', d, 'oy', { cls: 'w2' })),
+    h('div', { class: 'row' }, fText('Unité de graduation Ox', d, 'ux', { cls: 'w2', title: 'ex. 1 ; 0,5 ; pi/6' }), fText('Unité de graduation Oy', d, 'uy', { cls: 'w2' })),
     h('div', { class: 'row' }, fSel('format Ox', d, 'fmtX', [['normal', 'décimal'], ['trig', 'multiples de π']], { cls: 'w2' }), fSel('format Oy', d, 'fmtY', [['normal', 'décimal'], ['trig', 'multiples de π']], { cls: 'w2' })),
-    h('div', { class: 'row' }, fNum('1 unité Ox = … mm', d, 'lx', { min: 1, step: 0.5, cls: 'w2' }), fNum('1 unité Oy = … mm', d, 'ly', { min: 1, step: 0.5, cls: 'w2' })),
-    h('div', { class: 'row' }, fNum('axe Ox à … mm du haut', d, 'dOx', { step: 5, cls: 'w2' }), fNum('axe Oy à … mm de la gauche', d, 'dOy', { step: 5, cls: 'w2' })),
+    h('div', { class: 'row' }, fNumC('Longueur de l’unité Ox (cm)', d, 'lx', { min: 0.1, step: 0.1, cls: 'w2' }), fNumC('Longueur de l’unité Oy (cm)', d, 'ly', { min: 0.1, step: 0.1, cls: 'w2' })),
+    h('div', { class: 'row' }, fNumC('Distance entre l’axe Ox et le bord supérieur (cm)', d, 'dOx', { step: 0.5, cls: 'w2' }), fNumC('Distance entre l’axe Oy et le bord gauche (cm)', d, 'dOy', { step: 0.5, cls: 'w2' })),
     h('div', { class: 'row' }, fNum('chiffres sign. Ox', d, 'sigX', { min: 3, max: 10, cls: 'w2' }), fNum('chiffres sign. Oy', d, 'sigY', { min: 3, max: 10, cls: 'w2' })),
-    h('div', { class: 'row' }, fText('nom axe Ox', d, 'nameX', { cls: 'w2' }), fText('nom axe Oy', d, 'nameY', { cls: 'w2' })),
-    h('div', { class: 'row' }, fSel('grille', d, 'gridStyle', GRID_NAMES.map((n, i) => [i, n]), { num: true, cls: 'w2' }), fNum('carreau (mm)', d, 'gridSize', { min: 2, max: 20, step: 1, cls: 'w2' })),
+    h('div', { class: 'row' }, fText('Nom de l’axe Ox', d, 'nameX', { cls: 'w2' }), fText('Nom de l’axe Oy', d, 'nameY', { cls: 'w2' })),
+    h('div', { class: 'row' }, fSel('Grille du repère', d, 'gridStyle', [0, 1, 2, 3, 6, 5, 4, 7].map(i => [i, GRID_NAMES[i]]), { num: true, cls: 'w2' }), fNum('Taille des petits carreaux (mm)', d, 'gridSize', { min: 2, max: 20, step: 1, cls: 'w2' })),
     h('div', { class: 'row' }, fColor('couleur grille', d, 'gridCol'), fColor('couleur axes', d, 'repCol')),
-    h('div', { class: 'row' }, fChk('échelle logarithmique sur Ox', d.log, 'x'), fNum('module Ox (mm/décade)', d.log, 'mx', { min: 5, cls: 'w2' })),
-    h('div', { class: 'row' }, fChk('échelle logarithmique sur Oy', d.log, 'y'), fNum('module Oy (mm/décade)', d.log, 'my', { min: 5, cls: 'w2' })),
+    h('div', { class: 'row' }, fChk('Échelle logarithmique sur Ox', d.log, 'x'), fNumC('Longueur du module (cm)', d.log, 'mx', { min: 0.5, cls: 'w2' })),
+    h('div', { class: 'row' }, fChk('Échelle logarithmique sur Oy', d.log, 'y'), fNumC('Longueur du module (cm)', d.log, 'my', { min: 0.5, cls: 'w2' })),
     h('p', { class: 'hint' }, 'Astuce : à la souris, glissez l’origine (rond bleu), les carrés d’unité sur chaque axe, ou le bord droit / bas du dessin. En échelle logarithmique, l’origine doit être positive (0 devient 1).')));
 
   // fonctions
   const fnSec = [];
   d.fns.forEach((c, k) => fnSec.push(curveEditor(c, 'fn', `f${k + 1}(x)=`, () => { d.fns.splice(k, 1); buildPanel(); redraw(); commit(); })));
   if (d.fns.length < 10) fnSec.push(btn('+ Ajouter une fonction', () => { d.fns.push(newCurve({ couleur: [0, 16711680, 255, 32768, 8388736][d.fns.length % 5] })); buildPanel(); commit(); }));
+  fnSec.push(keypad());
   fnSec.push(h('p', { class: 'hint' }, 'Syntaxe « calculatrice » : 3x+4, x², x^2, racine(x), sin x, ln x, exp(x), abs(x), x!, pi. Composition : f1of2(x). Domaine : (3/(x-1))(x>=2).'));
   P.append(section('Fonctions f(x)', fnSec));
 
@@ -2047,15 +2089,15 @@ function buildPanel() {
   P.append(section('Expressions LaTeX', laSec));
 
   const exSec = [];
-  d.extras.forEach((e, k) => exSec.push(exEditor(e, k)));
-  exSec.push(h('div', { class: 'row' }, h('select', { id: 'exType', class: 'sel' }, Object.entries(EX).map(([k, T]) => h('option', { value: k }, T.label))),
-    btn('+ Ajouter', () => addExtra($('#exType').value), 'small')));
-  exSec.push(h('p', { class: 'hint' }, 'Statistiques, lois de probabilité, arbres, suites, intégrales, inéquations, coniques et tableaux. Les compléments sont enregistrés dans un fichier .sqnw.'));
-  if (d.extras.length) openSections.add('Compléments');
+  const DT = state.dlg.type, DK = state.dlg.kind;
+  d.extras.forEach((e, k) => { if (!DT || (e.type === DT && (!DK || e.kind === DK))) exSec.push(exEditor(e, k)); });
+  if (DT) exSec.push(btn('+ Ajouter', () => { addExtra(DT, DK); }, 'small'));
+  else exSec.push(h('div', { class: 'row' }, h('select', { id: 'exType', class: 'sel' }, Object.entries(EX).map(([k, T]) => h('option', { value: k }, T.label))), btn('+ Ajouter', () => addExtra($('#exType').value), 'small')));
+  exSec.push(h('p', { class: 'hint' }, 'Ces objets sont propres à la version en ligne : ils sont enregistrés dans un fichier .sqnw.'));
   P.append(section('Compléments', exSec));
 
   const rapSec = [];
-  if (!d.rap) rapSec.push(btn('+ Rapporteur trigonométrique', () => { d.rap = RAP_DEF(); openSections.add('Rapporteur trigonométrique'); buildPanel(); redraw(); commit(); }));
+  if (!d.rap) rapSec.push(btn('+ Rapporteur trigonométrique', () => { d.rap = RAP_DEF(); buildPanel(); redraw(); commit(); }));
   else {
     const r = d.rap, onoff = [[0, 'non'], [1, 'oui']];
     rapSec.push(h('div', { class: 'row' }, fNum('rayon (mm)', r, 'R', { min: 10, max: 200, step: 5, cls: 'w2' }), btn('✕ retirer', () => { d.rap = null; buildPanel(); redraw(); commit(); }, 'x')),
@@ -2066,6 +2108,7 @@ function buildPanel() {
   }
   P.append(section('Rapporteur trigonométrique', rapSec));
   P.append(calcSection());
+  renderDialog(P);
 }
 const g0 = () => geom(state.doc);
 
@@ -2134,7 +2177,7 @@ function newDocument() {
 }
 function loadDoc(d, name) {
   d.name = name; state.doc = d; state.hist = []; state.histPos = -1; state.dirty = false;
-  buildPanel(); drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle();
+  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle();
 }
 function openFile(file) {
   const r = new FileReader();
@@ -2184,6 +2227,40 @@ function printDoc() {
   setTimeout(() => window.print(), 50);
 }
 
+/* --- fenêtres modales (comme sous Windows : OK / Annuler / Aide) --- */
+function openDlg(titles, o = {}) {
+  const dlg = $('#dlg');
+  state.dlgSnap = { text: snapshotDoc(state.doc), pos: state.histPos, len: state.hist.length };
+  state.dlg = { titles, type: o.type, kind: o.kind, title: o.title || titles[0], help: o.help };
+  if (o.prep) o.prep(state.doc);
+  state.lastInput = null; buildPanel(); redraw();
+  if (!dlg.open) dlg.showModal();
+}
+function closeDlg(ok) {
+  const dlg = $('#dlg');
+  if (!ok && state.dlgSnap) {
+    const nm = state.doc.name; state.doc = docFromText(state.dlgSnap.text, nm);
+    state.hist = state.hist.slice(0, state.dlgSnap.pos + 1); state.histPos = state.dlgSnap.pos; redraw();
+  } else if (ok) commit();
+  state.dlg = null; state.dlgSnap = null; if (dlg.open) dlg.close();
+}
+function renderDialog(P) {
+  const dlg = $('#dlg'), D = state.dlg; if (!D) return;
+  const body = $('#dlg-body'), keep = body.scrollTop; body.textContent = '';
+  $('#dlg-title').textContent = D.title;
+  const secs = [...P.children].filter(sec => D.titles.includes(sec.querySelector('summary').textContent));
+  secs.forEach(sec => body.append(...sec.querySelector('.body').childNodes));
+  body.scrollTop = keep; updateErrs();
+}
+function initDlg() {
+  const dlg = $('#dlg');
+  $('#dlg-ok').onclick = () => closeDlg(true); $('#dlg-cancel').onclick = () => closeDlg(false);
+  $('#dlg-x').onclick = () => closeDlg(false);
+  $('#dlg-help').onclick = () => { const D = state.dlg; toast((D && D.help) || 'Modifiez les champs : le dessin se met à jour derrière la fenêtre. « OK » valide, « Annuler » revient en arrière.', 7000); };
+  dlg.addEventListener('cancel', e => { e.preventDefault(); closeDlg(false); });
+  dlg.addEventListener('focusin', e => { if (e.target.matches('input[type=text]')) state.lastInput = e.target; });
+}
+
 /* --- zoom --- */
 function setZoom(z) { state.doc.zoom = clamp(Math.round(z), 25, 400); drawNow(); }
 function fitZoom() { const st = $('#stage'); setZoom((st.clientWidth - 48) / (state.doc.W * 96 / 25.4) * 100); }
@@ -2194,7 +2271,7 @@ function showHelp() { $('#help').showModal(); }
 
 /* --- démarrage --- */
 function init() {
-  buildChrome();
+  buildChrome(); initDlg();
   $('#file').onchange = e => { if (e.target.files[0]) openFile(e.target.files[0]); e.target.value = ''; };
   $('#help-close').onclick = () => $('#help').close();
   document.addEventListener('keydown', e => {
@@ -2254,6 +2331,8 @@ const IC = {
   fp: '<text x="12" y="17" font-size="15" font-style="italic" text-anchor="middle" font-family="serif">f′</text>',
   F: '<text x="12" y="18" font-size="16" font-weight="bold" text-anchor="middle" font-family="sans-serif">F</text>',
   globe: '<circle cx="12" cy="12" r="9" fill="none" stroke="#0a7a3a" stroke-width="2"/><path d="M12 3v18M3 12h18M5 7c4 2 10 2 14 0M5 17c4-2 10-2 14 0" fill="none" stroke="#1b5fbf" stroke-width="1.2"/>',
+  poi: '<g fill="#7bd88f" stroke="#1d6b34"><rect x="3" y="6" width="3" height="14"/><rect x="7" y="3" width="3" height="17"/><rect x="11" y="8" width="3" height="12"/><rect x="15" y="14" width="3" height="6"/><rect x="19" y="18" width="3" height="2"/></g>',
+  expo: '<path d="M3 4c2 10 6 14 18 15" fill="none" stroke="#d62828" stroke-width="2"/><path d="M3 20h18" stroke="#333"/>',
   zin: '<circle cx="10" cy="10" r="6" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6M10 7v6" stroke="#333" stroke-width="1.6"/>',
   zout: '<circle cx="10" cy="10" r="6" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6" stroke="#333" stroke-width="1.6"/>',
   grid: '<path d="M3 3l18 18M3 9l12 12M9 3l12 12" stroke="#333" stroke-width="1.8"/>',
@@ -2262,11 +2341,11 @@ const IC = {
 };
 const svgIcon = k => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('width', 23); s.setAttribute('height', 23); s.innerHTML = IC[k]; return s; };
 
-function gotoSection(title) {
-  openSections.add(title); buildPanel();
-  const el = [...document.querySelectorAll('#panel details.sec > summary')].find(s => s.textContent === title);
-  if (el) { el.parentElement.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
-}
+const DLGHELP = {
+  'Fonctions f(x)': 'Saisissez jusqu’à 10 fonctions. Cochez la zone « courbe dessinée » en laissant l’expression non vide ; invisible = style « Invisible ».',
+  'Repère': 'Les longueurs sont en cm, comme dans la version Windows. Vous pouvez aussi glisser l’origine et les unités à la souris dans le dessin.'
+};
+function gotoSection(title, titleDlg) { openDlg([title], { title: titleDlg || title, help: DLGHELP[title] }); }
 function copyPng() {
   const d = state.doc, dpi = 150, wpx = Math.round(d.W / 25.4 * dpi), hpx = Math.round(d.H / 25.4 * dpi);
   const svg = buildSvg(d, buildCtx(d), {}).replace(/width="[^"]*mm" height="[^"]*mm"/, `width="${wpx}" height="${hpx}"`), img = new Image();
@@ -2281,10 +2360,10 @@ function styleToggle(flag) {
   const t = T[T.length - 1], on = new Set(); if (/gras|bold/.test(t.style || '')) on.add('gras'); if (/ital/.test(t.style || '')) on.add('italique'); if (/soul/.test(t.style || '')) on.add('souligné');
   on.has(flag) ? on.delete(flag) : on.add(flag); t.style = [...on].join(' ') || 'normal'; buildPanel(); redraw(); commit();
 }
-const addText = () => { const d = state.doc, g = geom(d); d.texts.push({ txt: 'Texte', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 10), font: 'Times New Roman', size: 12, col: 0, style: 'normal' }); gotoSection('Textes'); redraw(); commit(); };
-const addLatex = () => { const d = state.doc, g = geom(d); d.latex.push({ pre: '   3$ ', size: 3, src: '\\frac{a}{b}+\\sqrt{x^2+1}', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 20) }); gotoSection('Expressions LaTeX'); redraw(); commit(); };
-const ex = t => () => { addExtra(t); const p = $('#panel'); const sec = [...p.querySelectorAll('details.sec > summary')].find(s => s.textContent === 'Compléments'); if (sec) sec.parentElement.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
-const go = t => () => gotoSection(t);
+const addText = () => openDlg(['Textes'], { prep: d => { const g = geom(d); d.texts.push({ txt: 'Texte', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 10), font: 'Times New Roman', size: 12, col: 0, style: 'normal' }); } });
+const addLatex = () => openDlg(['Expressions LaTeX'], { prep: d => { const g = geom(d); d.latex.push({ pre: '   3$ ', size: 3, src: '\\frac{a}{b}+\\sqrt{x^2+1}', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 20) }); } });
+const ex = (t, kind, title) => () => openDlg(['Compléments'], { type: t, kind, title: title || EX[t].label, prep: d => { if (!d.extras.some(e => e.type === t && (!kind || e.kind === kind))) { const e = Object.assign({ type: t }, EX[t].def()); if (kind) e.kind = kind; if (EX[t].init) EX[t].init(e); d.extras.push(e); } } });
+const go = (t, title) => () => gotoSection(t, title);
 
 function chromeSpec() {
   const A = {
@@ -2303,19 +2382,21 @@ function chromeSpec() {
     ['Définir', [D('Page…', 'Page', go('Page')), D('Repère…', 'Repère', go('Repère')), D('Fonctions f(x)…', '', go('Fonctions f(x)')), D('Courbes paramétrées…', '', go('Courbes paramétrées')), D('Courbes polaires…', '', go('Courbes polaires')),
       D('Droites…', '', go('Droites')), D('Famille de fonctions…', '', go('Famille de fonctions')), D('Points et segments…', '', go('Points et segments')), '-', D('Texte', '', addText), D('Expression LaTeX', '', addLatex), D('Rapporteur trigonométrique…', '', go('Rapporteur trigonométrique'))]],
     ['Outils', [A.undo, A.redo, '-', A.zin, A.zout, A.zfit, A.z100, '-', ...Object.entries(EX).map(([k, T]) => D('Ajouter : ' + T.label, '', ex(k)))]],
-    ['Calculs', [D('Résoudre une équation…', '', go('Calculs')), D('Table de valeurs…', '', go('Calculs')), D('Intégrale approchée…', '', go('Calculs')), '-', D('Dérivée', '', ex('deriv')), D('Primitive', '', ex('prim')), D('Statistiques à une variable', '', ex('stat1')), D('Statistiques à deux variables', '', ex('stat2')), D('Lois de probabilité', '', ex('loi')), D('Simulation', '', () => { ex('stat1')(); })]],
+    ['Calculs', [D('Résoudre une équation…', '', go('Calculs', 'Calculs')), D('Table de valeurs…', '', go('Calculs', 'Calculs')), D('Intégrale approchée…', '', go('Calculs', 'Calculs')), '-', D('Dérivée', '', ex('deriv')), D('Primitive', '', ex('prim')), D('Statistiques à une variable', '', ex('stat1')), D('Statistiques à deux variables', '', ex('stat2')), D('Lois de probabilité', '', ex('loi')), D('Simulation', '', () => { ex('stat1')(); })]],
     ['?', [A.aide, A.apropos]]
   ];
   const B = (title, icon, fn) => ({ title, icon, fn }), SEP = { sep: 1 };
   const bar = [A.nouveau, A.ouvrir, A.imprimer, A.enreg, A.sqn, SEP, B('Copier le dessin comme image', 'copy', copyPng), SEP,
     B('Expression LaTeX', 'tex', addLatex), B('Texte', 'text', addText), SEP, { fmt: 1 }, SEP,
-    B('Repère', 'axes', go('Repère')), B('Fonctions f(x)', 'fn', go('Fonctions f(x)')), B('Courbes paramétrées', 'param', go('Courbes paramétrées')), B('Courbes polaires', 'polar', go('Courbes polaires')), B('Famille de fonctions', 'fam', go('Famille de fonctions')),
-    B('Figures géométriques (cercle, polygone, vecteur…)', 'shape', ex('shape')), B('Droites, points et segments', 'lines', go('Droites')), B('Courbe point par point', 'prim', ex('pbp')),
-    B('Statistiques à une variable', 'stat1', ex('stat1')), B('Statistiques à deux variables', 'stat2', ex('stat2')), B('Histogramme', 'histo', () => { ex('stat1')(); const e = state.doc.extras[state.doc.extras.length - 1]; e.mode = 'histo'; e.data = '0;2;3\n2;4;8\n4;6;5\n6;8;2'; buildPanel(); redraw(); }),
-    B('Lois de probabilité', 'loi', ex('loi')), B('Arbre de probabilités', 'arbre', ex('arbre')), B('Simulation', 'de', ex('stat1')), B('Suites numériques', 'suite', ex('suite')),
-    B('Intégrale', 'integ', ex('integ')), B('Inéquations', 'ineq', ex('ineq')), B('Courbes implicites, coniques', 'impl', ex('impl')), B('Tableaux de signes et de variations', 'tab', ex('tab')),
-    B('Rapporteur trigonométrique', 'rap', go('Rapporteur trigonométrique')), B('Calculs', 'calc', go('Calculs')), B('Courbe dérivée', 'fp', ex('deriv')), B('Primitive', 'F', ex('prim')), B('Échelle logarithmique', 'globe', go('Repère')), SEP,
-    { zoom: 1 }, B('Quadrillage', 'grid', go('Repère')), A.zin, A.zout, { coords: 1 }];
+    B('Définir le repère', 'axes', go('Repère', 'Définir le repère')), B('Liste des fonctions', 'fn', go('Fonctions f(x)', 'Liste des fonctions')), B('Liste des courbes paramétrées', 'param', go('Courbes paramétrées', 'Liste des courbes paramétrées')),
+    B('Liste des courbes polaires r=f(t)', 'polar', go('Courbes polaires', 'Liste des courbes polaires r=f(t)')), B('Famille de fonctions', 'fam', go('Famille de fonctions')),
+    B('Objets du schéma : figures géométriques', 'shape', ex('shape', null, 'Objets du schéma')), B('Droites', 'lines', go('Droites')), B('Courbe point par point', 'prim', ex('pbp')),
+    B('Statistiques à une variable', 'stat1', ex('stat1')), B('Statistiques à 2 variables', 'stat2', ex('stat2')),
+    B('Loi binomiale', 'histo', ex('loi', 'bin', 'Loi binomiale')), B('Loi de Poisson', 'poi', ex('loi', 'poi', 'Loi de Poisson')), B('Loi normale', 'loi', ex('loi', 'nor', 'Loi normale')), B('Loi exponentielle', 'expo', ex('loi', 'exp', 'Loi exponentielle')),
+    B('Simulations statistiques', 'de', ex('stat1', null, 'Simulations statistiques')), B('Tableau de signes ou de variations', 'tab', ex('tab')), B('Suites numériques', 'suite', ex('suite')),
+    B('Intégrale d’une fonction', 'integ', ex('integ')), B('Inéquations', 'ineq', ex('ineq')), B('Courbe dérivée', 'fp', ex('deriv')), B('Primitive', 'F', ex('prim')),
+    B('Rapporteur trigonométrique ou géométrique', 'rap', go('Rapporteur trigonométrique', 'Rapporteur trigonométrique ou géométrique')), SEP,
+    { zoom: 1 }, B('Quadrillage', 'grid', go('Repère', 'Définir le repère')), A.zin, A.zout, { coords: 1 }];
   return { menus, bar };
 }
 
