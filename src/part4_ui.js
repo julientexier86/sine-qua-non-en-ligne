@@ -301,6 +301,7 @@ function buildPanel() {
       h('div', { class: 'row' }, fSel('quadrillage intérieur', r, 'quad', [[0, 'aucun'], [1, 'rayons'], [2, 'rayons et lignes']], { num: true, cls: 'grow' })),
       h('div', { class: 'row' }, fColor('cercles', r, 'colCercles'), fColor('graduations', r, 'colGrad'), fColor('quadrillage', r, 'colQuad'), fColor('valeurs', r, 'colVal')));
   }
+  rapSec.push(h('div', { class: 'row' }, btn('→ Rapporteur de collège (demi-cercle gradué de 0 à 180°)', () => { closeDlg(true); ex('rapcol')(); }, 'small')));
   P.append(section('Rapporteur trigonométrique', rapSec));
   P.append(calcSection());
   renderDialog(P);

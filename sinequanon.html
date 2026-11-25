@@ -1488,23 +1488,32 @@ EX.prim = { label: 'Primitive passant par un point', def: () => ({ src: 'f1', x0
   } };
 
 /* --- point par point --- */
-EX.pbp = { label: 'Courbe point par point', def: () => ({ data: '0;0\n1;2\n2;1\n3;3\n4;2', mode: 'lisse', marks: true, couleur: 16711680, ep: 2, style: 0 }),
-  fields: [['data', 'points (x;y, un par ligne)', 'area', 'grow'], 'br', ['mode', 'tracé', 'sel', 'w2', [['seg', 'Segments'], ['lisse', 'Courbe lissée']]], ['marks', 'croix sur les points', 'chk'],
+EX.pbp = { label: 'Courbe point par point', def: () => ({ data: '0;0\n1;2\n2;1\n3;3\n4;2', mode: 'lisse', marks: true, mk: 'x', msz: 1.1, k: 1, closed: false, nums: false, couleur: 16711680, ep: 2, style: 0 }),
+  fields: [['data', 'points (x;y, un par ligne)', 'area', 'grow'], 'br', ['mode', 'tracé', 'sel', 'w2', [['seg', 'Segments'], ['lisse', 'Courbe lissée']]], ['marks', 'marquer les points', 'chk'], ['mk', 'marque', 'sel', 'w2', [['x', 'Croix'], ['plus', 'Plus'], ['dot', 'Point'], ['circ', 'Cercle'], ['sq', 'Carré']]], ['msz', 'taille', 'num', 'w3', { step: 0.1 }], 'br',
+    ['k', 'coefficient de lissage (0 = segments, 1 = normal, 2 = arrondi fort)', 'num', 'w3', { step: 0.1, min: 0, max: 3 }], ['closed', 'courbe fermée', 'chk'], ['nums', 'numéroter les points', 'chk'], 'br',
     ['couleur', 'couleur', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY]],
   render(e, d, g) {
-    const P = rowsOf(e.data).filter(r => r.length >= 2 && r.every(Number.isFinite)).map(r => [g.X(r[0]), g.Y(r[1])]), st = exStroke(e); let s = '';
+    const P = rowsOf(e.data).filter(r => r.length >= 2 && r.every(Number.isFinite)).map(r => [g.X(r[0]), g.Y(r[1])]), st = exStroke(e), K = e.k === undefined ? 1 : e.k; let s = '';
     if (P.length >= 2) {
-      if (e.mode === 'seg') s += drawPolyline(P, st);
+      if (e.closed && P.length > 2 && e.mode !== 'seg') { const n = P.length; let dstr = `M${f2(P[0][0])} ${f2(P[0][1])}`; for (let i = 0; i < n; i++) { const p0 = P[(i + n - 1) % n], p1 = P[i], p2 = P[(i + 1) % n], p3 = P[(i + 2) % n];
+          dstr += `C${f2(p1[0] + K * (p2[0] - p0[0]) / 6)} ${f2(p1[1] + K * (p2[1] - p0[1]) / 6)} ${f2(p2[0] - K * (p3[0] - p1[0]) / 6)} ${f2(p2[1] - K * (p3[1] - p1[1]) / 6)} ${f2(p2[0])} ${f2(p2[1])}`; }
+        s += `<path d="${dstr}Z" fill="none" stroke="${st.col}" stroke-width="${f2(st.w)}"${st.style === 1 ? ' stroke-dasharray="2 1"' : st.style === 2 ? ' stroke-dasharray="0.5 1"' : ''}/>`; }
+      else
+      if (e.mode === 'seg') s += drawPolyline(e.closed ? P.concat([P[0]]) : P, st);
       else {
         let dstr = `M${f2(P[0][0])} ${f2(P[0][1])}`;
         for (let i = 0; i < P.length - 1; i++) {
           const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
-          dstr += `C${f2(p1[0] + (p2[0] - p0[0]) / 6)} ${f2(p1[1] + (p2[1] - p0[1]) / 6)} ${f2(p2[0] - (p3[0] - p1[0]) / 6)} ${f2(p2[1] - (p3[1] - p1[1]) / 6)} ${f2(p2[0])} ${f2(p2[1])}`;
+          dstr += `C${f2(p1[0] + K * (p2[0] - p0[0]) / 6)} ${f2(p1[1] + K * (p2[1] - p0[1]) / 6)} ${f2(p2[0] - K * (p3[0] - p1[0]) / 6)} ${f2(p2[1] - K * (p3[1] - p1[1]) / 6)} ${f2(p2[0])} ${f2(p2[1])}`;
         }
         s += `<path d="${dstr}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w)}"${st.style === 1 ? ' stroke-dasharray="2 1"' : st.style === 2 ? ' stroke-dasharray="0.5 1"' : ''}/>`;
       }
     }
-    if (e.marks) P.forEach(p => { s += `<path d="M${f2(p[0] - 1.1)} ${f2(p[1] - 1.1)}l2.2 2.2M${f2(p[0] - 1.1)} ${f2(p[1] + 1.1)}l2.2 -2.2" stroke="${st.col}" stroke-width="0.3"/>`; });
+    if (e.marks) { const m = e.msz || 1.1; P.forEach(p => { const [x, y] = p; s += e.mk === 'plus' ? `<path d="M${f2(x - m)} ${f2(y)}h${f2(2 * m)}M${f2(x)} ${f2(y - m)}v${f2(2 * m)}" stroke="${st.col}" stroke-width="0.3"/>`
+        : e.mk === 'dot' ? `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(m * 0.6)}" fill="${st.col}"/>` : e.mk === 'circ' ? `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(m)}" fill="#fff" stroke="${st.col}" stroke-width="0.3"/>`
+        : e.mk === 'sq' ? `<rect x="${f2(x - m)}" y="${f2(y - m)}" width="${f2(2 * m)}" height="${f2(2 * m)}" fill="#fff" stroke="${st.col}" stroke-width="0.3"/>`
+        : `<path d="M${f2(x - m)} ${f2(y - m)}l${f2(2 * m)} ${f2(2 * m)}M${f2(x - m)} ${f2(y + m)}l${f2(2 * m)} ${f2(-2 * m)}" stroke="${st.col}" stroke-width="0.3"/>`; }); }
+    if (e.nums) P.forEach((p, i) => { s += T_(p[0] + 1.5, p[1] - 1.5, 'M' + (i + 1), { size: 8 }); });
     return s;
   } };
 
@@ -1538,17 +1547,35 @@ EX.shape = { label: 'Figure (cercle, polygone, vecteur…)', def: () => ({ kind:
 /* --- statistiques à une variable --- */
 function stat1Data(e) { // renvoie {vals:[[x,eff]], classes:[[a,b,eff]], all:[valeurs]}
   const R = rowsOf(e.data).filter(r => r.every(Number.isFinite));
-  if (e.mode === 'histo') { const cl = R.filter(r => r.length >= 3); return { classes: cl, all: [] }; }
+  if (e.mode === 'histo' || e.mode === 'cumulf') { const cl = R.filter(r => r.length >= 3); return { classes: cl, all: [] }; }
   const map = new Map(); R.forEach(r => { map.set(r[0], (map.get(r[0]) || 0) + (r.length >= 2 ? r[1] : 1)); });
   const vals = [...map.entries()].sort((a, b) => a[0] - b[0]); const all = []; vals.forEach(([x, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push(x); });
   return { vals, all };
 }
 function quart(sorted, q) { const n = sorted.length; return sorted[Math.max(0, Math.ceil(n * q) - 1)]; }
-EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons', data: '1;3\n2;5\n3;8\n4;4\n5;2', ky: 1, y0: -2, h: 1.2, showStats: true, sx: 0, sy: 0, couleur: 16711680, couleur2: 16777181, ep: 3, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }),
-  fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['cumul', 'Polygone des effectifs cumulés croissants']]],
+
+const CAT_COL = [16711680, 255, 32768, 65535, 16711935, 8421376, 33023, 8388736];
+function catData(e) { return linesOf(e.data).map(l => l.split(';')).map(a => [a[0].trim(), parseNum(a[1], 1)]).filter(a => Number.isFinite(a[1])); }
+function boxSvg(v, y0, h, st, fillc, g) {
+  v = v.slice().sort((a, b) => a - b); const q1 = quart(v, 0.25), q3 = quart(v, 0.75), md = median(v), mn = v[0], mx = v[v.length - 1];
+  const y1 = g.Y(y0 - h / 2), y2 = g.Y(y0 + h / 2), ym = g.Y(y0), ya = Math.min(y1, y2), yb = Math.max(y1, y2), c = (ya + yb) / 2, q = (yb - ya) / 4;
+  return `<rect x="${f2(g.X(q1))}" y="${f2(ya)}" width="${f2(g.X(q3) - g.X(q1))}" height="${f2(yb - ya)}" fill="${fillc}" stroke="${st.col}" stroke-width="${f2(st.w * 0.7)}"/>` +
+    lineSeg([g.X(md), ya], [g.X(md), yb], st.col, st.w) + lineSeg([g.X(mn), ym], [g.X(q1), ym], st.col, st.w * 0.7) + lineSeg([g.X(q3), ym], [g.X(mx), ym], st.col, st.w * 0.7) +
+    lineSeg([g.X(mn), c - q], [g.X(mn), c + q], st.col, st.w * 0.7) + lineSeg([g.X(mx), c - q], [g.X(mx), c + q], st.col, st.w * 0.7);
+}
+function tableSvg(rows, x, y, cw, rh, col, size = 9) { // rows: tableau de lignes de textes ; x,y en mm (coin haut-gauche)
+  let s = ''; const nc = Math.max(...rows.map(r => r.length)), W = nc * cw, H = rows.length * rh;
+  s += `<rect x="${f2(x)}" y="${f2(y)}" width="${f2(W)}" height="${f2(H)}" fill="#fff" stroke="${col}" stroke-width="0.25"/>`;
+  for (let i = 1; i < rows.length; i++) s += lineSeg([x, y + i * rh], [x + W, y + i * rh], col, 0.2);
+  for (let j = 1; j < nc; j++) s += lineSeg([x + j * cw, y], [x + j * cw, y + H], col, 0.2);
+  rows.forEach((r, i) => r.forEach((t, j) => { s += `<text x="${f2(x + j * cw + cw / 2)}" y="${f2(y + i * rh + rh * 0.68)}" text-anchor="middle" font-size="${f2(size * MM_PER_PT)}" font-family="'Times New Roman',serif"${i === 0 || j === 0 ? ' font-weight="bold"' : ''} fill="${col}">${esc(String(t))}</text>`; }));
+  return s;
+}
+EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons', data: '1;3\n2;5\n3;8\n4;4\n5;2', ky: 1, y0: -2, h: 1.2, showStats: true, sx: 0, sy: 0, table: false, tx: 0, ty: -3, couleur: 16711680, couleur2: 16777181, ep: 3, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }),
+  fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['cumul', 'Polygone des effectifs cumulés croissants'], ['cumulf', 'Polygone des fréquences cumulées (classes  a;b;effectif)'], ['multi', 'Boîtes à moustaches multiples  (nom;valeurs…)'], ['barres', 'Caractère qualitatif : barres  (modalité;effectif)'], ['camem', 'Caractère qualitatif : secteurs  (modalité;effectif)']]],
     ['data', 'données (une ligne par valeur)', 'area', 'grow'], 'br', ['ky', 'échelle verticale', 'num', 'w2', { step: 0.1 }], ['y0', 'boîte : y', 'num', 'w3', { step: 0.5 }], ['h', 'boîte : hauteur', 'num', 'w3', { step: 0.1 }], 'br',
-    ['couleur', 'trait', 'color'], ['couleur2', 'remplissage', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['showStats', 'afficher moyenne, médiane, écart-type', 'chk'], ['sx', 'x', 'num', 'w3', { step: 0.1 }], ['sy', 'y', 'num', 'w3', { step: 0.1 }], 'br',
-    ['sim', 'simulation', 'sel', 'w2', [['bin', 'Binomiale (n;p)'], ['unif', 'Uniforme entière (1..A)'], ['bern', 'Bernoulli (p)'], ['norm', 'Normale (μ;σ)'], ['geo', 'Géométrique (p)'], ['pois', 'Poisson (λ)']]],
+    ['couleur', 'trait', 'color'], ['couleur2', 'remplissage', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['showStats', 'afficher moyenne, médiane, écart-type', 'chk'], ['sx', 'x', 'num', 'w3', { step: 0.1 }], ['sy', 'y', 'num', 'w3', { step: 0.1 }], 'br', ['table', 'afficher le tableau statistique (effectifs, fréquences, cumuls)', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], 'br',
+    ['sim', 'simulation', 'sel', 'w2', [['bin', 'Binomiale (n;p)'], ['unif', 'Uniforme entière (1..A)'], ['bern', 'Bernoulli (p)'], ['norm', 'Normale (μ;σ)'], ['geo', 'Géométrique (p)'], ['pois', 'Poisson (λ)'], ['coin', 'Pièce : nombre de « face » sur n lancers (n ; p)'], ['de2', 'Somme de deux dés à A faces']]],
     ['simN', 'nb tirages', 'num', 'w3'], ['simA', 'A / n / μ / λ', 'num', 'w3', { step: 0.1 }], ['simB', 'p / σ', 'num', 'w3', { step: 0.05 }],
     ['@sim', 'Simuler → remplir les données', 'btn']],
   action(e, name) {
@@ -1557,7 +1584,7 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
     for (let i = 0; i < N; i++) {
       let v; if (e.sim === 'bin') { v = 0; for (let k = 0; k < e.simA; k++) v += rnd() < e.simB ? 1 : 0; } else if (e.sim === 'unif') v = 1 + Math.floor(rnd() * e.simA);
       else if (e.sim === 'bern') v = rnd() < e.simA ? 1 : 0; else if (e.sim === 'norm') v = Math.round((e.simA + e.simB * norm()) * 100) / 100;
-      else if (e.sim === 'geo') { v = 1; while (rnd() > e.simA && v < 1e4) v++; } else { let L = Math.exp(-e.simA), k = 0, p = 1; do { k++; p *= rnd(); } while (p > L); v = k - 1; }
+      else if (e.sim === 'coin') { v = 0; for (let k = 0; k < e.simA; k++) v += rnd() < (e.simB || 0.5) ? 1 : 0; } else if (e.sim === 'de2') v = 2 + Math.floor(rnd() * e.simA) + Math.floor(rnd() * e.simA); else if (e.sim === 'geo') { v = 1; while (rnd() > e.simA && v < 1e4) v++; } else { let L = Math.exp(-e.simA), k = 0, p = 1; do { k++; p *= rnd(); } while (p > L); v = k - 1; }
       out.push(v);
     }
     if (e.sim === 'norm') { e.data = out.map(v => v).join('\n'); e.mode = 'boite'; } else { const m = new Map(); out.forEach(v => m.set(v, (m.get(v) || 0) + 1)); e.data = [...m.entries()].sort((a, b) => a[0] - b[0]).map(([k, n]) => k + ';' + n).join('\n'); e.mode = 'batons'; }
@@ -1566,19 +1593,41 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
     const D = stat1Data(e), st = exStroke(e), fillc = tcolor(e.couleur2); let s = '', all = D.all, info = '';
     if (e.mode === 'batons') {
       for (const [x, n] of D.vals) s += lineSeg([g.X(x), g.Y(0)], [g.X(x), g.Y(n * e.ky)], st.col, st.w * 1.6);
-    } else if (e.mode === 'histo') {
+    } else if (e.mode === 'histo' || e.mode === 'cumulf') {
       for (const [a, b, n] of D.classes) { const hgt = n / (b - a) * e.ky; s += `<rect x="${f2(g.X(a))}" y="${f2(g.Y(hgt))}" width="${f2(g.X(b) - g.X(a))}" height="${f2(g.Y(0) - g.Y(hgt))}" fill="${fillc}" stroke="${st.col}" stroke-width="${f2(st.w * 0.6)}"/>`; }
       D.classes.forEach(([a, b, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push((a + b) / 2); });
     } else if (e.mode === 'boite' && all.length) {
-      const v = all.slice().sort((a, b) => a - b), q1 = quart(v, 0.25), q3 = quart(v, 0.75), md = median(v), mn = v[0], mx = v[v.length - 1];
-      const y1 = g.Y(e.y0 - e.h / 2), y2 = g.Y(e.y0 + e.h / 2), ym = g.Y(e.y0);
-      s += `<rect x="${f2(g.X(q1))}" y="${f2(Math.min(y1, y2))}" width="${f2(g.X(q3) - g.X(q1))}" height="${f2(Math.abs(y1 - y2))}" fill="${fillc}" stroke="${st.col}" stroke-width="${f2(st.w * 0.7)}"/>` +
-        lineSeg([g.X(md), y1], [g.X(md), y2], st.col, st.w) + lineSeg([g.X(mn), ym], [g.X(q1), ym], st.col, st.w * 0.7) + lineSeg([g.X(q3), ym], [g.X(mx), ym], st.col, st.w * 0.7) +
-        lineSeg([g.X(mn), (y1 + ym) / 2 + (ym - y1) * 0], [g.X(mn), (2 * ym - y1 + ym) / 2], st.col, st.w * 0.7) + lineSeg([g.X(mx), y1 * 0.5 + ym * 0.5], [g.X(mx), y2 * 0.5 + ym * 0.5], st.col, st.w * 0.7);
-      info = `min=${fmtC(mn)}  Q1=${fmtC(q1)}  méd=${fmtC(md)}  Q3=${fmtC(q3)}  max=${fmtC(mx)}`;
+      const v = all.slice().sort((a, b) => a - b); s += boxSvg(v, e.y0, e.h, st, fillc, g);
+      info = `min=${fmtC(v[0])}  Q1=${fmtC(quart(v, 0.25))}  méd=${fmtC(median(v))}  Q3=${fmtC(quart(v, 0.75))}  max=${fmtC(v[v.length - 1])}`;
+    } else if (e.mode === 'multi') {
+      linesOf(e.data).forEach((l, i) => { const a = l.split(';'), nom = a[0].trim(), v = a.slice(1).map(x => parseNum(x, NaN)).filter(Number.isFinite); if (!v.length) return;
+        const yy = e.y0 - i * e.h * 1.7; s += boxSvg(v, yy, e.h, st, fillc, g); all = all.concat(v);
+        s += T_(g.X(Math.min(...v)) - 2, g.Y(yy) + 1.2, nom, { size: 9 }).replace('<text ', '<text text-anchor="end" '); });
+    } else if (e.mode === 'barres' || e.mode === 'camem') {
+      const C = catData(e), tot = C.reduce((t, c) => t + c[1], 0) || 1;
+      if (e.mode === 'barres') C.forEach(([nom, n], i) => { const x0 = g.X(i * 1.5 + 0.2), x1 = g.X(i * 1.5 + 1.2), yy = g.Y(n * e.ky);
+        s += `<rect x="${f2(x0)}" y="${f2(yy)}" width="${f2(x1 - x0)}" height="${f2(g.Y(0) - yy)}" fill="${tcolor(CAT_COL[i % 8])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>` + T_((x0 + x1) / 2, g.Y(0) + 4, nom, { size: 9 }).replace('<text ', '<text text-anchor="middle" ') + T_((x0 + x1) / 2, yy - 1, String(n), { size: 9 }).replace('<text ', '<text text-anchor="middle" '); });
+      else { const cx = g.X(e.sx), cy = g.Y(e.sy), r = Math.abs(g.X(e.h) - g.X(0)); let a0 = -Math.PI / 2;
+        C.forEach(([nom, n], i) => { const a1 = a0 + 2 * Math.PI * n / tot, big = a1 - a0 > Math.PI ? 1 : 0;
+          s += C.length === 1 ? `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(r)}" fill="${tcolor(CAT_COL[0])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="0.3"/>` : `<path d="M${f2(cx)} ${f2(cy)}L${f2(cx + r * Math.cos(a0))} ${f2(cy + r * Math.sin(a0))}A${f2(r)} ${f2(r)} 0 ${big} 1 ${f2(cx + r * Math.cos(a1))} ${f2(cy + r * Math.sin(a1))}Z" fill="${tcolor(CAT_COL[i % 8])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="0.3"/>`;
+          const am = (a0 + a1) / 2; s += T_(cx + (r + 3) * Math.cos(am), cy + (r + 3) * Math.sin(am) + 1, `${nom} ${fmtC(100 * n / tot, 3)} %`, { size: 9 }).replace('<text ', `<text text-anchor="${Math.cos(am) < 0 ? 'end' : 'start'}" `); a0 = a1; }); }
+      all = [];
+    } else if (e.mode === 'cumulf') {
+      const tot = D.classes.reduce((t, c) => t + c[2], 0) || 1; let c = 0; const pts = D.classes.length ? [[g.X(D.classes[0][0]), g.Y(0)]] : [];
+      D.classes.forEach(([a, b, n]) => { c += n; pts.push([g.X(b), g.Y(c / tot * 100 * e.ky)]); });
+      s += drawPolyline(pts, st) + pts.map(p => `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="0.9" fill="${st.col}"/>`).join('');
     } else if (e.mode === 'cumul') {
       let c = 0; const pts = [[g.X(D.vals[0] ? D.vals[0][0] : 0), g.Y(0)]]; for (const [x, n] of D.vals) { c += n; pts.push([g.X(x), g.Y(c * e.ky)]); }
       s += drawPolyline(pts, st) + pts.map(p => `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="0.9" fill="${st.col}"/>`).join('');
+    }
+    if (e.table) {
+      let rows;
+      if (e.mode === 'histo' || e.mode === 'cumulf') { const tot = D.classes.reduce((t, c) => t + c[2], 0) || 1; let c = 0; rows = [['Classe', 'Effectif', 'Centre', 'Fréquence', 'ECC', 'FCC (%)']];
+        D.classes.forEach(([a, b, n]) => { c += n; rows.push([`[${fmtC(a)} ; ${fmtC(b)}[`, fmtC(n), fmtC((a + b) / 2), fmtC(n / tot, 3), fmtC(c), fmtC(c / tot * 100, 3)]); }); rows.push(['Total', fmtC(tot), '', '1', '', '']); }
+      else if (e.mode === 'barres' || e.mode === 'camem') { const C = catData(e), tot = C.reduce((t, c) => t + c[1], 0) || 1; rows = [['Modalité', 'Effectif', 'Fréquence', '%']]; C.forEach(([m, n]) => rows.push([m, fmtC(n), fmtC(n / tot, 3), fmtC(n / tot * 100, 3)])); rows.push(['Total', fmtC(tot), '1', '100']); }
+      else if (e.mode === 'multi') { rows = [['Série', 'Min', 'Q1', 'Médiane', 'Q3', 'Max', 'Moyenne']]; linesOf(e.data).forEach(l => { const a = l.split(';'), v = a.slice(1).map(x => parseNum(x, NaN)).filter(Number.isFinite).sort((p, q) => p - q); if (v.length) rows.push([a[0].trim(), fmtC(v[0]), fmtC(quart(v, 0.25)), fmtC(median(v)), fmtC(quart(v, 0.75)), fmtC(v[v.length - 1]), fmtC(mean(v))]); }); }
+      else { const tot = D.vals.reduce((t, c) => t + c[1], 0) || 1; let c = 0; rows = [['Valeur', 'Effectif', 'Fréquence', 'ECC', 'FCC (%)']]; D.vals.forEach(([x, n]) => { c += n; rows.push([fmtC(x), fmtC(n), fmtC(n / tot, 3), fmtC(c), fmtC(c / tot * 100, 3)]); }); rows.push(['Total', fmtC(tot), '1', '', '']); }
+      s += tableSvg(rows, g.X(e.tx), g.Y(e.ty), 24, 5.5, tcolor(e.couleur));
     }
     if (e.showStats && all.length) {
       const m = mean(all), sd = Math.sqrt(mean(all.map(v => (v - m) ** 2))), sorted = all.slice().sort((a, b) => a - b);
@@ -1672,17 +1721,19 @@ EX.arbre = { label: 'Arbre de probabilités', def: () => ({ data: 'A 0.3\n  B 0.
   } };
 
 /* --- suites --- */
-EX.suite = { label: 'Suite numérique', def: () => ({ mode: 'expl', src: '1/(x+1)', u0: 1, n0: 0, n1: 12, couleur: 16711680, couleur2: 32768, ep: 2, curve: true }),
+EX.suite = { label: 'Suite numérique', def: () => ({ mode: 'expl', src: '1/(x+1)', u0: 1, n0: 0, n1: 12, couleur: 16711680, couleur2: 32768, ep: 2, curve: true, link: false, terms: 0, tx: 0, ty: -2 }),
   fields: [['mode', 'type', 'sel', 'grow', [['expl', 'u(n) = f(n)'], ['rec', 'u(n+1) = f(u(n))   (points)'], ['toile', 'u(n+1) = f(u(n))   (escalier / toile d’araignée)']]], ['src', 'f(x)', 'text', 'grow'], 'br',
-    ['u0', 'u(n₀)', 'num', 'w3', { step: 0.1 }], ['n0', 'n₀', 'num', 'w3'], ['n1', 'n max', 'num', 'w3'], ['curve', 'tracer y=f(x) et y=x', 'chk'], ['couleur', 'points', 'color'], ['couleur2', 'courbe', 'color'], ['ep', 'ép.', 'num', 'w3']],
+    ['u0', 'u(n₀)', 'num', 'w3', { step: 0.1 }], ['n0', 'n₀', 'num', 'w3'], ['n1', 'n max', 'num', 'w3'], ['curve', 'tracer y=f(x) et y=x', 'chk'], ['link', 'relier les points', 'chk'], ['terms', 'afficher les premiers termes (nombre)', 'num', 'w3'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'points', 'color'], ['couleur2', 'courbe', 'color'], ['ep', 'ép.', 'num', 'w3']],
   render(e, d, g, ctx) {
     const f = fnOf(e.src, ctx), c1 = tcolor(e.couleur), c2 = tcolor(e.couleur2); let s = ''; const N = clamp(Math.round(e.n1), e.n0, e.n0 + 500), dot = (X, Y) => `<circle cx="${f2(X)}" cy="${f2(Y)}" r="1.1" fill="${c1}"/>`;
-    if (e.mode === 'expl') { for (let n = e.n0; n <= N; n++) { const v = f(n); if (Number.isFinite(v)) s += dot(g.X(n), g.Y(v)); } return s; }
+    const showT = u => { const k = Math.min(e.terms | 0, u.length); for (let i = 0; i < k; i++) s += T_(g.X(e.tx), g.Y(e.ty) + 4.2 * i, `u${e.n0 + i} = ${fmtC(u[i], 6)}`, { size: 9 }); };
+    const linkP = pts => { if (e.link && pts.length > 1) s += drawPolyline(pts, { col: c1, w: 0.2, style: 0 }); };
+    if (e.mode === 'expl') { const u = [], P = []; for (let n = e.n0; n <= N; n++) { const v = f(n); u.push(v); if (Number.isFinite(v)) { s += dot(g.X(n), g.Y(v)); P.push([g.X(n), g.Y(v)]); } } linkP(P); showT(u); return s; }
     const u = [e.u0]; for (let n = e.n0; n < N; n++) u.push(f(u[u.length - 1]));
-    if (e.mode === 'rec') { u.forEach((v, i) => { if (Number.isFinite(v)) s += dot(g.X(e.n0 + i), g.Y(v)); }); return s; }
+    if (e.mode === 'rec') { const P = []; u.forEach((v, i) => { if (Number.isFinite(v)) { s += dot(g.X(e.n0 + i), g.Y(v)); P.push([g.X(e.n0 + i), g.Y(v)]); } }); linkP(P); showT(u); return s; }
     if (e.curve) s += drawPolyline(sampleFn(f, d, g, 500), { col: c2, w: lineWidth(e.ep), style: 0 }) + lineSeg([g.X(g.xOf(-5)), g.Y(g.xOf(-5))], [g.X(g.xOf(d.W + 5)), g.Y(g.xOf(d.W + 5))], '#666', 0.3);
     let path = `M${f2(g.X(u[0]))} ${f2(g.Y(0))}`; for (let i = 0; i < u.length - 1; i++) { if (!Number.isFinite(u[i]) || !Number.isFinite(u[i + 1])) break; path += `L${f2(g.X(u[i]))} ${f2(g.Y(u[i + 1]))}L${f2(g.X(u[i + 1]))} ${f2(g.Y(u[i + 1]))}`; }
-    s += `<path d="${path}" fill="none" stroke="${c1}" stroke-width="0.3"/>`; u.slice(0, 12).forEach((v, i) => { s += T_(g.X(v) + 0.8, g.Y(0) + 4, 'u' + (e.n0 + i), { size: 7, col: c1 }); });
+    s += `<path d="${path}" fill="none" stroke="${c1}" stroke-width="0.3"/>`; u.slice(0, 12).forEach((v, i) => { s += T_(g.X(v) + 0.8, g.Y(0) + 4, 'u' + (e.n0 + i), { size: 7, col: c1 }); }); showT(u);
     return s;
   } };
 
@@ -1733,24 +1784,89 @@ EX.impl = { label: 'Courbe d’équation F(x,y)=0 (coniques…)', def: () => ({ 
   fields: [['eq', 'équation (x et y)  ex. x^3+y^3-3xy=0 ; y^2=4x ; x²+y²-2x=3', 'text', 'grow'], ['couleur', 'couleur', 'color'], ['ep', 'ép.', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY]],
   render(e, d, g, ctx) { const { f } = implicitFn(e.eq, ctx), st = exStroke(e); const dash = st.style === 1 ? ' stroke-dasharray="2 1"' : st.style === 2 ? ' stroke-dasharray="0.5 1"' : '';
     return `<path d="${contourPath(f, d, g)}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w)}" stroke-linecap="round"${dash}/>`; } };
-EX.ineq = { label: 'Système d’inéquations', def: () => ({ data: 'y>x^2-2\nx+y<=3', couleur: 16711680, opa: 0.28, border: true, ep: 2 }),
-  fields: [['data', 'inéquations (une par ligne, variables x et y)', 'area', 'grow'], 'br', ['couleur', 'couleur', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['border', 'tracer les frontières', 'chk'], ['ep', 'ép.', 'num', 'w3']],
+EX.ineq = { label: 'Système d’inéquations', def: () => ({ data: 'y>x^2-2\nx+y<=3', zone: 'sol', couleur: 16711680, opa: 0.28, border: true, ep: 2 }),
+  fields: [['data', 'inéquations (une par ligne, variables x et y)', 'area', 'grow'], 'br', ['zone', 'représentation', 'sel', 'grow', [['sol', 'Colorer la solution du système'], ['excl', 'Hachurer la zone exclue (la solution reste blanche)'], ['chaque', 'Hachurer, pour chaque inéquation, le demi-plan exclu'], ['sol+excl', 'Colorer la solution et hachurer la zone exclue']]], 'br', ['couleur', 'couleur', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['border', 'tracer les frontières', 'chk'], ['ep', 'ép.', 'num', 'w3']],
   render(e, d, g, ctx) {
-    const conds = linesOf(e.data).map(l => implicitFn(l, ctx)); if (!conds.length) return ''; const cell = 1.2, nx = Math.ceil(d.W / cell), ny = Math.ceil(d.H / cell); let rects = '';
-    for (let j = 0; j < ny; j++) { let run = -1; for (let i = 0; i <= nx; i++) { let ok = false; if (i < nx) { const x = g.xOf((i + 0.5) * cell), y = g.yOf((j + 0.5) * cell);
-          ok = conds.every(c => { const v = c.f(x, y); return c.op === '<' || c.op === '<=' || c.op === '=<' ? v < 0 || (c.op !== '<' && v === 0) : c.op === '=' ? Math.abs(v) < 0.05 : v > 0 || (c.op !== '>' && v === 0); }); }
-        if (ok && run < 0) run = i; else if (!ok && run >= 0) { rects += `M${f2(run * cell)} ${f2(j * cell)}h${f2((i - run) * cell)}v${f2(cell + 0.02)}h${f2(-(i - run) * cell)}z`; run = -1; } } }
-    let s = `<path d="${rects}" fill="${tcolor(e.couleur)}" fill-opacity="${e.opa}" stroke="none"/>`;
-    if (e.border) conds.forEach(c => { s += `<path d="${contourPath(c.f, d, g)}" fill="none" stroke="${tcolor(e.couleur)}" stroke-width="${f2(lineWidth(e.ep))}"${c.op === '<' || c.op === '>' ? ' stroke-dasharray="2 1"' : ''}/>`; });
+    const conds = linesOf(e.data).map(l => implicitFn(l, ctx)); if (!conds.length) return ''; const cell = 1.2, nx = Math.ceil(d.W / cell), ny = Math.ceil(d.H / cell), zone = e.zone || 'sol';
+    const sat = (c, x, y) => { const v = c.f(x, y); return c.op === '<' || c.op === '<=' || c.op === '=<' ? v < 0 || (c.op !== '<' && v === 0) : c.op === '=' ? Math.abs(v) < 0.05 : v > 0 || (c.op !== '>' && v === 0); };
+    const scan = pred => { let rects = ''; for (let j = 0; j < ny; j++) { let run = -1; for (let i = 0; i <= nx; i++) { const ok = i < nx && pred(g.xOf((i + 0.5) * cell), g.yOf((j + 0.5) * cell));
+          if (ok && run < 0) run = i; else if (!ok && run >= 0) { rects += `M${f2(run * cell)} ${f2(j * cell)}h${f2((i - run) * cell)}v${f2(cell + 0.02)}h${f2(-(i - run) * cell)}z`; run = -1; } } } return rects; };
+    const col = tcolor(e.couleur), pid = 'hch' + String(e.couleur) + (zone === 'chaque' ? 'c' : '');
+    let s = `<defs><pattern id="${pid}" width="2.2" height="2.2" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V2.2" stroke="${col}" stroke-width="0.25"/></pattern>` +
+      `<pattern id="${pid}b" width="2.2" height="2.2" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><path d="M0 0V2.2" stroke="${col}" stroke-width="0.25"/></pattern></defs>`;
+    if (zone === 'sol' || zone === 'sol+excl') s += `<path d="${scan((x, y) => conds.every(c => sat(c, x, y)))}" fill="${col}" fill-opacity="${e.opa}" stroke="none"/>`;
+    if (zone === 'excl' || zone === 'sol+excl') s += `<path d="${scan((x, y) => !conds.every(c => sat(c, x, y)))}" fill="url(#${pid})" stroke="none"/>`;
+    if (zone === 'chaque') conds.forEach((c, k) => { s += `<path d="${scan((x, y) => !sat(c, x, y))}" fill="url(#${pid}${k % 2 ? 'b' : ''})" stroke="none"/>`; });
+    if (e.border) conds.forEach(c => { s += `<path d="${contourPath(c.f, d, g)}" fill="none" stroke="${col}" stroke-width="${f2(lineWidth(e.ep))}"${c.op === '<' || c.op === '>' ? ' stroke-dasharray="2 1"' : ''}/>`; });
+    return s;
+  } };
+
+
+/* --- rapporteur de collège (demi-cercle gradué de 0 à 180°) --- */
+EX.rapcol = { label: 'Rapporteur de collège (demi-cercle gradué)', def: () => ({ cx: 0, cy: 0, R: 70, rot: 0, both: true, ticks: 1, nums: 10, inv: false, fill: true, couleur: 0, couleur2: 16777215, ep: 1 }),
+  fields: [['cx', 'centre x', 'num', 'w3', { step: 0.1 }], ['cy', 'centre y', 'num', 'w3', { step: 0.1 }], ['R', 'rayon (mm)', 'num', 'w3', { step: 1 }], ['rot', 'rotation (°)', 'num', 'w3', { step: 5 }], 'br',
+    ['both', 'deux graduations (dans les deux sens)', 'chk'], ['fill', 'fond translucide', 'chk'], ['nums', 'valeurs tous les (°)', 'num', 'w3', { step: 5 }], ['couleur', 'trait', 'color'], ['couleur2', 'fond', 'color'], ['ep', 'ép.', 'num', 'w3']],
+  render(e, d, g) {
+    const cx = g.X(e.cx), cy = g.Y(e.cy), R = e.R, st = exStroke(e), a0 = (e.rot || 0) * Math.PI / 180, P = (r, deg) => { const a = a0 + deg * Math.PI / 180; return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; };
+    let s = '', A = P(R, 0), B = P(R, 180);
+    s += `<path d="M${f2(A[0])} ${f2(A[1])}A${R} ${R} 0 0 0 ${f2(B[0])} ${f2(B[1])}Z" fill="${e.fill ? tcolor(e.couleur2) : 'none'}" fill-opacity="0.45" stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>`;
+    const Ri = R * 0.62; s += `<path d="M${f2(P(Ri, 0)[0])} ${f2(P(Ri, 0)[1])}A${Ri} ${Ri} 0 0 0 ${f2(P(Ri, 180)[0])} ${f2(P(Ri, 180)[1])}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w * 0.3)}"/>`;
+    for (let k = 0; k <= 180; k++) { const L = k % 10 === 0 ? 4 : k % 5 === 0 ? 3 : 1.8, p1 = P(R, k), p2 = P(R - L, k); s += lineSeg(p1, p2, st.col, k % 10 === 0 ? 0.25 : 0.12);
+      if (e.both) { const q1 = P(Ri, k), q2 = P(Ri + (k % 10 === 0 ? 3 : k % 5 === 0 ? 2.2 : 1.4), k); s += lineSeg(q1, q2, st.col, k % 10 === 0 ? 0.25 : 0.12); } }
+    const step = Math.max(5, e.nums | 0 || 10); for (let k = 0; k <= 180; k += step) { const p = P(R - 8, k), rr = [P(Ri - 5, k)]; s += T_(p[0], p[1] + 1, String(k), { size: 7 }).replace('<text ', '<text text-anchor="middle" ');
+      if (e.both) s += T_(rr[0][0], rr[0][1] + 1, String(180 - k), { size: 7 }).replace('<text ', '<text text-anchor="middle" '); }
+    s += lineSeg(P(0, 0), P(R + 3, 0), st.col, 0.2) + lineSeg(P(R + 3, 180), P(R, 180), st.col, 0.2) + lineSeg([cx - 2, cy], [cx + 2, cy], st.col, 0.25).replace(/M[^L]+L[^"]+/, m => m) + `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="0.9" fill="none" stroke="${st.col}" stroke-width="0.25"/>`;
     return s;
   } };
 
 /* --- tableaux de signes et de variations --- */
 function parseXs(txt) { return String(txt).split(/[;\s]+/).filter(Boolean).map(t => /^[-−]?\s*(inf|∞)/i.test(t) ? -Infinity : /^\+?\s*(inf|∞)/i.test(t) ? Infinity : evalConst(t, NaN)); }
-EX.tab = { label: 'Tableau de signes ou de variations', def: () => ({ kind: 'var', src: 'x^3-3x', xs: '-inf;-1;1;+inf', ox: 10, oy: 10, w: 120, rh: 9, couleur: 0, size: 10 }),
-  fields: [['kind', 'tableau', 'sel', 'w2', [['var', 'Tableau de variations de f'], ['sign', 'Tableau de signes de f']]], ['src', 'f(x)', 'text', 'grow'], ['xs', 'valeurs de x (séparées par ;) — « -inf » et « +inf » permis', 'text', 'grow'], 'br',
+
+const TAB_TPL = {
+  Var1: 'x ; -inf ; +inf\nf′(x) ; +\nf(x) ; -inf ; +inf', Var2: 'x ; -inf ; +inf\nf′(x) ; -\nf(x) ; +inf ; -inf',
+  Var3: 'x ; -inf ; 0 ; +inf\nf′(x) ; + ; 0 ; -\nf(x) ; -inf ; 2 ; -inf', Var4: 'x ; -inf ; 0 ; +inf\nf′(x) ; - ; 0 ; +\nf(x) ; +inf ; -2 ; +inf',
+  Var5: 'x ; -inf ; -1 ; 1 ; +inf\nf′(x) ; + ; 0 ; - ; 0 ; +\nf(x) ; -inf ; 2 ; -2 ; +inf', Var6: 'x ; -inf ; -1 ; 1 ; +inf\nf′(x) ; - ; 0 ; + ; 0 ; -\nf(x) ; +inf ; -2 ; 2 ; -inf',
+  Var7: 'x ; -inf ; 0 ; +inf\nf′(x) ; - ; || ; -\nf(x) ; 0 ; -inf|+inf ; 0', Var8: 'x ; -inf ; 0 ; +inf\nf′(x) ; + ; || ; +\nf(x) ; 0 ; +inf|-inf ; 0',
+  Sign: 'x ; -inf ; -2 ; 3 ; +inf\nf(x) ; + ; 0 ; - ; 0 ; +', Abs: 'x ; -inf ; 0 ; +inf\nf(x) ; - ; 0 ; +\n|f(x)| ; + ; 0 ; +'
+};
+function parseTabVal(t) { t = t.trim(); if (/^[-−]\s*(inf|∞)/i.test(t)) return -Infinity; if (/^\+?\s*(inf|∞)/i.test(t)) return Infinity; return evalConst(t.replace(/−/g, '-'), NaN); }
+function renderTabManual(e, d, g) {
+  const rows = linesOf(e.code).map(l => l.split(';').map(x => x.trim())); if (rows.length < 2) throw new Error('Code du tableau : au moins deux lignes (x et f)');
+  const xr = rows[0].slice(1), n = xr.length, col = tcolor(e.couleur), sz = e.size, lab = 22, cw = (e.w - lab) / (n - 1), rh = e.rh, x0 = e.ox, y0 = e.oy;
+  const isSign = r => r.slice(1).every(t => /^(\+|-|−|0|\|\||)$/.test(t)), kinds = rows.slice(1).map(r => isSign(r) ? 'S' : 'V'), hs = [rh, ...kinds.map(k => k === 'S' ? rh : rh * 2.2)];
+  const H = hs.reduce((a, b) => a + b, 0), cx = i => x0 + lab + i * cw, fmtX = v => v === Infinity ? '+∞' : v === -Infinity ? '−∞' : fmtC(v), fmtV = v => v === Infinity ? '+∞' : v === -Infinity ? '−∞' : Number.isFinite(v) ? fmtC(v) : '';
+  let s = `<rect x="${f2(x0)}" y="${f2(y0)}" width="${f2(e.w)}" height="${f2(H)}" fill="#fff" stroke="${col}" stroke-width="0.4"/>`, yy = y0;
+  hs.forEach((r, i) => { yy += r; if (i < hs.length - 1) s += lineSeg([x0, yy], [x0 + e.w, yy], col, 0.3); }); s += lineSeg([x0 + lab, y0], [x0 + lab, y0 + H], col, 0.3);
+  s += T_(x0 + 3, y0 + rh * 0.68, rows[0][0] || 'x', { size: sz, italic: true });
+  xr.forEach((t, i) => { const v = parseTabVal(t); s += T_(i === 0 ? cx(i) + 1.5 : i === n - 1 ? cx(i) - 1.5 : cx(i), y0 + rh * 0.68, fmtX(v), { size: sz, anchor: i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle' }); });
+  let ry = y0 + rh;
+  rows.slice(1).forEach((r, k) => {
+    const h = hs[k + 1]; s += T_(x0 + 3, ry + h * (kinds[k] === 'S' ? 0.68 : 0.55), r[0], { size: sz, italic: true }); const tok = r.slice(1);
+    if (kinds[k] === 'S') { // 2n-3 jetons : intervalles et points intérieurs
+      for (let i = 0; i < n - 1; i++) { const t = tok[2 * i] || ''; if (t) s += T_((cx(i) + cx(i + 1)) / 2, ry + h * 0.68, t === '-' ? '−' : t, { size: sz * 1.1, anchor: 'middle', bold: true }); }
+      for (let i = 1; i < n - 1; i++) { const t = tok[2 * i - 1] || ''; s += T_(cx(i), ry + h * 0.68, t === '||' ? '' : t, { size: sz, anchor: 'middle' }); if (t === '||') s += lineSeg([cx(i) - 0.4, ry], [cx(i) - 0.4, ry + h], col, 0.3) + lineSeg([cx(i) + 0.4, ry], [cx(i) + 0.4, ry + h], col, 0.3); }
+    } else {
+      const L = [], R = []; tok.forEach((t, i) => { const p = t.split('|'); L[i] = parseTabVal(p[0]); R[i] = p.length > 1 ? parseTabVal(p[1]) : L[i]; });
+      const top = ry + 2.2, bot = ry + h - 2.2, mid = (top + bot) / 2, segUp = i => L[i + 1] > R[i];
+      for (let i = 0; i < n; i++) { const arr = i > 0 ? (segUp(i - 1) ? 'top' : 'bot') : null, dep = i < n - 1 ? (segUp(i) ? 'bot' : 'top') : null;
+        const Yof = a => a === 'top' ? top : a === 'bot' ? bot : mid, dbl = L[i] !== R[i] && !(Number.isNaN(L[i]) && Number.isNaN(R[i])) && String(tok[i]).includes('|');
+        if (dbl) { s += T_(cx(i) - 1.5, Yof(arr) + sz * 0.12, fmtV(L[i]), { size: sz, anchor: 'end' }) + T_(cx(i) + 1.5, Yof(dep) + sz * 0.12, fmtV(R[i]), { size: sz, anchor: 'start' }) + lineSeg([cx(i) - 0.4, ry], [cx(i) - 0.4, ry + h], col, 0.3) + lineSeg([cx(i) + 0.4, ry], [cx(i) + 0.4, ry + h], col, 0.3); }
+        else { const a = arr && dep ? (arr === dep ? arr : 'mid') : arr || dep, X = cx(i); s += T_(i === 0 ? X + 2.5 : i === n - 1 ? X - 2.5 : X, Yof(a) + sz * 0.12, fmtV(L[i]), { size: sz, anchor: i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle' }); } }
+      for (let i = 0; i < n - 1; i++) { const up = segUp(i), yA = (R[i] !== L[i] && String(tok[i]).includes('|') ? (up ? bot : top) : (i === 0 ? (up ? bot : top) : (up ? (segUp(i - 1) ? mid : bot) : (segUp(i - 1) ? top : mid)))),
+          yB = (i + 1 === n - 1 ? (up ? top : bot) : (up ? (segUp(i + 1) ? mid : top) : (segUp(i + 1) ? bot : mid)));
+        const xa = cx(i) + (i === 0 ? 11 : 7), xb = cx(i + 1) - (i + 1 === n - 1 ? 11 : 7); if (xb - xa > 2) s += arrowSvg([xa, yA + (up ? -1.5 : 1.5)], [xb, yB + (up ? 1.5 : -1.5)], col, 0.4); }
+    }
+    ry += h;
+  });
+  return s;
+}
+EX.tab = { label: 'Tableau de signes ou de variations', action(e, name) { const k = name.slice(1); if (TAB_TPL[k]) { e.kind = 'manuel'; e.code = TAB_TPL[k]; } }, def: () => ({ code: TAB_TPL.Var5, kind: 'var', src: 'x^3-3x', xs: '-inf;-1;1;+inf', ox: 10, oy: 10, w: 120, rh: 9, couleur: 0, size: 10 }),
+  fields: [['kind', 'tableau', 'sel', 'w2', [['var', 'Tableau de variations de f (automatique)'], ['sign', 'Tableau de signes de f (automatique)'], ['manuel', 'Tableau saisi à la main (code, modèles Var1 à Var8, Sign, Abs)']]], ['src', 'f(x)', 'text', 'grow'], ['xs', 'valeurs de x (séparées par ;) — « -inf » et « +inf » permis', 'text', 'grow'], 'br',
+    ['code', 'code du tableau (mode « saisi à la main ») : une ligne par rangée, cellules séparées par « ; ». Une rangée de signes alterne intervalle / point (+ ; 0 ; - ; 0 ; +), « || » = valeur interdite, « a|b » = deux valeurs de part et d’autre de la double barre', 'area', 'grow'], 'br',
+    ...['Var1', 'Var2', 'Var3', 'Var4', 'Var5', 'Var6', 'Var7', 'Var8', 'Sign', 'Abs'].map(k => ['@' + k, k, 'btn']), 'br',
     ['ox', 'x (mm)', 'num', 'w3'], ['oy', 'y (mm)', 'num', 'w3'], ['w', 'largeur', 'num', 'w3'], ['rh', 'hauteur ligne', 'num', 'w3'], ['size', 'taille', 'num', 'w3'], ['couleur', 'trait', 'color']],
   render(e, d, g, ctx) {
+    if (e.kind === 'manuel') return renderTabManual(e, d, g);
     const f = fnOf(e.src, ctx), xs = parseXs(e.xs).filter(v => !Number.isNaN(v)); if (xs.length < 2) throw new Error('Donnez au moins deux valeurs de x');
     const col = tcolor(e.couleur), sz = e.size, lab = 22, cw = (e.w - lab) / (xs.length - 1), isVar = e.kind === 'var', rh = e.rh, x0 = e.ox, y0 = e.oy;
     const rows = isVar ? [rh, rh, rh * 2.2] : [rh, rh]; const H = rows.reduce((a, b) => a + b, 0), cx = i => x0 + lab + i * cw; let s = '';
@@ -2106,6 +2222,7 @@ function buildPanel() {
       h('div', { class: 'row' }, fSel('quadrillage intérieur', r, 'quad', [[0, 'aucun'], [1, 'rayons'], [2, 'rayons et lignes']], { num: true, cls: 'grow' })),
       h('div', { class: 'row' }, fColor('cercles', r, 'colCercles'), fColor('graduations', r, 'colGrad'), fColor('quadrillage', r, 'colQuad'), fColor('valeurs', r, 'colVal')));
   }
+  rapSec.push(h('div', { class: 'row' }, btn('→ Rapporteur de collège (demi-cercle gradué de 0 à 180°)', () => { closeDlg(true); ex('rapcol')(); }, 'small')));
   P.append(section('Rapporteur trigonométrique', rapSec));
   P.append(calcSection());
   renderDialog(P);
@@ -2380,7 +2497,7 @@ function chromeSpec() {
   const menus = [
     ['Fichier', [A.nouveau, A.ouvrir, A.enreg, A.sqn, '-', A.copier, A.png, A.svg, A.imprimer]],
     ['Définir', [D('Page…', 'Page', go('Page')), D('Repère…', 'Repère', go('Repère')), D('Fonctions f(x)…', '', go('Fonctions f(x)')), D('Courbes paramétrées…', '', go('Courbes paramétrées')), D('Courbes polaires…', '', go('Courbes polaires')),
-      D('Droites…', '', go('Droites')), D('Famille de fonctions…', '', go('Famille de fonctions')), D('Points et segments…', '', go('Points et segments')), '-', D('Texte', '', addText), D('Expression LaTeX', '', addLatex), D('Rapporteur trigonométrique…', '', go('Rapporteur trigonométrique'))]],
+      D('Droites…', '', go('Droites')), D('Famille de fonctions…', '', go('Famille de fonctions')), D('Points et segments…', '', go('Points et segments')), '-', D('Texte', '', addText), D('Expression LaTeX', '', addLatex), D('Rapporteur trigonométrique…', '', go('Rapporteur trigonométrique')), D('Rapporteur de collège…', '', ex('rapcol')), D('Simulations statistiques…', '', ex('stat1', null, 'Simulations statistiques')), D('Tableau de variations (modèles Var1 à Var8)…', '', ex('tab', 'manuel'))]],
     ['Outils', [A.undo, A.redo, '-', A.zin, A.zout, A.zfit, A.z100, '-', ...Object.entries(EX).map(([k, T]) => D('Ajouter : ' + T.label, '', ex(k)))]],
     ['Calculs', [D('Résoudre une équation…', '', go('Calculs', 'Calculs')), D('Table de valeurs…', '', go('Calculs', 'Calculs')), D('Intégrale approchée…', '', go('Calculs', 'Calculs')), '-', D('Dérivée', '', ex('deriv')), D('Primitive', '', ex('prim')), D('Statistiques à une variable', '', ex('stat1')), D('Statistiques à deux variables', '', ex('stat2')), D('Lois de probabilité', '', ex('loi')), D('Simulation', '', () => { ex('stat1')(); })]],
     ['?', [A.aide, A.apropos]]
