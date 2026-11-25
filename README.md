@@ -1,93 +1,36 @@
-# Sine qua non en ligne
+# Sine qua non en ligne (beta 1)
 
+Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans logiciel installé).
 
+➡️ **Utilisation** : ouvrir `sinequanon.html` dans un navigateur (Chrome, Firefox, Edge). Un seul fichier, aucune installation, fonctionne hors connexion.
 
-## Getting started
+## Hommage
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Ce projet n'existerait pas sans **Sine qua non**, logiciel de **Patrice Rabiller** et **Patrick Pradeau**, qui accompagne depuis de nombreuses années des générations d'enseignants de mathématiques par la qualité de ses figures.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+👉 Le logiciel d'origine, sa documentation et ses exemples : <http://patrice-rabiller.fr/SineQuaNon/menusqn.htm>
 
-## Add your files
+Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni soutenue par les auteurs. Elle ne contient aucun code, fichier d'installation, exemple ni documentation du logiciel d'origine : l'interface (menus et barre d'icônes) en reprend l'organisation pour ne pas dérouter les utilisateurs, et le format de fichier `.sqn` est lu et écrit pour rester compatible. **Pour la version de référence, utilisez le logiciel des auteurs.**
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Fonctionnalités (beta 1)
 
-```
-cd existing_repo
-git remote add origin https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne.git
-git branch -M main
-git push -uf origin main
-```
+- Ouverture et enregistrement des dessins `.sqn` de la version Windows (relecture identique sur les 34 exemples testés).
+- Repère, grilles, fonctions, courbes paramétrées et polaires, droites, familles, points et segments, textes, expressions LaTeX, échelle logarithmique, rapporteur trigonométrique.
+- Compléments : dérivée, primitive, courbe point par point, figures géométriques, statistiques à 1 et 2 variables, lois de probabilité, arbres, suites, intégrales, inéquations, courbes implicites (coniques), tableaux de signes et de variations, calculs (équations, table de valeurs, intégrale).
+- Export PNG (300 ppp), SVG, impression / PDF à l'échelle réelle.
 
-## Integrate with your tools
+Les compléments sont propres à cette version : un dessin qui en contient s'enregistre en `.sqnw` ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (sans eux).
 
-* [Set up project integrations](https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne/-/settings/integrations)
+## Limites connues de la beta
 
-## Collaborate with your team
+- Certains objets du logiciel d'origine (icônes « atome » et autres outils non identifiés) ne sont pas reproduits ; plusieurs outils ouvrent un panneau de réglages au lieu d'une boîte de dialogue.
+- Les compléments ne sont pas lisibles par la version Windows.
+- Merci de signaler tout écart de rendu par rapport au logiciel d'origine via les *tickets* du projet.
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## Développement
 
-## Test and Deploy
+Les sources sont dans `src/` (JavaScript sans dépendance). Pour régénérer `sinequanon.html` : `sh src/build.sh`.
 
-Use the built-in continuous integration in GitLab.
+## Licence
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+[GNU AGPL v3](LICENSE) pour le code de cette réécriture. Le nom « Sine qua non », le logiciel d'origine et ses contenus restent la propriété de leurs auteurs.

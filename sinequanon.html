@@ -1,0 +1,2351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sine qua non — en ligne</title>
+<style>
+:root{--bg:#e9ecef;--panel:#fff;--line:#d5d9de;--ink:#1f2933;--mut:#6b7785;--acc:#1b5fbf;--acc2:#e8f0fc;--err:#b3261e}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:#fff;border-bottom:1px solid var(--line)}
+header .brand{font-weight:700;color:var(--acc);margin-right:6px;white-space:nowrap}
+header .brand small{font-weight:400;color:var(--mut)}
+#docname{color:var(--mut);margin:0 8px;font-style:italic;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb{display:flex;gap:4px;align-items:center;padding-right:8px;margin-right:4px;border-right:1px solid var(--line)}
+.tb:last-child{border:0}
+button.t{font:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;color:var(--ink)}
+button.t:hover{background:var(--acc2);border-color:#b7cdf0}
+button.t.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+#menubar{display:flex;background:#fff;border-bottom:1px solid var(--line);padding:0 4px;font-size:14px;position:relative;z-index:20}
+.menu{position:relative}.mt{font:inherit;border:0;background:none;padding:6px 12px;cursor:pointer}.mt:hover,.menu.open .mt{background:#cde4fb}
+.dd{display:none;position:absolute;top:100%;left:0;min-width:270px;background:#fff;border:1px solid #bbb;box-shadow:0 6px 18px rgba(0,0,0,.25);padding:3px 0}
+.menu.open .dd{display:block}.mi{display:flex;justify-content:space-between;gap:20px;width:100%;font:inherit;border:0;background:none;text-align:left;padding:5px 18px;cursor:pointer}.mi:hover{background:#cde4fb}.mi kbd{font:12px inherit;color:#777}
+.dd hr{border:0;border-top:1px solid #ddd;margin:3px 0}
+#iconbar{display:flex;flex-wrap:wrap;align-items:center;gap:1px;background:#f4f5f7;border-bottom:1px solid #c9ced4;padding:3px 6px}
+.ib{border:1px solid transparent;background:none;border-radius:3px;padding:2px 3px;cursor:pointer;line-height:0;min-width:26px;height:30px;display:inline-flex;align-items:center;justify-content:center}
+.ib:hover{background:#d6e6fa;border-color:#8fb4e8}.ib.txt{font:italic 18px "Times New Roman",serif;line-height:1;color:#555}
+.sep{width:1px;align-self:stretch;margin:2px 5px;background:#bbb}
+.fontname{font:13px ui-monospace,Consolas,monospace;color:#777;padding:0 10px}
+#zoomsel{font:13px ui-monospace,Consolas,monospace;border:1px solid #7a9fd6;background:#fff;height:24px;margin:0 4px}
+#coords{font:14px ui-monospace,Consolas,monospace;padding:0 10px;min-width:170px;color:#222}
+main{flex:1;display:flex;min-height:0}
+#stage{flex:1;overflow:auto;padding:22px;background:#cfd4da;touch-action:none}
+#paper{margin:0 auto;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.28);position:relative;line-height:0}
+#paper svg{display:block}
+aside#panel{width:370px;max-width:46vw;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:6px 8px 60px}
+details.sec{border:1px solid var(--line);border-radius:8px;margin:7px 0;background:#fafbfc}
+details.sec>summary{cursor:pointer;padding:8px 10px;font-weight:600;list-style:none}
+details.sec>summary::before{content:"▸";display:inline-block;width:1em;color:var(--mut)}
+details.sec[open]>summary::before{content:"▾"}
+details.sec>.body{padding:2px 10px 10px}
+details.sub{margin-top:6px}
+details.sub>summary{cursor:pointer;color:var(--acc);font-size:13px}
+.item{border-top:1px dashed var(--line);padding:7px 0}
+.item:first-child{border-top:0}
+.row{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:flex-end;margin:4px 0}
+.f{display:flex;flex-direction:column;font-size:11.5px;color:var(--mut);flex:1 1 90px;min-width:70px}
+.f.grow{flex:1 1 140px}.f.w2{flex:1 1 120px}.f.w3{flex:1 1 70px}.f.w4{flex:1 1 52px}
+.f input,.f select{font:inherit;font-size:13.5px;color:var(--ink);padding:4px 6px;border:1px solid #c5ccd4;border-radius:5px;background:#fff;min-width:0;width:100%}
+.f input:focus,.f select:focus{outline:2px solid #9ec0f4;border-color:var(--acc)}
+.f.color input{padding:0;height:28px;width:44px;cursor:pointer}
+.f.color{flex:0 0 auto}
+.chk{display:flex;align-items:center;gap:5px;font-size:12.5px;white-space:nowrap}
+.lab{font-family:"Times New Roman",serif;font-style:italic;padding-bottom:6px;white-space:nowrap}
+.btn{font:inherit;border:1px solid #c5ccd4;background:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;margin-top:6px}
+.btn:hover{background:var(--acc2)}
+.btn.small{padding:3px 8px;font-size:12.5px}
+.btn.x{margin:0;padding:3px 7px;color:var(--err);border-color:#e6c4c1}
+.err{color:var(--err);font-size:12px;margin:0 0 2px 4px}
+.hint{font-size:12px;color:var(--mut);margin:8px 0 0}
+.out{background:#f3f5f8;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:4px 0 8px;font:12px/1.4 ui-monospace,Consolas,monospace;white-space:pre-wrap;max-height:180px;overflow:auto}
+textarea{font:12.5px/1.35 ui-monospace,Consolas,monospace;width:100%;padding:5px 6px;border:1px solid #c5ccd4;border-radius:5px;resize:vertical}
+.dim{color:var(--mut)}.grow{flex:1}
+.pt{border:1px solid #e3e7ec;border-radius:6px;padding:4px 6px;margin:5px 0;background:#fff}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:#1f2933;color:#fff;padding:9px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:.25s;z-index:30;max-width:90vw}
+#toast.show{opacity:.96;transform:translateX(-50%)}
+dialog{border:0;border-radius:12px;max-width:640px;width:92vw;padding:20px 24px;box-shadow:0 12px 50px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog h2{margin:.1em 0 .4em;font-size:18px}
+dialog code{background:#eef1f5;padding:1px 5px;border-radius:4px}
+dialog table{border-collapse:collapse;width:100%;font-size:13px}
+dialog td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+#printArea{display:none}
+@media (max-width:900px){main{flex-direction:column}aside#panel{width:100%;max-width:none;height:46vh;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="menubar"></div>
+<div id="iconbar"></div>
+<input type="file" id="file" accept=".sqn,.sqnw,.txt" hidden>
+<main>
+  <section id="stage"><div id="paper"></div></section>
+  <aside id="panel"></aside>
+</main>
+<div id="printArea"></div>
+<div id="toast"></div>
+<dialog id="help">
+  <h2>Aide rapide</h2>
+  <p><b>À la souris :</b> glissez l’origine du repère (rond bleu), les carrés d’unité sur Ox et Oy, le bord droit ou bas du dessin, ou un texte. <code>Maj</code> désactive l’aimantation à la grille.</p>
+  <table>
+    <tr><td>Fonctions</td><td><code>0,5x^2-3</code> · <code>(1/2)x²-3</code> · <code>racine(x²+1)</code> · <code>sin x</code> · <code>ln x</code> · <code>exp(x)</code> · <code>abs(x)</code> · <code>x!</code> · <code>pi</code></td></tr>
+    <tr><td>Priorité</td><td><code>1/2x</code> signifie 1/(2x) comme sur le logiciel d’origine ; en cas de doute, ajoutez des parenthèses.</td></tr>
+    <tr><td>Composition</td><td><code>f1of2(x)</code> ou <code>f1(f2(x))</code> (une fonction ne peut utiliser que celles définies avant elle)</td></tr>
+    <tr><td>Intervalle</td><td><code>(3/(x-1))(x&gt;=2)(x&lt;=5)</code></td></tr>
+    <tr><td>Paramétrées</td><td>variable <code>t</code> ; polaires : r(t), angle en radians</td></tr>
+    <tr><td>Familles</td><td>variable <code>p</code>, par ex. <code>(x^3-p*x)/10</code></td></tr>
+    <tr><td>Fichiers</td><td>« Ouvrir » lit les dessins <code>.sqn</code> du logiciel Windows ; « Enregistrer » produit un <code>.sqn</code> relisible par ce dernier.</td></tr>
+    <tr><td>Impression</td><td>« Imprimer / PDF » respecte les dimensions en millimètres (choisir « Échelle : 100 % », sans marges ni en-têtes).</td></tr>
+  </table>
+  <p style="color:#6b7785;font-size:12px">Réécriture en ligne du logiciel Sine qua non de Patrice Rabiller et Patrick Pradeau. Les compléments (statistiques, probabilités, arbres, suites, intégrales, inéquations, coniques, tableaux) sont propres à cette version : ils sont enregistrés dans un fichier <code>.sqnw</code> ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows, sans eux.</p>
+  <p style="text-align:right"><button class="t pri" id="help-close">Fermer</button></p>
+</dialog>
+<script>
+/* ======================================================================
+   SINE QUA NON — version en ligne
+   Réécriture du traceur de courbes planes en HTML/JavaScript (sans dépendance).
+   Le logiciel d'origine (Delphi / Windows) est de Patrice Rabiller et Patrick Pradeau.
+   Cette version relit/écrit le format .sqn pour les objets pris en charge.
+   ====================================================================== */
+'use strict';
+
+/* ---------- 1. Utilitaires ---------- */
+const MM_PER_PT = 25.4 / 72;
+const $ = (s, r = document) => r.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const f3 = n => (Math.round(n * 1000) / 1000).toString();
+
+function parseNum(s, dflt = 0) {
+  if (typeof s === 'number') return s;
+  const v = Number(String(s).trim().replace(',', '.'));
+  return Number.isFinite(v) ? v : dflt;
+}
+function fmtNum(n) { // nombre -> texte avec virgule décimale (format .sqn)
+  if (!Number.isFinite(n)) return '0';
+  return String(Math.round(n * 1e9) / 1e9).replace('.', ',');
+}
+// Couleurs Delphi (TColor = $00BBGGRR) <-> CSS
+function tcolor(v) {
+  v = Number(v);
+  if (v === -16777211 || v === -16777201 || v === -16777215) return '#ffffff';
+  if (v < 0) return '#000000';
+  const r = v & 255, g = (v >> 8) & 255, b = (v >> 16) & 255;
+  return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+}
+function fromCss(h) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);
+  if (!m) return 0;
+  return parseInt(m[1], 16) + parseInt(m[2], 16) * 256 + parseInt(m[3], 16) * 65536;
+}
+function hsl(i, n) { return `hsl(${Math.round(360 * i / Math.max(n, 1) * 0.85)},75%,42%)`; }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* ---------- 2. Moteur d'expressions (syntaxe « calculatrice » française) ---------- */
+function gammaFn(z) {
+  if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gammaFn(1 - z));
+  z -= 1;
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  let a = c[0]; const t = z + 7.5;
+  for (let i = 1; i < 9; i++) a += c[i] / (z + i);
+  return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * a;
+}
+function FACT(a) {
+  if (Number.isInteger(a)) {
+    if (a < 0) return NaN;
+    if (a > 170) return Infinity;
+    let r = 1; for (let i = 2; i <= a; i++) r *= i; return r;
+  }
+  return gammaFn(a + 1);
+}
+function PW(a, b) { // puissance, avec racines impaires des nombres négatifs
+  if (a >= 0 || Number.isInteger(b)) return Math.pow(a, b);
+  for (let q = 1; q <= 99; q++) {
+    const pq = b * q;
+    if (Math.abs(pq - Math.round(pq)) < 1e-9) {
+      if (q % 2 === 1) return (Math.round(pq) % 2 === 0 ? 1 : -1) * Math.pow(-a, b);
+      return NaN;
+    }
+  }
+  return NaN;
+}
+const SQ = a => a * a;
+const LN = a => Math.log(a);
+const FRAC = a => a - Math.floor(a);
+const FN_JS = {
+  abs: 'Math.abs', arccos: 'Math.acos', arcsin: 'Math.asin', arctan: 'Math.atan',
+  argch: 'Math.acosh', argsh: 'Math.asinh', argth: 'Math.atanh', carre: 'SQ', cos: 'Math.cos',
+  ch: 'Math.cosh', exp: 'Math.exp', frac: 'FRAC', int: 'Math.floor', ln: 'LN', log: 'Math.log10',
+  racine: 'Math.sqrt', sqrt: 'Math.sqrt', sh: 'Math.sinh', sin: 'Math.sin', tan: 'Math.tan', th: 'Math.tanh',
+  sinh: 'Math.sinh', cosh: 'Math.cosh', tanh: 'Math.tanh'
+};
+const NAMES = [...Object.keys(FN_JS), 'pi', 'f10', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'e', 'x', 't', 'y', 'p', 'o']
+  .sort((a, b) => b.length - a.length);
+
+function tokenize(src) {
+  let s = String(src).toLowerCase()
+    .replace(/[éèê]/g, 'e').replace(/²/g, '^2').replace(/³/g, '^3').replace(/π/g, 'pi')
+    .replace(/[−–—]/g, '-').replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/√/g, 'racine')
+    .replace(/°/g, 'o').replace(/[,]/g, '.').replace(/\s+/g, '');
+  const out = []; let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (/[0-9.]/.test(c)) {
+      let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++;
+      out.push({ t: 'num', v: parseFloat(s.slice(i, j)) }); i = j;
+    } else if (/[a-z]/.test(c)) {
+      const nm = NAMES.find(n => s.startsWith(n, i));
+      if (!nm) throw new Error('Symbole inconnu : « ' + c + ' »');
+      out.push({ t: 'name', v: nm }); i += nm.length;
+    } else if ('+-*/^()!'.includes(c)) { out.push({ t: 'op', v: c }); i++; }
+    else if (c === '<' || c === '>') {
+      if (s[i + 1] === '=') { out.push({ t: 'op', v: c + '=' }); i += 2; } else { out.push({ t: 'op', v: c }); i++; }
+    } else if (c === '=') { // « >= » saisi « => » : toléré
+      out.push({ t: 'op', v: '==' }); i++;
+    } else throw new Error('Caractère non reconnu : « ' + c + ' »');
+  }
+  return out;
+}
+
+/** Compile une expression en fonction (x,t,p). F = tableau des fonctions f1..f10. */
+function lnGamma(z) {
+  if (z < 0.5) return Math.log(Math.PI / Math.abs(Math.sin(Math.PI * z))) - lnGamma(1 - z);
+  z -= 1;
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  let a = c[0]; const t = z + 7.5;
+  for (let i = 1; i < 9; i++) a += c[i] / (z + i);
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(a);
+}
+function compileExpr(src, F, maxF = 10) {
+  const toks = tokenize(src);
+  if (!toks.length) throw new Error('Expression vide');
+  let i = 0;
+  const peek = () => toks[i], next = () => toks[i++];
+  const isOp = (tk, v) => tk && tk.t === 'op' && tk.v === v;
+  const startsFactor = tk => tk && (tk.t === 'num' || (tk.t === 'name' && tk.v !== 'o') || isOp(tk, '('));
+  const isFnTok = tk => tk && tk.t === 'name' && (FN_JS[tk.v] || /^f\d+$/.test(tk.v));
+
+  function parseRel() {
+    const a = parseAdd(); const tk = peek();
+    if (tk && tk.t === 'op' && ['<', '>', '<=', '>='].includes(tk.v)) {
+      next(); const b = parseAdd();
+      return `(((${a})${tk.v}(${b}))?1:NaN)`;
+    }
+    return a;
+  }
+  function parseAdd() {
+    let neg = false, tk = peek();
+    if (tk && tk.t === 'op' && (tk.v === '-' || tk.v === '+')) { next(); neg = tk.v === '-'; }
+    let a = parseMul(); if (neg) a = `(-${a})`;
+    while ((tk = peek()) && tk.t === 'op' && (tk.v === '+' || tk.v === '-')) {
+      next(); const b = parseMul(); a = `(${a}${tk.v}${b})`;
+    }
+    return a;
+  }
+  function parseMul() {
+    let a = parseImp(), tk;
+    while ((tk = peek()) && tk.t === 'op' && (tk.v === '*' || tk.v === '/')) {
+      next(); let neg = false; const t2 = peek();
+      if (isOp(t2, '-')) { next(); neg = true; } else if (isOp(t2, '+')) next();
+      let b = parseImp(); if (neg) b = `(-${b})`;
+      a = `(${a}${tk.v}${b})`;
+    }
+    return a;
+  }
+  function parseImp(stopAtFn) {
+    let a = parsePow();
+    while (startsFactor(peek()) && !(stopAtFn && isFnTok(peek()))) a = `(${a}*${parsePow()})`;
+    return a;
+  }
+  function parsePow() {
+    const a = parsePost(); const tk = peek();
+    if (isOp(tk, '^')) {
+      next(); let neg = false; const t2 = peek();
+      if (isOp(t2, '-')) { next(); neg = true; } else if (isOp(t2, '+')) next();
+      let b = parsePow(); if (neg) b = `(-${b})`;
+      return `PW(${a},${b})`;
+    }
+    return a;
+  }
+  function parsePost() {
+    let a = parseAtom();
+    while (isOp(peek(), '!')) { next(); a = `FACT(${a})`; }
+    return a;
+  }
+  function parseParen() {
+    if (!isOp(peek(), '(')) throw new Error('Parenthèse ouvrante attendue');
+    next(); const a = parseRel();
+    if (!isOp(peek(), ')')) throw new Error('Parenthèse fermante manquante');
+    next(); return a;
+  }
+  function parseFnArg() {
+    if (isOp(peek(), '(')) {
+      // « sin(x) » : l'argument est la parenthèse ; mais « sin(2)x » reste (sin 2)*x
+      return parseParen();
+    }
+    let neg = false;
+    if (isOp(peek(), '-')) { next(); neg = true; }
+    const a = parseImp(true);
+    return neg ? `(-${a})` : a;
+  }
+  function parseAtom() {
+    const tk = next();
+    if (!tk) throw new Error('Expression incomplète');
+    if (tk.t === 'num') return `(${tk.v})`;
+    if (isOp(tk, '(')) { i--; return parseParen(); }
+    if (tk.t === 'name') {
+      const n = tk.v;
+      if (n === 'x') return 'x'; if (n === 't' || n === 'y') return 't'; if (n === 'p') return 'p';
+      if (n === 'pi') return 'Math.PI'; if (n === 'e') return 'Math.E';
+      if (FN_JS[n]) return `${FN_JS[n]}(${parseFnArg()})`;
+      if (/^f\d+$/.test(n)) {
+        const idx = [parseInt(n.slice(1), 10)];
+        while (peek() && peek().t === 'name' && peek().v === 'o' && toks[i + 1] && /^f\d+$/.test(toks[i + 1].v || '')) {
+          next(); idx.push(parseInt(next().v.slice(1), 10));
+        }
+        for (const k of idx) if (k < 1 || k > 10 || k > maxF) throw new Error(`f${k} n'est pas utilisable ici (ordre de définition)`);
+        const arg = isOp(peek(), '(') ? parseParen() : 'x';
+        return idx.reduceRight((acc, k) => `F[${k}](${acc})`, arg);
+      }
+      if (n === 'o') throw new Error('« o » ne s\'emploie qu\'entre deux fonctions (f1of2)');
+    }
+    throw new Error('Symbole inattendu');
+  }
+
+  const code = parseRel();
+  if (i < toks.length) throw new Error('Texte en trop après l\'expression');
+  const fn = new Function('F', 'PW', 'FACT', 'SQ', 'LN', 'FRAC',
+    `"use strict"; return function(x,t,p){ return ${code}; }`)(F, PW, FACT, SQ, LN, FRAC);
+  return fn;
+}
+
+/** Évalue une constante (pas de x/t/p) comme "pi/6" ; renvoie NaN si erreur. */
+function evalConst(src, dflt = NaN) {
+  try { const v = compileExpr(String(src), [], 0)(0, 0, 0); return Number.isFinite(v) ? v : dflt; }
+  catch (e) { return dflt; }
+}
+/* ---------- 3. Modèle de document + lecture / écriture du format .sqn ---------- */
+
+// Blocs « bruts » conservés tels quels pour les fonctions non prises en charge (statistiques, etc.)
+const RAW_MIDDLE_DEFAULT = [
+  "Pas de courbe définie point par point",
+  "Données statistiques 1 variable non numérique",
+  "   Titre de la série : ",
+  "   Style du graphique : 0",
+  "Times New Roman",
+  "   Nombre de lignes : 0",
+  "Données statistiques 1 variable (valeurs isolées)",
+  "   Titre de la série : ",
+  "   Style du graphique : 20",
+  "Times New Roman",
+  "   Couleur : 16777181",
+  "   Nombre de lignes : 0",
+  "Pas de données statistiques 1 variable (valeurs regroupées en classes)",
+  "Pas de données statistiques 2 variables",
+  "Pas de loi binômiale",
+  "Pas de loi de Poisson",
+  "Pas de loi normale",
+  "Pas de suite numérique",
+  "Pas d'intégrale",
+  "Pas de courbe point par point lissée",
+  "Pas de boîtes à moustaches multiples",
+  "Pas de table de valeurs de fonctions",
+  "Pas de table de valeurs de courbes paramétrées",
+  "Pas d'inéquations"
+];
+const RAW_TAIL_DEFAULT = [
+  "Pas de courbe dérivée.",
+  "Pas de courbe primitive.",
+  "Échelle linéaire sur l'axe Ox",
+  "Échelle linéaire sur l'axe Oy",
+  "Pas de simulations statistiques.",
+  "Pas d'arbre de probabilités.",
+  "Pas de tableau de variations ou de signes.",
+  "Pas de loi exponentielle",
+  "Pas de rapporteur"
+];
+
+const newCurve = (o = {}) => Object.assign({
+  expr: '', expr2: '', couleur: 0, vitesse: 5, ep: 2, style: 0,
+  tmin: '-pi', tmax: 'pi', n: 400, env: false, dev: false, anim: false, pts: []
+}, o);
+const newPoint = (o = {}) => Object.assign({
+  a: '0', nom: '', police: 'MS Sans Serif', taille: 10, style: 'gras', pos: 1, couleur: 16711680,
+  cote: true, tang: false, ftang: false, fnorm: false
+}, o);
+
+function newDoc() {
+  return {
+    header: '1', // « Sine qua non - version 2 »
+    cadre: true, cadreCol: 12632256, fondCol: 16777215,
+    orient: 'portrait',
+    axesVis: true, nameX: 'x', nameY: 'y', keepX: false, keepY: false,
+    grad: 'full', // full | first | none
+    gradGrille: true,
+    W: 180, H: 130, mg: 15, mh: 15, dOx: 65, dOy: 90,
+    ox: '0', oy: '0', sigX: 4, sigY: 4,
+    ux: '1', uy: '1', fmtX: 'normal', fmtY: 'normal',
+    lx: 10, ly: 10, zoom: 100,
+    gridStyle: 2, gridSize: 5, repCol: 0, gridCol: 8388736,
+    gFont: ['Courier New', 'Arial'], gSize: [10, 10], gCol: [0, 0], gStyle: ['gras', 'gras'],
+    texts: [], fns: [], params: [], polars: [],
+    fam: null, droites: [], objs: [],
+    latex: [], latexOpaque: false,
+    rawMiddle: RAW_MIDDLE_DEFAULT.slice(), rawTail: RAW_TAIL_DEFAULT.slice(),
+    extraHeader: [], name: 'sans titre',
+    extras: [], log: { x: false, y: false, mx: 40, my: 40 }
+  };
+}
+function defaultDoc() {
+  const d = newDoc();
+  d.fns.push(newCurve({ expr: '0.5x^2-3' }));
+  return d;
+}
+
+/* ----- lecture ----- */
+const isIndented = l => /^\s/.test(l);
+
+function parseCurveAttrs(lines, c) {
+  let cp = null;
+  for (const raw of lines) {
+    const t = raw.trim(); let m;
+    if ((m = t.match(/^point n°\s*\d+,\s*(?:d'abscisse|de paramètre|d'angle|de t|de)?\s*(.*)$/i))) {
+      cp = newPoint({ a: m[1].trim(), cote: false }); c.pts.push(cp); continue;
+    }
+    if (cp) {
+      if ((m = t.match(/^nom\s*:\s*(.*)$/))) cp.nom = m[1];
+      else if ((m = t.match(/^police\s*:\s*(.*)$/))) cp.police = m[1];
+      else if ((m = t.match(/^taille\s*:\s*(\d+)/))) cp.taille = +m[1];
+      else if ((m = t.match(/^style\s*:\s*(.*)$/))) cp.style = m[1];
+      else if ((m = t.match(/^position\s*:\s*(-?\d+)/))) cp.pos = +m[1];
+      else if ((m = t.match(/^couleur\s*:\s*(-?\d+)/))) cp.couleur = +m[1];
+      else if (/^ligne de cote trac/i.test(t)) cp.cote = true;
+      else if (/^pas de ligne de cote/i.test(t)) cp.cote = false;
+      else if (/^tangente trac/i.test(t)) cp.tang = true;
+      else if (/^pas de tangente/i.test(t)) cp.tang = false;
+      else if (/^fl[èe]che tangente trac/i.test(t)) cp.ftang = true;
+      else if (/^pas de fl[èe]che tangente/i.test(t)) cp.ftang = false;
+      else if (/^fl[èe]che normale trac/i.test(t)) cp.fnorm = true;
+      else if (/^pas de fl[èe]che normale/i.test(t)) cp.fnorm = false;
+      continue;
+    }
+    if ((m = t.match(/^couleur\s*:\s*(-?\d+)/))) c.couleur = +m[1];
+    else if ((m = t.match(/^vitesse\s*:\s*(-?\d+)/))) c.vitesse = +m[1];
+    else if ((m = t.match(/^[ée]paisseur\s*:\s*(\d+)/i))) c.ep = +m[1];
+    else if ((m = t.match(/^style\s*:\s*(-?\d+)/))) c.style = +m[1];
+    else if ((m = t.match(/^TMin\s*:\s*(.*)$/i))) c.tmin = m[1].trim();
+    else if ((m = t.match(/^TMax\s*:\s*(.*)$/i))) c.tmax = m[1].trim();
+    else if ((m = t.match(/^Nombre de valeurs de T\s*:\s*(\d+)/i))) c.n = +m[1];
+    else if (/^pas d'enveloppe/i.test(t)) c.env = false;
+    else if (/^enveloppe tangentielle/i.test(t)) c.env = true;
+    else if (/^pas de d[ée]velopp[ée]e/i.test(t)) c.dev = false;
+    else if (/^d[ée]velopp[ée]e normale/i.test(t)) c.dev = true;
+    else if (/^ne pas voir la progression/i.test(t)) c.anim = false;
+    else if (/^voir la progression/i.test(t)) c.anim = true;
+  }
+}
+
+/** Lit un bloc d'éléments indentés : renvoie [début de l'élément, lignes d'attributs] */
+function readItems(L, i, headRe) {
+  const items = [];
+  while (i < L.length && headRe.test(L[i])) {
+    const head = L[i++]; const attrs = [];
+    while (i < L.length && isIndented(L[i]) ) attrs.push(L[i++]);
+    items.push({ head, attrs });
+  }
+  return { items, i };
+}
+
+function parseSqn(text, name = 'sans titre') {
+  const L = text.replace(/\r\n?/g, '\n').split('\n');
+  while (L.length && L[L.length - 1].trim() === '') L.pop();
+  const d = newDoc(); d.name = name; d.rawMiddle = []; d.rawTail = [];
+  let i = 0;
+  if (!/^Sine qua non/i.test(L[0] || '')) throw new Error('Ce fichier n\'est pas un dessin Sine qua non (.sqn).');
+  i = 1;
+  // --- en-tête ---
+  while (i < L.length && !/^Nombre de textes/i.test(L[i])) {
+    const line = L[i++]; let m;
+    const kv = line.match(/^([^:]+?)\s*:\s*(.*)$/);
+    if (/^Cadre\s*:/i.test(line)) d.cadre = /oui/i.test(line);
+    else if ((m = line.match(/^Couleur cadre\s*:\s*(-?\d+)\s+(-?\d+)/i))) { d.cadreCol = +m[1]; d.fondCol = +m[2]; }
+    else if (/^Orientation\s*:/i.test(line)) d.orient = /paysage|landscape/i.test(line) ? 'paysage' : 'portrait';
+    else if (/^Axes (in)?visibles/i.test(line)) {
+      d.axesVis = !/^Axes invisibles/i.test(line);
+      const p = line.split('\t'); d.nameX = p[1] || 'x'; d.nameY = p[2] || 'y';
+      d.keepX = p[3] === '1'; d.keepY = p[4] === '1';
+    }
+    else if (/^Graduations compl/i.test(line)) d.grad = 'full';
+    else if (/^Graduations (incompl|premi)/i.test(line)) d.grad = 'first';
+    else if (/^(Aucune graduation|Pas de graduation|Graduations (absentes|invisibles))/i.test(line)) d.grad = 'none';
+    else if (/^Graduations bas[ée]es sur la grille/i.test(line)) d.gradGrille = true;
+    else if (/^Graduations (non|ind[ée]pendantes|libres)/i.test(line)) d.gradGrille = false;
+    else if (/^\s+taille\s*:/i.test(line) && (m = line.match(/:\s*(\d+)-(\d+)/))) d.gSize = [+m[1], +m[2]];
+    else if (/^\s+couleur\s*:/i.test(line) && (m = line.match(/:\s*(-?\d+)-(-?\d+)/))) d.gCol = [+m[1], +m[2]];
+    else if (/^\s+style\s*:/i.test(line) && (m = line.match(/:\s*(.+)-(.+)$/))) d.gStyle = [m[1].trim(), m[2].trim()];
+    else if (kv) {
+      const k = kv[1].toLowerCase(), v = kv[2];
+      const parts = v.split('\t');
+      if (/^largeur en mm/.test(k)) d.W = parseNum(v);
+      else if (/^hauteur en mm/.test(k)) d.H = parseNum(v);
+      else if (/^marge gauche/.test(k)) d.mg = parseNum(v);
+      else if (/^marge haute/.test(k)) d.mh = parseNum(v);
+      else if (/^distance de l'axe ox/.test(k)) d.dOx = parseNum(v);
+      else if (/^distance de l'axe oy/.test(k)) d.dOy = parseNum(v);
+      else if (/^origine de l'axe ox/.test(k)) { d.ox = parts[0].trim(); d.sigX = parseInt(parts[1]) || 4; }
+      else if (/^origine de l'axe oy/.test(k)) { d.oy = parts[0].trim(); d.sigY = parseInt(parts[1]) || 4; }
+      else if (/^unit[ée] sur l'axe ox/.test(k)) d.ux = v.trim();
+      else if (/^unit[ée] sur l'axe oy/.test(k)) d.uy = v.trim();
+      else if (/^format des unit[ée]s sur ox/.test(k)) d.fmtX = /trig/i.test(v) ? 'trig' : 'normal';
+      else if (/^format des unit[ée]s sur oy/.test(k)) d.fmtY = /trig/i.test(v) ? 'trig' : 'normal';
+      else if (/^longueur de l'unit[ée] sur ox/.test(k)) d.lx = parseNum(v);
+      else if (/^longueur de l'unit[ée] sur oy/.test(k)) d.ly = parseNum(v);
+      else if (/^zoom/.test(k)) d.zoom = parseNum(v, 100);
+      else if (/^style grille/.test(k)) { d.gridStyle = parseInt(parts[0]) || 0; d.gridSize = parseNum(parts[1], 5) || 5; }
+      else if (/^couleur du rep[èe]re/.test(k)) d.repCol = parseInt(v) || 0;
+      else if (/^couleur de la grille/.test(k)) d.gridCol = parseInt(v) || 0;
+      else if (/^polices utilis[ée]es graduations/.test(k)) { const q = v.split('-'); d.gFont = [q[0].trim(), (q[1] || q[0]).trim()]; }
+      else d.extraHeader.push(line);
+    }
+    else d.extraHeader.push(line);
+  }
+  // --- textes ---
+  let m = (L[i] || '').match(/^Nombre de textes\s*:\s*(\d+)/i);
+  if (m) {
+    i++; const n = +m[1];
+    for (let k = 0; k < n && i < L.length; k++) {
+      const h = (L[i++] || '').match(/^Texte n°\s*\d+\s*:\s?(.*)$/);
+      const t = { txt: h ? h[1] : '', x: 0, y: 0, font: 'Times New Roman', size: 12, col: 0, style: 'normal' };
+      while (i < L.length && isIndented(L[i])) {
+        const a = L[i++].match(/^\s+(abscisse|ordonnee|ordonnée|police|taille|couleur|style|angle)\s*:\s*(.*)$/i);
+        if (!a) continue;
+        const key = a[1].toLowerCase(), v = a[2];
+        if (key === 'abscisse') t.x = parseNum(v); else if (key.startsWith('ordonn')) t.y = parseNum(v);
+        else if (key === 'police') t.font = v.trim(); else if (key === 'taille') t.size = parseNum(v, 12);
+        else if (key === 'couleur') t.col = parseInt(v) || 0; else if (key === 'style') t.style = v.trim();
+        else if (key === 'angle') t.angle = parseNum(v);
+      }
+      d.texts.push(t);
+    }
+  }
+  // --- fonctions ---
+  m = (L[i] || '').match(/^Nombre de fonctions\s*:\s*(\d+)/i);
+  if (m) {
+    i++;
+    const r = readItems(L, i, /^F\d+\(x\)\s*=/i); i = r.i;
+    for (const it of r.items) {
+      const c = newCurve({ expr: it.head.replace(/^F\d+\(x\)\s*=/i, '') });
+      parseCurveAttrs(it.attrs, c); d.fns.push(c);
+    }
+  }
+  // --- paramétrées ---
+  m = (L[i] || '').match(/^Nombre de courbes param[ée]tr[ée]es\s*:\s*(\d+)/i);
+  if (m) {
+    i++;
+    while (i < L.length && /^X\d+\(t\)\s*=/i.test(L[i])) {
+      const c = newCurve({ expr: L[i++].replace(/^X\d+\(t\)\s*=/i, '') });
+      if (/^Y\d+\(t\)\s*=/i.test(L[i] || '')) c.expr2 = L[i++].replace(/^Y\d+\(t\)\s*=/i, '');
+      const attrs = []; while (i < L.length && isIndented(L[i])) attrs.push(L[i++]);
+      parseCurveAttrs(attrs, c); d.params.push(c);
+    }
+  }
+  // --- famille ---
+  if (/^Famille de fonctions/i.test(L[i] || '')) {
+    i++; const f = { expr: '', pmin: '-1', pmax: '1', dp: '0.5', couleur: -1, vitesse: 0, ep: 3, style: 0, anim: true, animDet: false, show: false, abs: '0', pos: 1 };
+    while (i < L.length && !/^Nombre de droites/i.test(L[i])) {
+      const l = L[i++]; let q;
+      if ((q = l.match(/^Fp\(x\)\s*=(.*)$/i))) f.expr = q[1];
+      else if ((q = l.match(/^P Minimum\s*=(.*)$/i))) f.pmin = q[1].trim();
+      else if ((q = l.match(/^P Maximum\s*=(.*)$/i))) f.pmax = q[1].trim();
+      else if ((q = l.match(/^Delta P\s*=(.*)$/i))) f.dp = q[1].trim();
+      else if ((q = l.match(/^Couleur\s*=\s*(-?\d+)/i))) f.couleur = +q[1];
+      else if ((q = l.match(/^Vitesse\s*=\s*(-?\d+)/i))) f.vitesse = +q[1];
+      else if ((q = l.match(/^[ÉE]paisseur\s*=\s*(\d+)/i))) f.ep = +q[1];
+      else if ((q = l.match(/^Style\s*=\s*(\d+)/i))) f.style = +q[1];
+      else if (/^Ne pas voir la progression d[ée]taill/i.test(l)) f.animDet = false;
+      else if (/^Voir la progression d[ée]taill/i.test(l)) f.animDet = true;
+      else if (/^Ne pas voir la progression/i.test(l)) f.anim = false;
+      else if (/^Voir la progression/i.test(l)) f.anim = true;
+      else if (/^Ne pas afficher/i.test(l)) f.show = false;
+      else if (/^Afficher les valeurs/i.test(l)) f.show = true;
+      else if ((q = l.match(/^Abscisse de l'a(?:ff?)ichage de P\s*=(.*)$/i))) { f.abs = q[1].trim(); f.typo = /l'afichage/i.test(l); }
+      else if ((q = l.match(/^Position de P\s*=\s*(-?\d+)/i))) f.pos = +q[1];
+    }
+    d.fam = f;
+  } else if (/^Pas de famille/i.test(L[i] || '')) i++;
+  // --- droites ---
+  m = (L[i] || '').match(/^Nombre de droites\s*:\s*(\d+)/i);
+  if (m) {
+    i++;
+    const r = readItems(L, i, /^[ÉE]quation de D\d+\s*:/i); i = r.i;
+    for (const it of r.items) {
+      const dr = { eq: it.head.replace(/^[ÉE]quation de D\d+\s*:/i, ''), couleur: 0, ep: 2, styleStr: '011', type: 1, a: '0', b: '0' };
+      for (const a of it.attrs) {
+        const q = a.trim().match(/^([^:]+?)\s*:\s*(.*)$/); if (!q) continue;
+        const k = q[1].toLowerCase();
+        if (k === 'couleur') dr.couleur = parseInt(q[2]) || 0; else if (/paisseur/.test(k)) dr.ep = parseInt(q[2]) || 2;
+        else if (k === 'style') dr.styleStr = q[2]; else if (k.startsWith('type')) dr.type = parseInt(q[2]) || 1;
+        else if (k === 'coef a') dr.a = q[2]; else if (k === 'coef b') dr.b = q[2];
+      }
+      d.droites.push(dr);
+    }
+  }
+  // --- objets graphiques ---
+  m = (L[i] || '').match(/^Nombre d'objets graphiques\s*:\s*(\d+)/i);
+  if (m) {
+    const n = +m[1]; d.objsTail = (L[i].split('\t')[1] || '1'); i++;
+    for (let k = 0; k < n && i < L.length; k++) d.objs.push(parseObj(L[i++]));
+  }
+  // --- bloc brut (stats, lois, suites, intégrales…) jusqu'aux expressions LaTeX ---
+  while (i < L.length && !/^(Pas d'expressions LaTeX|Expressions LaTeX)/i.test(L[i])) d.rawMiddle.push(L[i++]);
+  // --- LaTeX ---
+  if (/^Expressions LaTeX/i.test(L[i] || '')) {
+    d.latexOpaque = /opaque/i.test(L[i]); i++;
+    while (i < L.length && !/^Fin des expressions LaTeX/i.test(L[i])) {
+      const q = L[i++].match(/^(\s*(?:\d+\$)?\s?)(.*)\t([^\t]*)\t([^\t]*)$/);
+      if (q) d.latex.push({ pre: q[1], size: (/(\d+)\$/.exec(q[1]) || [0, 3])[1] * 1, src: q[2], x: parseNum(q[3]), y: parseNum(q[4]) });
+    }
+    i++;
+  } else if (/^Pas d'expressions LaTeX/i.test(L[i] || '')) i++;
+  // --- polaires ---
+  m = (L[i] || '').match(/^Nombre de courbes en coordonn[ée]es polaires\s*:\s*(\d+)/i);
+  if (m) {
+    i++;
+    const r = readItems(L, i, /^f\d+\(t\)\s*=/i); i = r.i;
+    for (const it of r.items) {
+      const c = newCurve({ expr: it.head.replace(/^f\d+\(t\)\s*=/i, ''), tmin: '0', tmax: '2pi' });
+      parseCurveAttrs(it.attrs, c); d.polars.push(c);
+    }
+  } else if (/^Pas de courbes en coordonn[ée]es polaires/i.test(L[i] || '')) i++;
+  // --- reste ---
+  while (i < L.length) d.rawTail.push(L[i++]);
+  const ri = d.rawTail.findIndex(l => /^Rapporteur\s*$/i.test(l));
+  if (ri >= 0) {
+    const kv = {}; for (const l of d.rawTail.slice(ri + 1)) { const q = l.match(/^\s+([^:]+?)\s*:\s*(-?\d+)/); if (q) kv[q[1].trim().toLowerCase()] = +q[2]; }
+    const gv = (k, dflt) => (kv[k] !== undefined ? kv[k] : dflt);
+    d.rap = { R: gv('rayon du rapporteur', 65), ext: gv('cercle extérieur', 0), deg: gv('graduations en degrés', 0), rad: gv('graduations en radians', 1),
+      quad: gv('quadrillage intérieur', 0), val: gv('valeurs remarquables', 1), colCercles: gv('couleur cercles', 0),
+      colGrad: gv('couleur graduations', 0), colQuad: gv('couleur quadrillage', 12632256), colVal: gv('couleur valeurs remarquables', 32768) };
+  }
+  if (!d.rawMiddle.length) d.rawMiddle = RAW_MIDDLE_DEFAULT.slice();
+  if (!d.rawTail.length) d.rawTail = RAW_TAIL_DEFAULT.slice();
+  return d;
+}
+
+function parseObj(line) {
+  let m;
+  if ((m = line.match(/^Point ([^,]*),(-?\d+),(.*)$/))) {
+    const parts = m[3].split(';');
+    return { kind: 'point', nom: m[1].trim(), pos: +m[2], x: parseNum(parts[0]), y: parseNum(parts[1]), tail: parts.slice(2).join(';') || '7,1,2,0,0' };
+  }
+  if ((m = line.match(/^Segment,(\d+),(.),(.),(.*)$/))) {
+    const parts = m[4].split(';');
+    const f = (parts[4] || ',,,,0,1,0,0,30').split(',');
+    return { kind: 'segment', x1: parseNum(parts[0]), y1: parseNum(parts[1]), x2: parseNum(parts[2]), y2: parseNum(parts[3]),
+      style: parseInt(f[4]) || 0, ep: parseInt(f[5]) || 1, couleur: parseInt(f[6]) || 0, e1: m[2], e2: m[3], f: f };
+  }
+  return { kind: 'raw', raw: line };
+}
+
+/* ----- écriture ----- */
+function serializeCurveAttrs(c, mode) {
+  const o = [];
+  o.push(`    couleur : ${c.couleur}`, `    vitesse : ${c.vitesse}`, `    épaisseur : ${c.ep}`, `    style : ${c.style}`);
+  if (mode !== 'fn') o.push(`    TMin : ${c.tmin}`, `    TMax : ${c.tmax}`, `    Nombre de valeurs de T : ${c.n}`);
+  o.push(c.env ? '    enveloppe tangentielle' : "    pas d'enveloppe tangentielle");
+  o.push(c.dev ? '    développée normale' : '    pas de développée normale');
+  o.push(c.anim ? '    voir la progression' : '    ne pas voir la progression');
+  o.push(`    Nombre de points particuliers : ${c.pts.length}`);
+  c.pts.forEach((p, k) => {
+    o.push(`    point n° ${k + 1}, d'abscisse ${p.a}`,
+      `        nom : ${p.nom}`, `        police : ${p.police}`, `        taille : ${p.taille}`,
+      `        style : ${p.style}`, `        position : ${p.pos}`, `        couleur : ${p.couleur}`,
+      p.cote ? '        ligne de cote tracée' : '        pas de ligne de cote',
+      p.tang ? '        tangente tracée' : '        pas de tangente',
+      p.ftang ? '        flèche tangente tracée' : '        pas de flèche tangente',
+      p.fnorm ? '        flèche normale tracée' : '        pas de flèche normale');
+  });
+  return o;
+}
+function serializeObj(o, tailDefault) {
+  if (o.kind === 'raw') return o.raw;
+  if (o.kind === 'point') return `Point ${o.nom},${o.pos || 0},${fmtNum(o.x)};${fmtNum(o.y)};${o.tail || tailDefault}`;
+  const f = (o.f || ',,,,0,1,0,0,30'.split(',')).slice(); while (f.length < 9) f.push('0');
+  f[4] = o.style; f[5] = o.ep; f[6] = o.couleur;
+  return `Segment,1,${o.e1 || '['},${o.e2 || ']'},${fmtNum(o.x1)};${fmtNum(o.y1)};${fmtNum(o.x2)};${fmtNum(o.y2)};${f.join(',')}`;
+}
+
+function serializeSqn(d) {
+  const o = [];
+  o.push('Sine qua non - version 2');
+  o.push(`Cadre : ${d.cadre ? 'oui' : 'non'}`);
+  o.push(`Couleur cadre : ${d.cadreCol}\t${d.fondCol}`);
+  o.push(`Orientation : ${d.orient}`);
+  o.push(`Axes ${d.axesVis ? '' : 'in'}visibles\t${d.nameX}\t${d.nameY}\t${d.keepX ? 1 : 0}\t${d.keepY ? 1 : 0}`);
+  o.push(d.grad === 'full' ? 'Graduations complètes' : d.grad === 'first' ? 'Graduations incomplètes' : 'Aucune graduation');
+  o.push(d.gradGrille ? 'Graduations basées sur la grille' : 'Graduations non basées sur la grille');
+  o.push(`Largeur en mm : ${fmtNum(d.W)}`, `Hauteur en mm : ${fmtNum(d.H)}`,
+    `Marge gauche en mm : ${fmtNum(d.mg)}`, `Marge haute en mm : ${fmtNum(d.mh)}`,
+    `Distance de l'axe Ox en mm : ${fmtNum(d.dOx)}`, `Distance de l'axe Oy en mm : ${fmtNum(d.dOy)}`,
+    `Origine de l'axe Ox : ${d.ox}\t${d.sigX}\tchiffres significatifs`,
+    `Origine de l'axe Oy : ${d.oy}\t${d.sigY}\tchiffres significatifs`,
+    `Unité sur l'axe Ox : ${d.ux}`, `Format des unités sur Ox : ${d.fmtX === 'trig' ? 'trigonométrique' : 'normal'}`,
+    `Longueur de l'unité sur Ox en mm : ${fmtNum(d.lx)}`,
+    `Unité sur l'axe Oy : ${d.uy}`, `Format des unités sur Oy : ${d.fmtY === 'trig' ? 'trigonométrique' : 'normal'}`,
+    `Longueur de l'unité sur Oy en mm : ${fmtNum(d.ly)}`,
+    `Zoom (%) : ${fmtNum(d.zoom)}`, `Style grille : ${d.gridStyle}\t${fmtNum(d.gridSize)}`,
+    `Couleur du repère : ${d.repCol}`, `Couleur de la grille : ${d.gridCol}`,
+    `Polices utilisées graduations-points : ${d.gFont.join('-')}`,
+    `      taille  : ${d.gSize.join('-')}`, `      couleur : ${d.gCol.join('-')}`, `      style : ${d.gStyle.join('-')}`);
+  o.push(...d.extraHeader);
+  o.push(`Nombre de textes : ${d.texts.length}`);
+  d.texts.forEach((t, k) => o.push(`Texte n° ${k + 1} : ${t.txt}`,
+    `      abscisse : ${fmtNum(t.x)}`, `      ordonnee : ${fmtNum(t.y)}`, `      police   : ${t.font}`,
+    `      taille   : ${fmtNum(t.size)}`, `      couleur  : ${t.col};-16777211`, `      style    : ${t.style}`));
+  o.push(`Nombre de fonctions : ${d.fns.length}`);
+  d.fns.forEach((c, k) => { o.push(`F${k + 1}(x)=${c.expr}`, ...serializeCurveAttrs(c, 'fn')); });
+  o.push(`Nombre de courbes paramétrées : ${d.params.length}`);
+  d.params.forEach((c, k) => { o.push(`X${k + 1}(t)=${c.expr}`, `Y${k + 1}(t)=${c.expr2}`, ...serializeCurveAttrs(c, 'param')); });
+  if (d.fam) {
+    const f = d.fam;
+    o.push('Famille de fonctions', `Fp(x) =${f.expr}`, `P Minimum =${f.pmin}`, `P Maximum =${f.pmax}`, `Delta P =${f.dp}`,
+      `Couleur =${f.couleur}`, `Vitesse =${f.vitesse}`, `Épaisseur =${f.ep}`, `Style =${f.style}`,
+      f.anim ? 'Voir la progression du dessin' : 'Ne pas voir la progression du dessin',
+      f.animDet ? 'Voir la progression détaillée du dessin' : 'Ne pas voir la progression détaillée du dessin',
+      f.show ? 'Afficher les valeurs de P' : 'Ne pas afficher les valeurs de P',
+      `Abscisse de l'${f.typo === false ? 'aff' : 'af'}ichage de P =${f.abs}`, `Position de P =${f.pos}`);
+  } else o.push('Pas de famille de fonctions');
+  o.push(`Nombre de droites : ${d.droites.length}`);
+  d.droites.forEach((r, k) => o.push(`Équation de D${k + 1}:${r.eq}`, `    Couleur :${r.couleur}`, `    Épaisseur :${r.ep}`,
+    `    Style :${r.styleStr}`, `    Type de droite :${r.type}`, `    Coef a :${r.a}`, `    Coef b :${r.b}`));
+  o.push(`Nombre d'objets graphiques : ${d.objs.length}\t${d.objsTail || 1}`);
+  d.objs.forEach(ob => o.push(serializeObj(ob, '7,1,2,0,0')));
+  o.push(...d.rawMiddle);
+  if (d.latex.length) {
+    o.push(`Expressions LaTeX (${d.latexOpaque ? 'opaques' : 'transparentes'})`);
+    d.latex.forEach(l => o.push(`${l.pre !== undefined ? l.pre : '   ' + (l.size || 3) + '$ '}${l.src}\t${fmtNum(l.x)}\t${fmtNum(l.y)}`));
+    o.push('Fin des expressions LaTeX');
+  } else o.push("Pas d'expressions LaTeX");
+  if (d.polars.length) {
+    o.push(`Nombre de courbes en coordonnées polaires : ${d.polars.length}`);
+    d.polars.forEach((c, k) => o.push(`f${k + 1}(t)=${c.expr}`, ...serializeCurveAttrs(c, 'param')));
+  } else o.push('Pas de courbes en coordonnées polaires.');
+  o.push(...tailWithRap(d));
+  return o.join('\r\n') + '\r\n';
+}
+
+function tailWithRap(d) {
+  const t = d.rawTail.slice();
+  let i = t.findIndex(l => /^Rapporteur\s*$/i.test(l)), j = t.findIndex(l => /^Pas de rapporteur/i.test(l));
+  const r = d.rap;
+  const block = r ? ['Rapporteur', '   Type Lycée', `   Rayon du rapporteur    :${r.R}`, '   Repère en arrière plan :0', `   Cercle extérieur       :${r.ext}`,
+    `   Graduations en degrés  :${r.deg}`, `   Graduations en radians :${r.rad}`, '      Traits', `   Quadrillage intérieur  :${r.quad}`,
+    `   Valeurs remarquables   :${r.val}`, `   Couleur cercles        :${r.colCercles}`, `   Couleur graduations    :${r.colGrad}`,
+    `   Couleur quadrillage    :${r.colQuad}`, `   Couleur valeurs remarquables :${r.colVal}`] : ['Pas de rapporteur'];
+  if (!r) { if (i >= 0) t.splice(i, t.length - i, 'Pas de rapporteur'); return t; }
+  if (i >= 0) t.splice(i, t.length - i, ...block); else if (j >= 0) t.splice(j, 1, ...block); else t.push(...block);
+  return t;
+}
+const hasExtras = d => d.extras.length > 0 || d.log.x || d.log.y;
+/** Instantané complet (.sqn + compléments propres à la version en ligne) */
+function snapshotDoc(d) { return JSON.stringify({ format: 'sqnw', sqn: serializeSqn(d), extras: d.extras, log: d.log }); }
+function docFromText(text, name) {
+  if (text.trim().startsWith('{')) {
+    const j = JSON.parse(text); if (j.format !== 'sqnw') throw new Error('Format de fichier inconnu.');
+    const d = parseSqn(j.sqn, name); d.extras = j.extras || []; d.log = Object.assign({ x: false, y: false, mx: 40, my: 40 }, j.log || {}); return d;
+  }
+  return parseSqn(text, name);
+}
+
+/* Encodage / décodage Windows-1252 (encodage des .sqn) */
+const CP1252 = { 0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87, 0x02C6: 0x88,
+  0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94,
+  0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F };
+function encodeCp1252(s) {
+  const b = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    b[i] = c < 256 ? c : (CP1252[c] || 63);
+  }
+  return b;
+}
+function decodeCp1252(buf) { return new TextDecoder('windows-1252').decode(buf); }
+/* ---------- 4. Rendu SVG (unités = millimètres) ---------- */
+const f2 = n => (Math.round(n * 100) / 100).toString();
+const FONT_STACK = name => {
+  const n = (name || '').toLowerCase();
+  if (n.includes('times')) return "'Times New Roman',Times,'Liberation Serif',serif";
+  if (n.includes('arial') || n.includes('sans')) return "Arial,Helvetica,'Liberation Sans',sans-serif";
+  if (n.includes('courier')) return "'Courier New',Courier,'Liberation Mono',monospace";
+  if (n.includes('sqnmath')) return "'Times New Roman',Times,'Liberation Serif',serif";
+  return `'${name}',Arial,sans-serif`;
+};
+const fontAttrs = (style) => {
+  const s = (style || '').toLowerCase();
+  return (/gras|bold/.test(s) ? ' font-weight="bold"' : '') + (/ital/.test(s) ? ' font-style="italic"' : '') +
+    (/soulign/.test(s) ? ' text-decoration="underline"' : '');
+};
+const lineWidth = ep => Math.max(0.1, ep * 0.1 + 0.15);
+
+function geom(d) {
+  const ox = evalConst(d.ox, 0), oy = evalConst(d.oy, 0);
+  let ux = evalConst(d.ux, 1), uy = evalConst(d.uy, 1);
+  if (!(ux > 0)) ux = 1; if (!(uy > 0)) uy = 1;
+  const lx = Math.max(d.lx, 0.1), ly = Math.max(d.ly, 0.1), L = d.log || {}, lgx = !!L.x, lgy = !!L.y, mx = L.mx || 40, my = L.my || 40;
+  const bx = ox > 0 ? ox : 1, by = oy > 0 ? oy : 1;
+  return {
+    ox, oy, ux, uy, lx, ly, lgx, lgy, mx, my, bx, by,
+    X: lgx ? (x => x > 0 ? d.dOy + Math.log10(x / bx) * mx : NaN) : (x => d.dOy + (x - ox) * lx / ux),
+    Y: lgy ? (y => y > 0 ? d.dOx - Math.log10(y / by) * my : NaN) : (y => d.dOx - (y - oy) * ly / uy),
+    xOf: lgx ? (mm => bx * Math.pow(10, (mm - d.dOy) / mx)) : (mm => ox + (mm - d.dOy) * ux / lx),
+    yOf: lgy ? (mm => by * Math.pow(10, (d.dOx - mm) / my)) : (mm => oy - (mm - d.dOx) * uy / ly)
+  };
+}
+
+/** Compile toutes les expressions du document ; mémorise les erreurs dans les objets. */
+function buildCtx(d) {
+  const F = [null];
+  for (let k = 0; k < 10; k++) F[k + 1] = () => NaN;
+  d.fns.forEach((c, k) => {
+    c._err = '';
+    if (!c.expr.trim()) { F[k + 1] = () => NaN; return; }
+    try { const fn = compileExpr(c.expr, F, k); F[k + 1] = x => fn(x, 0, 0); c._fn = F[k + 1]; }
+    catch (e) { c._err = e.message; F[k + 1] = () => NaN; c._fn = null; }
+  });
+  const safe = (s, mf = 10) => { try { return s.trim() ? compileExpr(s, F, mf) : null; } catch (e) { return null; } };
+  const check = (c, key) => { try { if (c[key].trim()) compileExpr(c[key], F, 10); return ''; } catch (e) { return e.message; } };
+  d.params.forEach(c => { c._err = check(c, 'expr') || check(c, 'expr2'); c._fx = safe(c.expr); c._fy = safe(c.expr2); });
+  d.polars.forEach(c => { c._err = check(c, 'expr'); c._fr = safe(c.expr); });
+  if (d.fam) { d.fam._err = check(d.fam, 'expr'); d.fam._f = safe(d.fam.expr); }
+  d.droites.forEach(r => { r._err = ''; r._f = null; });
+  return { F, g: geom(d) };
+}
+
+/* ----- tracés ----- */
+function ptsToPath(pts) {
+  let s = '', pen = false;
+  for (const p of pts) {
+    if (!p) { pen = false; continue; }
+    s += (pen ? 'L' : 'M') + f2(p[0]) + ' ' + f2(p[1]); pen = true;
+  }
+  return s;
+}
+function dotsAlong(pts, step) {
+  const out = []; let carry = 0, prev = null;
+  for (const p of pts) {
+    if (!p) { prev = null; continue; }
+    if (prev) {
+      let dx = p[0] - prev[0], dy = p[1] - prev[1]; const len = Math.hypot(dx, dy);
+      if (len > 0 && len < 5000) {
+        let pos = step - carry;
+        while (pos <= len) { out.push([prev[0] + dx * pos / len, prev[1] + dy * pos / len]); pos += step; }
+        carry = len - (pos - step);
+      }
+    } else out.push([p[0], p[1]]);
+    prev = p;
+  }
+  return out;
+}
+function strokeOf(col, ep, style) { return { col, w: lineWidth(ep), style }; }
+function drawPolyline(pts, st, wMul = 1) {
+  const w = st.w * wMul;
+  if (st.style === 3 || st.style === 4) {
+    const dots = dotsAlong(pts, 3), r = st.style === 3 ? Math.max(0.5, st.w * 1.6) : Math.max(0.3, st.w * 0.8);
+    return dots.map(p => `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="${f2(r)}" fill="${st.col}"/>`).join('');
+  }
+  const dash = st.style === 1 ? ' stroke-dasharray="2 1"' : st.style === 2 ? ` stroke-dasharray="0.01 ${f2(1 + w)}" stroke-linecap="round"` : '';
+  return `<path d="${ptsToPath(pts)}" fill="none" stroke="${st.col}" stroke-width="${f2(w)}" stroke-linejoin="round"${dash}/>`;
+}
+const toMM = (g, x, y) => [g.X(x), g.Y(y)];
+function breakJumps(pts, H) { // coupe les raccords verticaux géants (asymptotes)
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    if (a && b && Math.abs(b[1] - a[1]) > H * 1.5 && ((a[1] < 0 && b[1] > H) || (a[1] > H && b[1] < 0))) pts.splice(i, 0, null), i++;
+  }
+  return pts;
+}
+function sampleFn(f, d, g, n) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const mm = -5 + (d.W + 10) * i / n, x = g.xOf(mm); let y;
+    try { y = f(x); } catch (e) { y = NaN; }
+    const Y = g.Y(y);
+    if (!Number.isFinite(y) || !Number.isFinite(Y)) { pts.push(null); continue; }
+    pts.push([mm, clamp(Y, -1e4, 1e4)]);
+  }
+  return breakJumps(pts, d.H);
+}
+function sampleParam(fxy, t0, t1, n, g, H) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = t0 + (t1 - t0) * i / n; let r;
+    try { r = fxy(t); } catch (e) { r = null; }
+    if (!r || !Number.isFinite(r[0]) || !Number.isFinite(r[1])) { pts.push(null); continue; }
+    pts.push([clamp(g.X(r[0]), -1e4, 1e4), clamp(g.Y(r[1]), -1e4, 1e4)]);
+  }
+  return pts;
+}
+// dérivées numériques d'une courbe (x(t), y(t))
+function deriv(fxy, t, h) {
+  const a = fxy(t - h), b = fxy(t), c = fxy(t + h);
+  return { p: b, d1: [(c[0] - a[0]) / (2 * h), (c[1] - a[1]) / (2 * h)], d2: [(c[0] - 2 * b[0] + a[0]) / (h * h), (c[1] - 2 * b[1] + a[1]) / (h * h)] };
+}
+function evolutePts(fxy, t0, t1, n, g) {
+  const h = (t1 - t0) * 1e-4 || 1e-4, pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = t0 + (t1 - t0) * i / n; let q;
+    try {
+      const { p, d1, d2 } = deriv(fxy, t, h);
+      const den = d1[0] * d2[1] - d1[1] * d2[0], s = d1[0] * d1[0] + d1[1] * d1[1];
+      if (!Number.isFinite(den) || Math.abs(den) < 1e-10) { pts.push(null); continue; }
+      q = [p[0] - d1[1] * s / den, p[1] + d1[0] * s / den];
+    } catch (e) { pts.push(null); continue; }
+    const X = g.X(q[0]), Y = g.Y(q[1]);
+    pts.push(Number.isFinite(X) && Number.isFinite(Y) && Math.abs(X) < 3000 && Math.abs(Y) < 3000 ? [X, Y] : null);
+  }
+  return pts;
+}
+function envelopeSvg(fxy, t0, t1, g, d, col) {
+  const h = (t1 - t0) * 1e-4 || 1e-4, K = 70, L = (d.W + d.H) * 2; let s = '';
+  for (let i = 0; i <= K; i++) {
+    const t = t0 + (t1 - t0) * i / K;
+    try {
+      const { p, d1 } = deriv(fxy, t, h);
+      const vx = d1[0] * g.lx / g.ux, vy = -d1[1] * g.ly / g.uy, n = Math.hypot(vx, vy);
+      if (!(n > 1e-12) || !Number.isFinite(p[0] + p[1])) continue;
+      const X = g.X(p[0]), Y = g.Y(p[1]);
+      s += `M${f2(X - vx / n * L)} ${f2(Y - vy / n * L)}L${f2(X + vx / n * L)} ${f2(Y + vy / n * L)}`;
+    } catch (e) { /* ignore */ }
+  }
+  return `<path d="${s}" fill="none" stroke="${col}" stroke-width="0.12"/>`;
+}
+const arrowHead = (x, y, ang, col, s = 2.4) => {
+  const a1 = ang + Math.PI - 0.38, a2 = ang + Math.PI + 0.38;
+  return `<path d="M${f2(x)} ${f2(y)}L${f2(x + s * Math.cos(a1))} ${f2(y + s * Math.sin(a1))}L${f2(x + s * Math.cos(a2))} ${f2(y + s * Math.sin(a2))}Z" fill="${col}"/>`;
+};
+const POS_DIR = { 0: [0, 0], 1: [1, -1], 2: [1, 0], 3: [1, 1], 4: [0, 1], 5: [-1, 1], 6: [-1, 0], 7: [-1, -1], 8: [0, -1] };
+
+/** Points particuliers (lignes de cote, tangente, flèches, nom) sur une courbe donnée par fxy(t). */
+function pointsSvg(c, fxy, g, d, defaultColor) {
+  let s = '';
+  for (const p of c.pts) {
+    const a = evalConst(p.a, NaN); if (!Number.isFinite(a)) continue;
+    let r, dd;
+    try {
+      const h = 1e-5 * Math.max(1, Math.abs(a));
+      const q = deriv(fxy, a, h); r = q.p; dd = q.d1;
+    } catch (e) { continue; }
+    if (!Number.isFinite(r[0] + r[1])) continue;
+    const X = g.X(r[0]), Y = g.Y(r[1]), col = tcolor(p.couleur);
+    const vx = dd[0] * g.lx / g.ux, vy = -dd[1] * g.ly / g.uy, n = Math.hypot(vx, vy) || 1;
+    const ux_ = vx / n, uy_ = vy / n, L = (d.W + d.H) * 2;
+    if (p.cote) s += `<path d="M${f2(X)} ${f2(Y)}L${f2(X)} ${f2(d.dOx)}M${f2(X)} ${f2(Y)}L${f2(d.dOy)} ${f2(Y)}" stroke="${col}" stroke-width="0.25" stroke-dasharray="1 0.9" fill="none"/>`;
+    if (p.tang) s += `<path d="M${f2(X - ux_ * L)} ${f2(Y - uy_ * L)}L${f2(X + ux_ * L)} ${f2(Y + uy_ * L)}" stroke="${col}" stroke-width="0.3" fill="none"/>`;
+    if (p.ftang) {
+      const h2 = 8, x1 = X - ux_ * h2, y1 = Y - uy_ * h2, x2 = X + ux_ * h2, y2 = Y + uy_ * h2;
+      s += `<path d="M${f2(x1)} ${f2(y1)}L${f2(x2)} ${f2(y2)}" stroke="${col}" stroke-width="0.4" fill="none"/>` +
+        arrowHead(x2, y2, Math.atan2(uy_, ux_), col) + arrowHead(x1, y1, Math.atan2(-uy_, -ux_), col);
+    }
+    if (p.fnorm) {
+      const nx = uy_, ny = -ux_, x2 = X + nx * 12, y2 = Y + ny * 12;
+      s += `<path d="M${f2(X)} ${f2(Y)}L${f2(x2)} ${f2(y2)}" stroke="${col}" stroke-width="0.4" fill="none"/>` + arrowHead(x2, y2, Math.atan2(ny, nx), col);
+    }
+    s += `<circle cx="${f2(X)}" cy="${f2(Y)}" r="0.9" fill="${col}"/>`;
+    if (p.nom) {
+      const sz = (p.taille || 10) * MM_PER_PT, dir = POS_DIR[p.pos] || POS_DIR[1];
+      const off = 2.2;
+      const anchor = dir[0] > 0 ? 'start' : dir[0] < 0 ? 'end' : 'middle';
+      const ty = Y + dir[1] * off + (dir[1] > 0 ? sz * 0.8 : dir[1] < 0 ? -0.5 : sz * 0.35);
+      s += `<text x="${f2(X + dir[0] * off)}" y="${f2(ty)}" font-size="${f2(sz)}" font-family="${FONT_STACK(p.police)}"${fontAttrs(p.style)} fill="${col}" text-anchor="${anchor}">${esc(p.nom)}</text>`;
+    }
+  }
+  return s;
+}
+
+/** Dessine une courbe générique (fonction, paramétrée ou polaire) avec développée, enveloppe et points. */
+function curveSvg(c, ptsMM, fxy, t0, t1, g, d, color) {
+  if (c.style === 10) return ''; // style « invisible » du logiciel d'origine
+  const st = strokeOf(color, c.ep, c.style);
+  let s = drawPolyline(ptsMM, st);
+  if (c.dev) s += drawPolyline(evolutePts(fxy, t0, t1, Math.max(c.n || 400, 200), g), strokeOf(color, 1, 0), 1);
+  if (c.env) s += envelopeSvg(fxy, t0, t1, g, d, color);
+  s += pointsSvg(c, fxy, g, d, color);
+  return s;
+}
+
+/* ----- repère ----- */
+function fmtTick(v, sig, trig, unitVal) {
+  if (Math.abs(v) < 1e-12 * Math.max(1, Math.abs(unitVal))) return '0';
+  if (trig) {
+    const q = v / Math.PI;
+    for (let den = 1; den <= 24; den++) {
+      const nu = q * den;
+      if (Math.abs(nu - Math.round(nu)) < 1e-6) {
+        const n = Math.round(nu), sg = n < 0 ? '-' : '', an = Math.abs(n);
+        const num = an === 1 ? 'π' : an + 'π';
+        return sg + num + (den === 1 ? '' : '/' + den);
+      }
+    }
+  }
+  let r = Number(v.toPrecision(Math.max(3, sig)));
+  if (Math.abs(r) >= Math.pow(10, sig)) return r.toExponential().replace('e+', 'E').replace('e', 'E').replace('.', ',');
+  return String(r).replace('.', ',');
+}
+
+function gridSvg(d, g) {
+  const col = tcolor(d.gridCol), sz = Math.max(d.gridSize, 1), W = d.W, H = d.H; let gs = d.gridStyle;
+  if (!gs) return '';
+  if ((g.lgx || g.lgy) && (gs === 6 || gs === 1 || gs === 7)) gs = 5;
+  const kx0 = Math.ceil((0 - d.dOy) / sz), kx1 = Math.floor((W - d.dOy) / sz);
+  const ky0 = Math.ceil((0 - d.dOx) / sz), ky1 = Math.floor((H - d.dOx) / sz);
+  const logPos = (lg, base, mod, off, size) => { const r = []; if (!lg) return null; const k0 = Math.floor(Math.log10(Math.max(1e-300, 1))) - 40; for (let k = -40; k <= 40; k++) for (let m = 1; m <= 9; m++) { const mmv = off + (lg === 'x' ? 1 : -1) * Math.log10(m * Math.pow(10, k)) * mod; if (mmv >= -0.01 && mmv <= size + 0.01) r.push(mmv); } return r; };
+  const vlines = (step, extra = '') => { let s = ''; if (g.lgx) { for (const X of logPos('x', g.bx, g.mx, d.dOy, W)) s += `M${f2(X)} 0V${f2(H)}`; return s; } for (let k = Math.ceil((0 - d.dOy) / step); k <= Math.floor((W - d.dOy) / step); k++) s += `M${f2(d.dOy + k * step)} 0V${f2(H)}`; return s; };
+  const hlines = (step) => { let s = ''; if (g.lgy) { for (const Y of logPos('y', g.by, g.my, d.dOx, H)) s += `M0 ${f2(Y)}H${f2(W)}`; return s; } for (let k = Math.ceil((0 - d.dOx) / step); k <= Math.floor((H - d.dOx) / step); k++) s += `M0 ${f2(d.dOx + k * step)}H${f2(W)}`; return s; };
+  if (gs === 6) { // papier millimétré
+    let p1 = '', p5 = '', p10 = '';
+    for (let k = Math.ceil(-d.dOy); k <= Math.floor(W - d.dOy); k++) { const s = `M${f2(d.dOy + k)} 0V${f2(H)}`; if (k % 10 === 0) p10 += s; else if (k % 5 === 0) p5 += s; else p1 += s; }
+    for (let k = Math.ceil(-d.dOx); k <= Math.floor(H - d.dOx); k++) { const s = `M0 ${f2(d.dOx + k)}H${f2(W)}`; if (k % 10 === 0) p10 += s; else if (k % 5 === 0) p5 += s; else p1 += s; }
+    return `<g fill="none" stroke="${col}"><path d="${p1}" stroke-width="0.08"/><path d="${p5}" stroke-width="0.18"/><path d="${p10}" stroke-width="0.3"/></g>`;
+  }
+  if (gs === 1) { // petites croix
+    let s = '';
+    for (let i = kx0; i <= kx1; i++) for (let j = ky0; j <= ky1; j++) { const x = d.dOy + i * sz, y = d.dOx + j * sz; s += `M${f2(x - 0.9)} ${f2(y)}h1.8M${f2(x)} ${f2(y - 0.9)}v1.8`; }
+    return `<path d="${s}" stroke="${col}" stroke-width="0.15" fill="none"/>`;
+  }
+  if (gs === 7) { // papier pointé
+    let s = '';
+    for (let i = kx0; i <= kx1; i++) for (let j = ky0; j <= ky1; j++) s += `<circle cx="${f2(d.dOy + i * sz)}" cy="${f2(d.dOx + j * sz)}" r="0.22"/>`;
+    return `<g fill="${col}">${s}</g>`;
+  }
+  const dash = gs === 2 ? 'stroke-dasharray="0.2 0.8" stroke-width="0.22"' : gs === 3 ? 'stroke-dasharray="0.5 1" stroke-width="0.3"' :
+    gs === 4 ? 'stroke-dasharray="1.5 1" stroke-width="0.2"' : 'stroke-width="0.2"';
+  return `<path d="${vlines(sz)}${hlines(sz)}" stroke="${col}" fill="none" ${dash}/>`;
+}
+
+function axesSvg(d, g) {
+  const col = tcolor(d.repCol), W = d.W, H = d.H;
+  const showX = d.axesVis || d.keepX, showY = d.axesVis || d.keepY;
+  const thick = d.gridStyle === 5 || d.gridStyle === 6 ? 0.55 : 0.3;
+  let s = '';
+  const inX = d.dOx >= -0.01 && d.dOx <= H + 0.01, inY = d.dOy >= -0.01 && d.dOy <= W + 0.01;
+  const font = FONT_STACK(d.gFont[0]), fs = d.gSize[0] * MM_PER_PT, gcol = tcolor(d.gCol[0]), fa = fontAttrs(d.gStyle[0]);
+  const T = (x, y, txt, anchor) => `<text x="${f2(x)}" y="${f2(y)}" font-size="${f2(fs)}" font-family="${font}"${fa} fill="${gcol}" text-anchor="${anchor}">${esc(txt)}</text>`;
+  const ax = [];
+  if (showX && inX) { ax.push(`M0 ${f2(d.dOx)}H${f2(W)}`); }
+  if (showY && inY) { ax.push(`M${f2(d.dOy)} ${f2(H)}V0`); }
+  s += `<path d="${ax.join('')}" stroke="${col}" stroke-width="${thick}" fill="none"/>`;
+  if (showX && inX) s += arrowHead(W, d.dOx, 0, col, 2.2);
+  if (showY && inY) s += arrowHead(d.dOy, 0, -Math.PI / 2, col, 2.2);
+  // noms des axes
+  const nf = `font-family="'Times New Roman',Times,serif" font-style="italic" font-size="${f2(12 * MM_PER_PT)}" fill="${col}"`;
+  if (showX && inX) s += `<text x="${f2(W - 1.5)}" y="${f2(d.dOx - 2)}" ${nf} text-anchor="end">${esc(d.nameX)}</text>`;
+  if (showY && inY) s += `<text x="${f2(d.dOy + 2)}" y="${f2(4.2)}" ${nf}>${esc(d.nameY)}</text>`;
+  // graduations
+  const zeroBoth = !g.lgx && !g.lgy && Math.abs(g.ox) < 1e-12 && Math.abs(g.oy) < 1e-12;
+  const strideX = Math.max(1, Math.ceil(9 / g.lx)), strideY = Math.max(1, Math.ceil(5.5 / g.ly));
+  let ticks = '', labels = '';
+  if (showX && inX) {
+    if (g.lgx) {
+      const k0 = Math.floor(Math.log10(g.xOf(0) / g.bx)), k1 = Math.ceil(Math.log10(g.xOf(W) / g.bx));
+      for (let k = k0; k <= k1; k++) for (let m = 1; m <= 9; m++) {
+        const v = g.bx * Math.pow(10, k) * m, X = g.X(v); if (!(X >= -0.01 && X <= W + 0.01)) continue;
+        const maj = m === 1, th = maj ? 1.1 : 0.6; ticks += `M${f2(X)} ${f2(d.dOx - th)}V${f2(d.dOx + th)}`;
+        if (maj && d.grad !== 'none' && !(d.grad === 'first' && k !== 1)) labels += T(X, d.dOx + 1.2 + fs * 0.9, fmtTick(v, d.sigX, false, 1), 'middle');
+      }
+    } else {
+      const kmin = Math.ceil((0 - d.dOy) / g.lx), kmax = Math.floor((W - d.dOy) / g.lx);
+      for (let k = kmin; k <= kmax && kmax - kmin < 2000; k++) {
+        const X = d.dOy + k * g.lx;
+        ticks += `M${f2(X)} ${f2(d.dOx - 1.1)}V${f2(d.dOx + 1.1)}`;
+        if (d.grad === 'none') continue;
+        if (d.grad === 'first' && k !== 1) continue;
+        if (d.grad === 'full' && k % strideX !== 0) continue;
+        if (k === 0 && zeroBoth && showY && inY) continue;
+        const v = g.ox + k * g.ux;
+        labels += T(X, d.dOx + 1.2 + fs * 0.9, fmtTick(v, d.sigX, d.fmtX === 'trig', g.ux), 'middle');
+      }
+    }
+  }
+  if (showY && inY) {
+    if (g.lgy) {
+      const k0 = Math.floor(Math.log10(g.yOf(H) / g.by)), k1 = Math.ceil(Math.log10(g.yOf(0) / g.by));
+      for (let k = k0; k <= k1; k++) for (let m = 1; m <= 9; m++) {
+        const v = g.by * Math.pow(10, k) * m, Y = g.Y(v); if (!(Y >= -0.01 && Y <= H + 0.01)) continue;
+        const maj = m === 1, th = maj ? 1.1 : 0.6; ticks += `M${f2(d.dOy - th)} ${f2(Y)}H${f2(d.dOy + th)}`;
+        if (maj && d.grad !== 'none' && !(d.grad === 'first' && k !== 1)) labels += T(d.dOy - 1.6, Y + fs * 0.33, fmtTick(v, d.sigY, false, 1), 'end');
+      }
+    } else {
+      const kmin = Math.ceil((d.dOx - H) / g.ly), kmax = Math.floor(d.dOx / g.ly);
+      for (let k = kmin; k <= kmax && kmax - kmin < 2000; k++) {
+        const Y = d.dOx - k * g.ly;
+        ticks += `M${f2(d.dOy - 1.1)} ${f2(Y)}H${f2(d.dOy + 1.1)}`;
+        if (d.grad === 'none') continue;
+        if (d.grad === 'first' && k !== 1) continue;
+        if (d.grad === 'full' && k % strideY !== 0) continue;
+        if (k === 0 && zeroBoth && showX && inX) continue;
+        const v = g.oy + k * g.uy;
+        labels += T(d.dOy - 1.6, Y + fs * 0.33, fmtTick(v, d.sigY, d.fmtY === 'trig', g.uy), 'end');
+      }
+    }
+  }
+  if (zeroBoth && showX && showY && inX && inY && d.grad !== 'none' && d.grad !== 'first') labels += T(d.dOy - 1.6, d.dOx + 1.2 + fs * 0.9, '0', 'end');
+  s += `<path d="${ticks}" stroke="${col}" stroke-width="0.25" fill="none"/>` + labels;
+  return s;
+}
+
+
+/* ----- rapporteur trigonométrique (cercle trigonométrique) ----- */
+function rapSvg(d, g) {
+  const r = d.rap; if (!r) return '';
+  const cx = d.dOy, cy = d.dOx, R = r.R, S = (a, rr) => [cx + rr * Math.cos(a), cy - rr * Math.sin(a)];
+  const cCol = tcolor(r.colCercles), gCol = tcolor(r.colGrad), qCol = tcolor(r.colQuad), vCol = tcolor(r.colVal);
+  let s = '';
+  const T = (x, y, txt, col, anchor = 'middle', sz = 9) => `<text x="${f2(x)}" y="${f2(y)}" font-size="${f2(sz * MM_PER_PT)}" font-family="'Times New Roman',serif" fill="${col}" text-anchor="${anchor}">${esc(txt)}</text>`;
+  if (r.quad >= 1) { // rayons et lignes remarquables en pointillés
+    let q = '';
+    for (const deg of [30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330]) { const [x, y] = S(deg * Math.PI / 180, R); q += `M${f2(cx)} ${f2(cy)}L${f2(x)} ${f2(y)}`; }
+    if (r.quad >= 2) for (const v of [0.5, Math.SQRT1_2, Math.sqrt(3) / 2]) for (const sg of [-1, 1]) {
+      const o = v * R * sg, h = Math.sqrt(R * R - o * o);
+      q += `M${f2(cx + o)} ${f2(cy - h)}V${f2(cy + h)}M${f2(cx - h)} ${f2(cy + o)}H${f2(cx + h)}`;
+    }
+    s += `<path d="${q}" stroke="${qCol}" stroke-width="0.2" stroke-dasharray="0.8 1" fill="none"/>`;
+  }
+  s += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(R)}" fill="none" stroke="${cCol}" stroke-width="0.45"/>`;
+  if (r.ext) s += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(R + 7)}" fill="none" stroke="${cCol}" stroke-width="0.25"/>`;
+  let ticks = '';
+  for (let deg = 0; deg < 360; deg += 5) {
+    const len = deg % 30 === 0 || deg % 45 === 0 ? 3 : deg % 15 === 0 ? 2 : 1.2, a = deg * Math.PI / 180;
+    const [x1, y1] = S(a, R - len), [x2, y2] = S(a, R); ticks += `M${f2(x1)} ${f2(y1)}L${f2(x2)} ${f2(y2)}`;
+  }
+  s += `<path d="${ticks}" stroke="${gCol}" stroke-width="0.25" fill="none"/>`;
+  const RAD = { 0: '0', 30: 'π/6', 45: 'π/4', 60: 'π/3', 90: 'π/2', 120: '2π/3', 135: '3π/4', 150: '5π/6', 180: 'π', 210: '7π/6', 225: '5π/4', 240: '4π/3', 270: '3π/2', 300: '5π/3', 315: '7π/4', 330: '11π/6' };
+  for (const [deg, lab] of Object.entries(RAD)) {
+    const a = +deg * Math.PI / 180, off = r.rad ? 6.5 : 4.5;
+    if (r.rad) { const [x, y] = S(a, R + off); s += T(x, y + 1.2, lab, gCol, 'middle', 9); }
+    if (r.deg) { const [x, y] = S(a, R + (r.rad ? 12.5 : off)); s += T(x, y + 1.2, deg + '°', gCol, 'middle', 8); }
+  }
+  if (r.val) {
+    const vals = [[0.5, '1/2'], [Math.SQRT1_2, '√2/2'], [Math.sqrt(3) / 2, '√3/2'], [1, '1']];
+    for (const [v, lab] of vals) for (const sg of [-1, 1]) {
+      if (v === 1 && sg === 1) continue;
+      const o = v * R * sg;
+      s += T(cx + o, cy + 4.2, (sg < 0 ? '-' : '') + lab, vCol, 'middle', 8);
+      s += T(cx - 1.5, cy - o + 1.2, (sg > 0 ? '' : '-') + lab, vCol, 'end', 8);
+    }
+  }
+  return s;
+}
+
+/* ----- schémas ----- */
+function objSvg(o, g, d) {
+  if (o.kind === 'segment') {
+    const dash = o.style === 1 ? 'stroke-dasharray="2 1"' : o.style === 2 ? 'stroke-dasharray="0.8 1"' : '';
+    return `<path d="M${f2(g.X(o.x1))} ${f2(g.Y(o.y1))}L${f2(g.X(o.x2))} ${f2(g.Y(o.y2))}" stroke="${tcolor(o.couleur)}" stroke-width="${f2(lineWidth(o.ep) * 0.8)}" ${dash} fill="none"/>`;
+  }
+  if (o.kind === 'point') {
+    const X = g.X(o.x), Y = g.Y(o.y), col = '#000';
+    let s = `<path d="M${f2(X - 1.1)} ${f2(Y - 1.1)}l2.2 2.2M${f2(X - 1.1)} ${f2(Y + 1.1)}l2.2 -2.2" stroke="${col}" stroke-width="0.3" fill="none"/>`;
+    if (o.nom) {
+      const dir = POS_DIR[o.pos || 1] || POS_DIR[1], sz = 10 * MM_PER_PT;
+      s += `<text x="${f2(X + dir[0] * 2.4)}" y="${f2(Y + dir[1] * 2.4 + (dir[1] > 0 ? sz * 0.8 : dir[1] < 0 ? -0.4 : sz * 0.35))}" font-size="${f2(sz)}" font-family="'Times New Roman',serif" font-style="italic" text-anchor="${dir[0] > 0 ? 'start' : dir[0] < 0 ? 'end' : 'middle'}">${esc(o.nom)}</text>`;
+    }
+    return s;
+  }
+  return '';
+}
+
+/* ----- assemblage complet ----- */
+function buildSvg(d, ctx, opts = {}) {
+  const g = ctx.g, W = d.W, H = d.H;
+  let curves = '';
+  // fonctions
+  d.fns.forEach((c, k) => {
+    if (!c._fn || !c.expr.trim()) return;
+    const f = c._fn, fxy = x => [x, f(x)];
+    const x0 = g.xOf(0), x1 = g.xOf(W);
+    const pts = sampleFn(f, d, g, clamp(Math.round(W * 4), 300, 4000));
+    curves += curveSvgFn(c, pts, fxy, x0, x1, g, d);
+  });
+  // paramétrées
+  d.params.forEach(c => {
+    if (!c._fx || !c._fy) return;
+    const t0 = evalConst(c.tmin, -Math.PI), t1 = evalConst(c.tmax, Math.PI), n = clamp(c.n || 400, 20, 20000);
+    const fxy = t => [c._fx(0, t, 0), c._fy(0, t, 0)];
+    curves += curveSvg(c, sampleParam(fxy, t0, t1, n, g, H), fxy, t0, t1, g, d, tcolor(c.couleur));
+  });
+  // polaires
+  d.polars.forEach(c => {
+    if (!c._fr) return;
+    const t0 = evalConst(c.tmin, 0), t1 = evalConst(c.tmax, 2 * Math.PI), n = clamp(c.n || 400, 20, 20000);
+    const fxy = t => { const r = c._fr(0, t, 0); return [r * Math.cos(t), r * Math.sin(t)]; };
+    curves += curveSvg(c, sampleParam(fxy, t0, t1, n, g, H), fxy, t0, t1, g, d, tcolor(c.couleur));
+  });
+  // famille de fonctions
+  if (d.fam && d.fam._f && d.fam.expr.trim()) {
+    const f = d.fam, p0 = evalConst(f.pmin, -1), p1 = evalConst(f.pmax, 1);
+    let dp = evalConst(f.dp, 0.5); if (!(dp > 0)) dp = 1;
+    const cnt = Math.min(300, Math.floor((p1 - p0) / dp + 1e-9) + 1);
+    for (let i = 0; i < cnt; i++) {
+      const p = p0 + i * dp, col = f.couleur === -1 ? hsl(i, cnt) : tcolor(f.couleur);
+      const fn = x => f._f(x, 0, p);
+      const pts = sampleFn(fn, d, g, clamp(Math.round(W * 3), 300, 3000));
+      if (f.style !== 10) curves += drawPolyline(pts, strokeOf(col, f.ep, f.style));
+      if (f.show) {
+        const xa = evalConst(f.abs, 0), ya = fn(xa);
+        if (Number.isFinite(ya)) curves += `<text x="${f2(g.X(xa) + 1)}" y="${f2(g.Y(ya) - 1)}" font-size="${f2(9 * MM_PER_PT)}" font-family="Arial,sans-serif" fill="${col}">p=${esc(fmtTick(p, 5, false, 1))}</text>`;
+      }
+    }
+  }
+  // droites
+  d.droites.forEach(r => {
+    const col = tcolor(r.couleur), st = strokeOf(col, r.ep, 0);
+    let m, pts = null;
+    const eq = String(r.eq).trim();
+    if ((m = eq.match(/^y\s*=(.*)$/i))) {
+      try { const fn = compileExpr(m[1], ctx.F, 10); r._err = ''; pts = [[g.X(g.xOf(-5)), g.Y(fn(g.xOf(-5), 0, 0))], [g.X(g.xOf(W + 5)), g.Y(fn(g.xOf(W + 5), 0, 0))]]; }
+      catch (e) { r._err = e.message; }
+    } else if ((m = eq.match(/^x\s*=(.*)$/i))) {
+      const c = evalConst(m[1], NaN); if (Number.isFinite(c)) pts = [[g.X(c), -5], [g.X(c), H + 5]]; else r._err = 'Abscisse invalide';
+    } else r._err = 'Écrire y=… ou x=…';
+    if (pts && pts.every(p => Number.isFinite(p[0]) && Number.isFinite(p[1])))
+      curves += `<path d="M${f2(pts[0][0])} ${f2(pts[0][1])}L${f2(pts[1][0])} ${f2(pts[1][1])}" stroke="${col}" stroke-width="${f2(st.w)}" fill="none"/>`;
+  });
+  d.objs.forEach(o => { curves += objSvg(o, g, d); });
+  curves += extrasSvg(d, ctx);
+
+  // textes
+  let texts = '';
+  d.texts.forEach((t, k) => {
+    const sz = t.size * MM_PER_PT, X = g.X(t.x), Y = g.Y(t.y);
+    const lines = String(t.txt).split(/\\n|\n/);
+    lines.forEach((ln, li) => {
+      texts += `<text data-ti="${k}" x="${f2(X)}" y="${f2(Y + sz * 0.82 + li * sz * 1.2)}" font-size="${f2(sz)}" font-family="${FONT_STACK(t.font)}"${fontAttrs(t.style)} fill="${tcolor(t.col)}"${opts.ui ? ' style="cursor:move"' : ''}>${esc(ln)}</text>`;
+    });
+  });
+  // LaTeX
+  let tex = '';
+  d.latex.forEach((l, k) => { tex += texSvg(l, g, d, k); });
+
+  const uid = 'c' + Math.random().toString(36).slice(2, 7);
+  let ui = '';
+  if (opts.ui) {
+    ui += `<g class="ui" fill="rgba(30,100,220,.18)" stroke="rgba(30,100,220,.8)" stroke-width="0.3">
+      <circle cx="${f2(d.dOy)}" cy="${f2(d.dOx)}" r="2.4"/>
+      <rect x="${f2(d.dOy + g.lx - 1.4)}" y="${f2(d.dOx - 1.4)}" width="2.8" height="2.8"/>
+      <rect x="${f2(d.dOy - 1.4)}" y="${f2(d.dOx - g.ly - 1.4)}" width="2.8" height="2.8"/></g>`;
+  }
+  const bg = `<rect x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="${tcolor(d.fondCol)}"/>`;
+  const frame = d.cadre ? `<rect x="0.15" y="0.15" width="${f2(W - 0.3)}" height="${f2(H - 0.3)}" fill="none" stroke="${tcolor(d.cadreCol)}" stroke-width="0.3"/>` : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f2(W)}mm" height="${f2(H)}mm" viewBox="0 0 ${f2(W)} ${f2(H)}">
+<defs><clipPath id="${uid}"><rect x="0" y="0" width="${f2(W)}" height="${f2(H)}"/></clipPath></defs>
+${bg}<g clip-path="url(#${uid})">${gridSvg(d, g)}${axesSvg(d, g)}${rapSvg(d, g)}${curves}${tex}${texts}</g>${frame}${ui}</svg>`;
+}
+function curveSvgFn(c, pts, fxy, x0, x1, g, d) {
+  return curveSvg(Object.assign({}, c, { n: 400 }), pts, fxy, x0, x1, g, d, tcolor(c.couleur));
+}
+/* ---------- 4b. Mini-moteur LaTeX → SVG (fractions, exposants, indices, racines, systèmes) ---------- */
+const TEX_SYM = { pi: 'π', theta: 'θ', rho: 'ρ', alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', Delta: 'Δ', lambda: 'λ', mu: 'μ',
+  sigma: 'σ', Sigma: 'Σ', omega: 'ω', Omega: 'Ω', phi: 'φ', varphi: 'φ', epsilon: 'ε', varepsilon: 'ε', infty: '∞', leq: '≤', le: '≤',
+  geq: '≥', ge: '≥', neq: '≠', ne: '≠', times: '×', cdot: '·', to: '→', rightarrow: '→', Rightarrow: '⇒', approx: '≈', pm: '±',
+  circ: '°', ast: '∗', int: '∫', oint: '∮', prod: '∏', sqcup: '⊔', subset: '⊂', emptyset: '∅', lbrace: '{', rbrace: '}', lfloor: '⌊', rfloor: '⌋', Rightarrow: '⇒', Leftrightarrow: '⇔',  dots: '…', ldots: '…', cdots: '⋯', Gamma: 'Γ', in: '∈', sum: '∑', partial: '∂', degree: '°', prime: '′', cup: '∪', cap: '∩',
+  forall: '∀', exists: '∃', mathbb: '', vee: '∨', wedge: '∧', neg: '¬', equiv: '≡', sim: '∼', perp: '⊥', angle: '∠', vec: '→' };
+const TEX_FN = ['arcsin', 'arccos', 'arctan', 'sin', 'cos', 'tan', 'ln', 'log', 'exp', 'lim', 'max', 'min', 'sh', 'ch', 'th'];
+const TEX_COLORS = { black: '#000', blue: '#0000ff', red: '#ff0000', green: '#008000', gray: '#808080', white: '#fff', yellow: '#c0a000', magenta: '#ff00ff', cyan: '#00a0a0' };
+let _mctx = null;
+function measureW(txt, sz, italic) {
+  try {
+    if (!_mctx) _mctx = document.createElement('canvas').getContext('2d');
+    _mctx.font = `${italic ? 'italic ' : ''}${100}px 'Times New Roman',Times,serif`;
+    return _mctx.measureText(txt).width / 100 * sz;
+  } catch (e) { return txt.length * sz * 0.5; }
+}
+
+function texParse(s) {
+  let i = 0;
+  function seq(stop) {
+    const items = [];
+    while (i < s.length && s[i] !== stop) {
+      const a = atomScripts(); if (a) items.push(a);
+    }
+    return items;
+  }
+  function arg() {
+    while (s[i] === ' ') i++;
+    if (s[i] === '{') { i++; const r = seq('}'); i++; return { t: 'group', items: r }; }
+    return atom();
+  }
+  function atomScripts() {
+    let b = atom(); if (!b) return null;
+    for (;;) {
+      let j = i; while (s[j] === ' ') j++;
+      if (s[j] === '^' || s[j] === '_') { i = j + 1; const a = arg(); b = { t: s[j] === '^' ? 'sup' : 'sub', base: b, arg: a }; }
+      else break;
+    }
+    return b;
+  }
+  function atom() {
+    const c = s[i];
+    if (c === undefined) return null;
+    if (c === '{') { i++; const r = seq('}'); i++; return { t: 'group', items: r }; }
+    if (c === '}') { i++; return null; }
+    if (c === '\\') {
+      i++;
+      if (s[i] === '\\') { i++; return { t: 'nl' }; }
+      const m = /^[A-Za-z]+/.exec(s.slice(i));
+      if (!m) { const ch = s[i++]; if (ch === ',' || ch === ';' || ch === ' ' || ch === '!') return { t: 'space', w: 0.25 }; return { t: 'run', txt: ch, it: false }; }
+      const name = m[0]; i += name.length;
+      if (name === 'frac' || name === 'dfrac') { const n = arg(), d = arg(); return { t: 'frac', n, d }; }
+      if (name === 'sqrt') { let idx = null; if (s[i] === '[') { const e = s.indexOf(']', i); idx = s.slice(i + 1, e); i = e + 1; } return { t: 'sqrt', arg: arg(), idx }; }
+      if (name === 'array') { const g = arg(); return { t: 'array', items: g.items || [g] }; }
+      if (name === 'mathrm' || name === 'text' || name === 'mbox' || name === 'rm') { const g = arg(); return { t: 'up', arg: g }; }
+      if (name === 'left') { const d = s[i++] === '\\' ? s[i++] : s[i - 1]; return { t: 'left', d }; }
+      if (name === 'right') { const d = s[i++] === '\\' ? s[i++] : s[i - 1]; return { t: 'right', d }; }
+      if (TEX_COLORS[name]) return { t: 'color', c: TEX_COLORS[name] };
+      if (/^(tiny|scriptsize|small|normalsize|large|Large|LARGE|huge|Huge|big|Big|bigg|Bigg|displaystyle|limits|nolimits|bf|it|sf|tt|bigl|bigr|Bigl|Bigr|biggl|biggr|textstyle)$/.test(name)) return { t: 'space', w: 0 };
+      if (/^(overline|bar|widehat|hat|widetilde|tilde|vec|overrightarrow|underline)$/.test(name)) return { t: 'accent', kind: name, arg: arg() };
+      if (name === 'quad' || name === 'qquad') return { t: 'space', w: name === 'quad' ? 1 : 2 };
+      if (TEX_FN.includes(name)) return { t: 'run', txt: name, it: false };
+      if (name in TEX_SYM) return { t: 'run', txt: TEX_SYM[name], it: false };
+      return { t: 'run', txt: name, it: false };
+    }
+    for (const fn of TEX_FN) if (s.startsWith(fn, i) && !/[A-Za-z]/.test(s[i + fn.length] || '')) { i += fn.length; return { t: 'run', txt: fn, it: false }; }
+    i++;
+    if (c === ' ') return { t: 'space', w: 0.2 };
+    if (c === '$') return null;
+    return { t: 'run', txt: c, it: /[A-Za-z]/.test(c) };
+  }
+  return seq();
+}
+
+function texLayout(items, sz, color) {
+  // renvoie {w, a, dsc, draw(x,y)}
+  let cur = color; const parts = [];
+  const mk = (it) => {
+    switch (it.t) {
+      case 'color': cur = it.c; return null;
+      case 'left': case 'right': return it.d && it.d !== '.' ? run(it.d === '{' || it.d === '}' ? it.d : it.d, false, cur) : null;
+      case 'space': return { w: sz * it.w, a: 0, dsc: 0, draw: () => '' };
+      case 'run': return run(it.txt, it.it, cur);
+      case 'group': return texLayout(it.items, sz, cur);
+      case 'up': { const b = texLayout(it.arg.items || [it.arg], sz, cur); return b; }
+      case 'sup': case 'sub': {
+        const base = it.base.t === 'run' || it.base.t === 'group' || it.base.t === 'frac' || it.base.t === 'sqrt' ? mk(it.base) : mk(it.base);
+        const sub = texLayout([it.arg.t === 'group' ? it.arg : it.arg], sz * 0.7, cur);
+        const up = it.t === 'sup', dy = up ? -sz * 0.42 : sz * 0.22;
+        const w = base.w + sub.w + sz * 0.04;
+        return { w, a: Math.max(base.a, up ? sz * 0.42 + sub.a : 0), dsc: Math.max(base.dsc, up ? 0 : sz * 0.22 + sub.dsc),
+          draw: (x, y) => base.draw(x, y) + sub.draw(x + base.w + sz * 0.04, y + dy) };
+      }
+      case 'frac': {
+        const n = texLayout([it.n], sz * 0.88, cur), d = texLayout([it.d], sz * 0.88, cur), ax = sz * 0.28, gap = sz * 0.14;
+        const w = Math.max(n.w, d.w) + sz * 0.25, col = cur;
+        return { w, a: ax + gap + n.a + n.dsc, dsc: -ax + gap + d.a + d.dsc,
+          draw: (x, y) => `<path d="M${f2(x + sz * 0.05)} ${f2(y - ax)}H${f2(x + w - sz * 0.05)}" stroke="${col}" stroke-width="${f2(sz * 0.05)}"/>` +
+            n.draw(x + (w - n.w) / 2, y - ax - gap - n.dsc) + d.draw(x + (w - d.w) / 2, y - ax + gap + d.a) };
+      }
+      case 'sqrt': {
+        const b = texLayout([it.arg], sz, cur), col = cur, rw = sz * 0.55, top = b.a + sz * 0.18;
+        const idx = it.idx ? texLayout([{ t: 'run', txt: it.idx, it: false }], sz * 0.5, cur) : null;
+        const iw = idx ? idx.w : 0;
+        return { w: iw + rw + b.w + sz * 0.1, a: top + sz * 0.05, dsc: b.dsc,
+          draw: (x, y) => {
+            const x0 = x + iw;
+            return `<path d="M${f2(x0)} ${f2(y - sz * 0.25)}L${f2(x0 + rw * 0.25)} ${f2(y - sz * 0.3)}L${f2(x0 + rw * 0.55)} ${f2(y + b.dsc)}L${f2(x0 + rw)} ${f2(y - top)}H${f2(x0 + rw + b.w + sz * 0.1)}" fill="none" stroke="${col}" stroke-width="${f2(sz * 0.05)}"/>` +
+              (idx ? idx.draw(x, y - top * 0.5) : '') + b.draw(x0 + rw + sz * 0.02, y);
+          } };
+      }
+      case 'array': { // pile verticale (ex. coefficient binomial)
+        const rows = []; let row = [];
+        for (const e of it.items) { if (e.t === 'nl') { rows.push(row); row = []; } else row.push(e); }
+        rows.push(row);
+        const bs = rows.map(r => texLayout(r, sz * 0.9, cur));
+        const w = Math.max(...bs.map(b => b.w)); let h = 0; const offs = [];
+        bs.forEach(b => { h += b.a; offs.push(h); h += b.dsc + sz * 0.12; });
+        return { w, a: h / 2 + sz * 0.3, dsc: h / 2 - sz * 0.3,
+          draw: (x, y) => bs.map((b, k) => b.draw(x + (w - b.w) / 2, y - (h / 2 - sz * 0.3) + offs[k] + k * 0)).join('') };
+      }
+      case 'accent': {
+        const b = texLayout([it.arg], sz, cur), col = cur, k = it.kind, top = b.a + sz * 0.1;
+        return { w: b.w, a: b.a + sz * 0.2, dsc: k === 'underline' ? b.dsc + sz * 0.15 : b.dsc,
+          draw: (x, y) => {
+            let m;
+            if (k === 'underline') m = `<path d="M${f2(x)} ${f2(y + b.dsc + sz * 0.05)}H${f2(x + b.w)}" stroke="${col}" stroke-width="${f2(sz * 0.05)}"/>`;
+            else if (k === 'overline' || k === 'bar') m = `<path d="M${f2(x)} ${f2(y - top)}H${f2(x + b.w)}" stroke="${col}" stroke-width="${f2(sz * 0.05)}"/>`;
+            else if (k === 'vec' || k === 'overrightarrow') m = `<path d="M${f2(x)} ${f2(y - top)}H${f2(x + b.w)}M${f2(x + b.w - sz * 0.18)} ${f2(y - top - sz * 0.1)}L${f2(x + b.w)} ${f2(y - top)}L${f2(x + b.w - sz * 0.18)} ${f2(y - top + sz * 0.1)}" fill="none" stroke="${col}" stroke-width="${f2(sz * 0.05)}"/>`;
+            else m = `<path d="M${f2(x)} ${f2(y - top)}L${f2(x + b.w / 2)} ${f2(y - top - sz * 0.18)}L${f2(x + b.w)} ${f2(y - top)}" fill="none" stroke="${col}" stroke-width="${f2(sz * 0.05)}"/>`;
+            return b.draw(x, y) + m;
+          } };
+      }
+      default: return null;
+    }
+  };
+  function run(txt, it, col) {
+    const w = measureW(txt, sz, it) + (/^[=+\-<>≤≥≠×±]$/.test(txt) ? sz * 0.3 : 0);
+    const pad = /^[=+\-<>≤≥≠×±]$/.test(txt) ? sz * 0.15 : 0;
+    return { w, a: sz * 0.72, dsc: sz * 0.22,
+      draw: (x, y) => `<text x="${f2(x + pad)}" y="${f2(y)}" font-size="${f2(sz)}" font-family="'Times New Roman',Times,serif"${it ? ' font-style="italic"' : ''} fill="${col}">${esc(txt)}</text>` };
+  }
+  for (const it of items) { const b = mk(it); if (b) parts.push(b); }
+  let w = 0, a = 0, dsc = 0;
+  parts.forEach(p => { w += p.w; a = Math.max(a, p.a); dsc = Math.max(dsc, p.dsc); });
+  return { w, a, dsc, draw: (x, y) => { let s = '', cx = x; for (const p of parts) { s += p.draw(cx, y); cx += p.w; } return s; } };
+}
+
+function texSvg(l, g, d) {
+  const scale = { 1: 0.65, 2: 0.82, 3: 1, 4: 1.2, 5: 1.45 }[l.size] || 1, sz = 12 * MM_PER_PT * scale * 1.1;
+  let src = l.src.trim(), system = false;
+  if (/^\\left\\\{/.test(src)) { system = true; src = src.replace(/^\\left\\\{/, '').replace(/\\right\.\s*$/, ''); }
+  const items = texParse(src);
+  // découpe en lignes
+  const lines = []; let cur = [];
+  for (const it of items) { if (it.t === 'nl') { lines.push(cur); cur = []; } else cur.push(it); }
+  lines.push(cur);
+  let color = '#000';
+  const boxes = lines.map(ln => { const b = texLayout(ln, sz, color); return b; });
+  let y = 0, out = ''; const X = g.X(l.x) + (system ? sz * 0.6 : 0), Y0 = g.Y(l.y);
+  const metrics = [];
+  boxes.forEach((b, k) => { y += b.a; metrics.push(y); y += b.dsc + sz * 0.25; });
+  boxes.forEach((b, k) => { out += b.draw(X, Y0 + metrics[k]); });
+  if (system) {
+    const h = y - sz * 0.25, bx = X - sz * 0.45;
+    out += `<path d="M${f2(bx + sz * 0.3)} ${f2(Y0)}Q${f2(bx)} ${f2(Y0)} ${f2(bx)} ${f2(Y0 + h * 0.2)}V${f2(Y0 + h * 0.42)}Q${f2(bx)} ${f2(Y0 + h / 2)} ${f2(bx - sz * 0.2)} ${f2(Y0 + h / 2)}Q${f2(bx)} ${f2(Y0 + h / 2)} ${f2(bx)} ${f2(Y0 + h * 0.58)}V${f2(Y0 + h * 0.8)}Q${f2(bx)} ${f2(Y0 + h)} ${f2(bx + sz * 0.3)} ${f2(Y0 + h)}" fill="none" stroke="#000" stroke-width="${f2(sz * 0.06)}"/>`;
+  }
+  return `<g>${out}</g>`;
+}
+/* ---------- 6. Compléments : dérivée, primitive, point par point, figures, statistiques, probabilités,
+   arbres, suites, intégrales, inéquations, courbes implicites (coniques), tableaux, rapporteur, calculs ---------- */
+
+const fmtC = (v, n = 4) => { // nombre -> texte français
+  if (!Number.isFinite(v)) return String(v);
+  let r = Number(v.toPrecision(n)); return String(r).replace('.', ',').replace('-', '-');
+};
+const rowsOf = txt => String(txt || '').split(/\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'))
+  .map(l => l.split(/[;\t]|\s+/).filter(x => x !== '').map(x => parseNum(x, NaN)));
+const linesOf = txt => String(txt || '').split(/\n/).map(l => l.replace(/\s+$/, '')).filter(l => l.trim() !== '');
+const exStroke = (e, w = 1) => ({ col: tcolor(e.couleur), w: lineWidth(e.ep) * w, style: e.style || 0 });
+const T_ = (x, y, txt, o = {}) => `<text x="${f2(x)}" y="${f2(y)}" font-size="${f2((o.size || 10) * MM_PER_PT)}" font-family="${o.font || "'Times New Roman',Times,serif"}"${o.italic ? ' font-style="italic"' : ''}${o.bold ? ' font-weight="bold"' : ''} fill="${o.col || '#000'}" text-anchor="${o.anchor || 'start'}"${o.rot ? ` transform="rotate(${o.rot} ${f2(x)} ${f2(y)})"` : ''}>${esc(txt)}</text>`;
+function fnOf(src, ctx) { // « f1 » ou expression en x
+  const s = String(src || '').trim(); if (!s) throw new Error('Expression vide');
+  const fn = compileExpr(s, ctx.F, 10); return x => fn(x, 0, 0);
+}
+function visibleX(d, g) { return [g.xOf(-5), g.xOf(d.W + 5)]; }
+const lineSeg = (a, b, col, w, dash = '') => `<path d="M${f2(a[0])} ${f2(a[1])}L${f2(b[0])} ${f2(b[1])}" stroke="${col}" stroke-width="${f2(w)}" fill="none"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
+function mean(a) { return a.reduce((s, v) => s + v, 0) / a.length; }
+function median(sorted) { const n = sorted.length; return n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2; }
+function erf(x) { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return s * y; }
+const normCdf = (x, m, s) => 0.5 * (1 + erf((x - m) / (s * Math.SQRT2)));
+const normPdf = (x, m, s) => Math.exp(-0.5 * ((x - m) / s) ** 2) / (s * Math.sqrt(2 * Math.PI));
+const binomPmf = (k, n, p) => k < 0 || k > n ? 0 : p <= 0 ? (k === 0 ? 1 : 0) : p >= 1 ? (k === n ? 1 : 0)
+  : Math.exp(lnGamma(n + 1) - lnGamma(k + 1) - lnGamma(n - k + 1) + k * Math.log(p) + (n - k) * Math.log(1 - p));
+const poisPmf = (k, l) => k < 0 ? 0 : Math.exp(-l + k * Math.log(l) - lnGamma(k + 1));
+function solveLin(A, b) { // gauss
+  const n = b.length; A = A.map(r => r.slice()); b = b.slice();
+  for (let i = 0; i < n; i++) { let m = i; for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[m][i])) m = r;
+    [A[i], A[m]] = [A[m], A[i]]; [b[i], b[m]] = [b[m], b[i]];
+    for (let r = i + 1; r < n; r++) { const f = A[r][i] / A[i][i]; for (let c = i; c < n; c++) A[r][c] -= f * A[i][c]; b[r] -= f * b[i]; } }
+  const x = Array(n).fill(0); for (let i = n - 1; i >= 0; i--) { let s = b[i]; for (let c = i + 1; c < n; c++) s -= A[i][c] * x[c]; x[i] = s / A[i][i]; } return x;
+}
+const arrowSvg = (a, b, col, w = 0.4) => {
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+  return `<path d="M${f2(a[0])} ${f2(a[1])}L${f2(b[0])} ${f2(b[1])}" stroke="${col}" stroke-width="${f2(w)}" fill="none"/>` + arrowHead(b[0], b[1], ang, col, 2.6);
+};
+
+const EX = {};
+const STY = [[0, 'Continu'], [1, 'Tirets'], [2, 'Pointillés']];
+
+/* --- dérivée --- */
+EX.deriv = { label: 'Courbe dérivée', def: () => ({ src: 'f1', couleur: 255, ep: 2, style: 0 }),
+  fields: [['src', 'dérivée de (f1… ou expression)', 'text', 'grow'], ['couleur', 'couleur', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY]],
+  render(e, d, g, ctx) { const f = fnOf(e.src, ctx), h = 1e-5; return drawPolyline(sampleFn(x => (f(x + h) - f(x - h)) / (2 * h), d, g, 800), exStroke(e)); } };
+
+/* --- primitive --- */
+EX.prim = { label: 'Primitive passant par un point', def: () => ({ src: 'f1', x0: 0, y0: 0, couleur: 32768, ep: 2, style: 0 }),
+  fields: [['src', 'primitive de', 'text', 'grow'], ['x0', 'x₀', 'num', 'w3'], ['y0', 'F(x₀)', 'num', 'w3'], ['couleur', 'couleur', 'color'], ['ep', 'épaisseur', 'num', 'w3']],
+  render(e, d, g, ctx) {
+    const f = fnOf(e.src, ctx), [a, b] = visibleX(d, g), N = 1200, xs = Array.from({ length: N + 1 }, (_, i) => a + (b - a) * i / N);
+    let i0 = 0; xs.forEach((x, i) => { if (Math.abs(x - e.x0) < Math.abs(xs[i0] - e.x0)) i0 = i; });
+    const val = Array(N + 1).fill(NaN); val[i0] = e.y0;
+    const stepI = (x1, x2) => { const m = (x1 + x2) / 2; return (x2 - x1) / 6 * (f(x1) + 4 * f(m) + f(x2)); };
+    for (let i = i0 + 1; i <= N; i++) val[i] = val[i - 1] + stepI(xs[i - 1], xs[i]);
+    for (let i = i0 - 1; i >= 0; i--) val[i] = val[i + 1] - stepI(xs[i], xs[i + 1]);
+    const pts = xs.map((x, i) => Number.isFinite(val[i]) ? [g.X(x), clamp(g.Y(val[i]), -1e4, 1e4)] : null);
+    return drawPolyline(breakJumps(pts, d.H), exStroke(e));
+  } };
+
+/* --- point par point --- */
+EX.pbp = { label: 'Courbe point par point', def: () => ({ data: '0;0\n1;2\n2;1\n3;3\n4;2', mode: 'lisse', marks: true, couleur: 16711680, ep: 2, style: 0 }),
+  fields: [['data', 'points (x;y, un par ligne)', 'area', 'grow'], 'br', ['mode', 'tracé', 'sel', 'w2', [['seg', 'Segments'], ['lisse', 'Courbe lissée']]], ['marks', 'croix sur les points', 'chk'],
+    ['couleur', 'couleur', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY]],
+  render(e, d, g) {
+    const P = rowsOf(e.data).filter(r => r.length >= 2 && r.every(Number.isFinite)).map(r => [g.X(r[0]), g.Y(r[1])]), st = exStroke(e); let s = '';
+    if (P.length >= 2) {
+      if (e.mode === 'seg') s += drawPolyline(P, st);
+      else {
+        let dstr = `M${f2(P[0][0])} ${f2(P[0][1])}`;
+        for (let i = 0; i < P.length - 1; i++) {
+          const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
+          dstr += `C${f2(p1[0] + (p2[0] - p0[0]) / 6)} ${f2(p1[1] + (p2[1] - p0[1]) / 6)} ${f2(p2[0] - (p3[0] - p1[0]) / 6)} ${f2(p2[1] - (p3[1] - p1[1]) / 6)} ${f2(p2[0])} ${f2(p2[1])}`;
+        }
+        s += `<path d="${dstr}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w)}"${st.style === 1 ? ' stroke-dasharray="2 1"' : st.style === 2 ? ' stroke-dasharray="0.5 1"' : ''}/>`;
+      }
+    }
+    if (e.marks) P.forEach(p => { s += `<path d="M${f2(p[0] - 1.1)} ${f2(p[1] - 1.1)}l2.2 2.2M${f2(p[0] - 1.1)} ${f2(p[1] + 1.1)}l2.2 -2.2" stroke="${st.col}" stroke-width="0.3"/>`; });
+    return s;
+  } };
+
+/* --- figures géométriques --- */
+const SHAPES = [['cercle', 'Cercle  (cx;cy;r)'], ['ellipse', 'Ellipse  (cx;cy;a;b;angle°)'], ['vecteur', 'Vecteur  (x1;y1;x2;y2)'], ['demidroite', 'Demi-droite  (x1;y1;x2;y2)'],
+  ['polygone', 'Polygone  (un sommet x;y par ligne)'], ['arc', 'Arc / angle  (cx;cy;r;angle1°;angle2°)'], ['bezier', 'Courbe de Bézier  (points de contrôle, un par ligne)'], ['segments', 'Ligne brisée  (un point par ligne)']];
+EX.shape = { label: 'Figure (cercle, polygone, vecteur…)', def: () => ({ kind: 'cercle', data: '0;0;2', couleur: 0, ep: 2, style: 0, fill: false, fillCol: 16776960, opa: 0.35, nom: '' }),
+  fields: [['kind', 'figure', 'sel', 'grow', SHAPES], ['data', 'données', 'area', 'grow'], 'br', ['couleur', 'trait', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY],
+    ['fill', 'remplir', 'chk'], ['fillCol', 'fond', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['nom', 'nom', 'text', 'w3']],
+  render(e, d, g) {
+    const R = rowsOf(e.data), st = exStroke(e), col = st.col, w = st.w, dash = st.style === 1 ? ' stroke-dasharray="2 1"' : st.style === 2 ? ' stroke-dasharray="0.5 1"' : '';
+    const fill = e.fill ? `fill="${tcolor(e.fillCol)}" fill-opacity="${e.opa}"` : 'fill="none"';
+    const r0 = R[0] || [], K = e.kind; let s = '', label = null;
+    const sx = g.lx / g.ux, sy = g.ly / g.uy;
+    if (K === 'cercle') { const [cx, cy, r] = r0; s = `<ellipse cx="${f2(g.X(cx))}" cy="${f2(g.Y(cy))}" rx="${f2(Math.abs(r * sx))}" ry="${f2(Math.abs(r * sy))}" ${fill} stroke="${col}" stroke-width="${f2(w)}"${dash}/>`; label = [g.X(cx), g.Y(cy)]; }
+    else if (K === 'ellipse') { const [cx, cy, a, b, ang = 0] = r0; s = `<ellipse cx="${f2(g.X(cx))}" cy="${f2(g.Y(cy))}" rx="${f2(Math.abs(a * sx))}" ry="${f2(Math.abs(b * sy))}" transform="rotate(${-ang} ${f2(g.X(cx))} ${f2(g.Y(cy))})" ${fill} stroke="${col}" stroke-width="${f2(w)}"${dash}/>`; label = [g.X(cx), g.Y(cy)]; }
+    else if (K === 'vecteur') { const [x1, y1, x2, y2] = r0; s = arrowSvg([g.X(x1), g.Y(y1)], [g.X(x2), g.Y(y2)], col, w); label = [g.X(x2), g.Y(y2)]; }
+    else if (K === 'demidroite') { const [x1, y1, x2, y2] = r0, A = [g.X(x1), g.Y(y1)], B = [g.X(x2), g.Y(y2)], L = (d.W + d.H) * 2, n = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
+      s = lineSeg(A, [A[0] + (B[0] - A[0]) / n * L, A[1] + (B[1] - A[1]) / n * L], col, w, dash ? '2 1' : ''); label = A; }
+    else if (K === 'polygone' || K === 'segments') { const P = R.filter(r => r.length >= 2).map(r => [g.X(r[0]), g.Y(r[1])]);
+      if (P.length >= 2) s = `<path d="M${P.map(p => f2(p[0]) + ' ' + f2(p[1])).join('L')}${K === 'polygone' ? 'Z' : ''}" ${K === 'polygone' ? fill : 'fill="none"'} stroke="${col}" stroke-width="${f2(w)}" stroke-linejoin="round"${dash}/>`; label = P[0]; }
+    else if (K === 'arc') { const [cx, cy, r, a1, a2] = r0, A = a1 * Math.PI / 180, B = a2 * Math.PI / 180, N = 60; const pts = [];
+      for (let i = 0; i <= N; i++) { const t = A + (B - A) * i / N; pts.push([g.X(cx + r * Math.cos(t)), g.Y(cy + r * Math.sin(t))]); }
+      s = `<path d="M${pts.map(p => f2(p[0]) + ' ' + f2(p[1])).join('L')}" ${fill} stroke="${col}" stroke-width="${f2(w)}"${dash}/>`; label = pts[N >> 1]; }
+    else if (K === 'bezier') { const P = R.filter(r => r.length >= 2).map(r => [g.X(r[0]), g.Y(r[1])]);
+      if (P.length >= 3) { const cmd = P.length === 3 ? 'Q' : 'C'; s = `<path d="M${f2(P[0][0])} ${f2(P[0][1])}${cmd}${P.slice(1, 4).map(p => f2(p[0]) + ' ' + f2(p[1])).join(' ')}" fill="none" stroke="${col}" stroke-width="${f2(w)}"${dash}/>`; } label = P[0]; }
+    if (e.nom && label) s += T_(label[0] + 1.5, label[1] - 1.5, e.nom, { italic: true });
+    return s;
+  } };
+
+/* --- statistiques à une variable --- */
+function stat1Data(e) { // renvoie {vals:[[x,eff]], classes:[[a,b,eff]], all:[valeurs]}
+  const R = rowsOf(e.data).filter(r => r.every(Number.isFinite));
+  if (e.mode === 'histo') { const cl = R.filter(r => r.length >= 3); return { classes: cl, all: [] }; }
+  const map = new Map(); R.forEach(r => { map.set(r[0], (map.get(r[0]) || 0) + (r.length >= 2 ? r[1] : 1)); });
+  const vals = [...map.entries()].sort((a, b) => a[0] - b[0]); const all = []; vals.forEach(([x, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push(x); });
+  return { vals, all };
+}
+function quart(sorted, q) { const n = sorted.length; return sorted[Math.max(0, Math.ceil(n * q) - 1)]; }
+EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons', data: '1;3\n2;5\n3;8\n4;4\n5;2', ky: 1, y0: -2, h: 1.2, showStats: true, sx: 0, sy: 0, couleur: 16711680, couleur2: 16777181, ep: 3, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }),
+  fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['cumul', 'Polygone des effectifs cumulés croissants']]],
+    ['data', 'données (une ligne par valeur)', 'area', 'grow'], 'br', ['ky', 'échelle verticale', 'num', 'w2', { step: 0.1 }], ['y0', 'boîte : y', 'num', 'w3', { step: 0.5 }], ['h', 'boîte : hauteur', 'num', 'w3', { step: 0.1 }], 'br',
+    ['couleur', 'trait', 'color'], ['couleur2', 'remplissage', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['showStats', 'afficher moyenne, médiane, écart-type', 'chk'], ['sx', 'x', 'num', 'w3', { step: 0.1 }], ['sy', 'y', 'num', 'w3', { step: 0.1 }], 'br',
+    ['sim', 'simulation', 'sel', 'w2', [['bin', 'Binomiale (n;p)'], ['unif', 'Uniforme entière (1..A)'], ['bern', 'Bernoulli (p)'], ['norm', 'Normale (μ;σ)'], ['geo', 'Géométrique (p)'], ['pois', 'Poisson (λ)']]],
+    ['simN', 'nb tirages', 'num', 'w3'], ['simA', 'A / n / μ / λ', 'num', 'w3', { step: 0.1 }], ['simB', 'p / σ', 'num', 'w3', { step: 0.05 }],
+    ['@sim', 'Simuler → remplir les données', 'btn']],
+  action(e, name) {
+    if (name !== '@sim') return; const out = []; const rnd = Math.random, N = Math.min(100000, e.simN | 0);
+    const norm = () => Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd());
+    for (let i = 0; i < N; i++) {
+      let v; if (e.sim === 'bin') { v = 0; for (let k = 0; k < e.simA; k++) v += rnd() < e.simB ? 1 : 0; } else if (e.sim === 'unif') v = 1 + Math.floor(rnd() * e.simA);
+      else if (e.sim === 'bern') v = rnd() < e.simA ? 1 : 0; else if (e.sim === 'norm') v = Math.round((e.simA + e.simB * norm()) * 100) / 100;
+      else if (e.sim === 'geo') { v = 1; while (rnd() > e.simA && v < 1e4) v++; } else { let L = Math.exp(-e.simA), k = 0, p = 1; do { k++; p *= rnd(); } while (p > L); v = k - 1; }
+      out.push(v);
+    }
+    if (e.sim === 'norm') { e.data = out.map(v => v).join('\n'); e.mode = 'boite'; } else { const m = new Map(); out.forEach(v => m.set(v, (m.get(v) || 0) + 1)); e.data = [...m.entries()].sort((a, b) => a[0] - b[0]).map(([k, n]) => k + ';' + n).join('\n'); e.mode = 'batons'; }
+  },
+  render(e, d, g) {
+    const D = stat1Data(e), st = exStroke(e), fillc = tcolor(e.couleur2); let s = '', all = D.all, info = '';
+    if (e.mode === 'batons') {
+      for (const [x, n] of D.vals) s += lineSeg([g.X(x), g.Y(0)], [g.X(x), g.Y(n * e.ky)], st.col, st.w * 1.6);
+    } else if (e.mode === 'histo') {
+      for (const [a, b, n] of D.classes) { const hgt = n / (b - a) * e.ky; s += `<rect x="${f2(g.X(a))}" y="${f2(g.Y(hgt))}" width="${f2(g.X(b) - g.X(a))}" height="${f2(g.Y(0) - g.Y(hgt))}" fill="${fillc}" stroke="${st.col}" stroke-width="${f2(st.w * 0.6)}"/>`; }
+      D.classes.forEach(([a, b, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push((a + b) / 2); });
+    } else if (e.mode === 'boite' && all.length) {
+      const v = all.slice().sort((a, b) => a - b), q1 = quart(v, 0.25), q3 = quart(v, 0.75), md = median(v), mn = v[0], mx = v[v.length - 1];
+      const y1 = g.Y(e.y0 - e.h / 2), y2 = g.Y(e.y0 + e.h / 2), ym = g.Y(e.y0);
+      s += `<rect x="${f2(g.X(q1))}" y="${f2(Math.min(y1, y2))}" width="${f2(g.X(q3) - g.X(q1))}" height="${f2(Math.abs(y1 - y2))}" fill="${fillc}" stroke="${st.col}" stroke-width="${f2(st.w * 0.7)}"/>` +
+        lineSeg([g.X(md), y1], [g.X(md), y2], st.col, st.w) + lineSeg([g.X(mn), ym], [g.X(q1), ym], st.col, st.w * 0.7) + lineSeg([g.X(q3), ym], [g.X(mx), ym], st.col, st.w * 0.7) +
+        lineSeg([g.X(mn), (y1 + ym) / 2 + (ym - y1) * 0], [g.X(mn), (2 * ym - y1 + ym) / 2], st.col, st.w * 0.7) + lineSeg([g.X(mx), y1 * 0.5 + ym * 0.5], [g.X(mx), y2 * 0.5 + ym * 0.5], st.col, st.w * 0.7);
+      info = `min=${fmtC(mn)}  Q1=${fmtC(q1)}  méd=${fmtC(md)}  Q3=${fmtC(q3)}  max=${fmtC(mx)}`;
+    } else if (e.mode === 'cumul') {
+      let c = 0; const pts = [[g.X(D.vals[0] ? D.vals[0][0] : 0), g.Y(0)]]; for (const [x, n] of D.vals) { c += n; pts.push([g.X(x), g.Y(c * e.ky)]); }
+      s += drawPolyline(pts, st) + pts.map(p => `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="0.9" fill="${st.col}"/>`).join('');
+    }
+    if (e.showStats && all.length) {
+      const m = mean(all), sd = Math.sqrt(mean(all.map(v => (v - m) ** 2))), sorted = all.slice().sort((a, b) => a - b);
+      const txt = [`N = ${all.length}`, `moyenne = ${fmtC(m)}`, `médiane = ${fmtC(median(sorted))}`, `écart-type = ${fmtC(sd)}`, ...(info ? [info] : [])];
+      txt.forEach((t, i) => { s += T_(g.X(e.sx), g.Y(e.sy) + 4 * i, t, { size: 9 }); });
+    }
+    return s;
+  } };
+
+/* --- statistiques à deux variables --- */
+EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: () => ({ data: '1;2.1\n2;3.9\n3;6.2\n4;7.8\n5;10.1\n6;12.2', fit: 'lin', cloud: true, gpoint: true, show: true, tx: 0, ty: 0, couleur: 16711680, couleur2: 255, ep: 2 }),
+  fields: [['data', 'points (x;y)', 'area', 'grow'], 'br', ['fit', 'ajustement', 'sel', 'grow', [['none', 'Aucun'], ['lin', 'Droite des moindres carrés'], ['mayer', 'Droite de Mayer'], ['exp', 'Exponentielle  y = a·eᵇˣ'], ['pow', 'Puissance  y = a·xᵇ'], ['par', 'Parabole  y = ax²+bx+c']]],
+    ['cloud', 'nuage', 'chk'], ['gpoint', 'point moyen G', 'chk'], ['show', 'afficher l’équation', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'points', 'color'], ['couleur2', 'courbe', 'color'], ['ep', 'épaisseur', 'num', 'w3']],
+  render(e, d, g) {
+    const P = rowsOf(e.data).filter(r => r.length >= 2 && r.every(Number.isFinite)); let s = ''; if (!P.length) return s;
+    const xs = P.map(p => p[0]), ys = P.map(p => p[1]), n = P.length, mx = mean(xs), my = mean(ys), c1 = tcolor(e.couleur), c2 = tcolor(e.couleur2); let f = null, eq = '', r2 = null;
+    const lin = (X, Y) => { const mX = mean(X), mY = mean(Y); const sxy = mean(X.map((v, i) => v * Y[i])) - mX * mY, sxx = mean(X.map(v => v * v)) - mX * mX; const a = sxy / sxx, b = mY - a * mX; const syy = mean(Y.map(v => v * v)) - mY * mY; return { a, b, r: sxy / Math.sqrt(sxx * syy) }; };
+    if (e.fit === 'lin' && n >= 2) { const r = lin(xs, ys); f = x => r.a * x + r.b; eq = `y = ${fmtC(r.a)}x ${r.b < 0 ? '-' : '+'} ${fmtC(Math.abs(r.b))}   (r = ${fmtC(r.r)})`; }
+    else if (e.fit === 'mayer' && n >= 4) { const idx = P.map((p, i) => i).sort((a, b) => xs[a] - xs[b]), h = Math.floor(n / 2); const A = idx.slice(0, h), B = idx.slice(n - h);
+      const g1 = [mean(A.map(i => xs[i])), mean(A.map(i => ys[i]))], g2 = [mean(B.map(i => xs[i])), mean(B.map(i => ys[i]))]; const a = (g2[1] - g1[1]) / (g2[0] - g1[0]), b = g1[1] - a * g1[0];
+      f = x => a * x + b; eq = `y = ${fmtC(a)}x ${b < 0 ? '-' : '+'} ${fmtC(Math.abs(b))}  (Mayer)`;
+      s += [g1, g2].map(G => `<circle cx="${f2(g.X(G[0]))}" cy="${f2(g.Y(G[1]))}" r="1.1" fill="${c2}"/>`).join(''); }
+    else if (e.fit === 'exp' && ys.every(v => v > 0) && n >= 2) { const r = lin(xs, ys.map(Math.log)), a = Math.exp(r.b); f = x => a * Math.exp(r.a * x); eq = `y = ${fmtC(a)}·e^(${fmtC(r.a)}x)`; }
+    else if (e.fit === 'pow' && ys.every(v => v > 0) && xs.every(v => v > 0) && n >= 2) { const r = lin(xs.map(Math.log), ys.map(Math.log)), a = Math.exp(r.b); f = x => a * Math.pow(x, r.a); eq = `y = ${fmtC(a)}·x^${fmtC(r.a)}`; }
+    else if (e.fit === 'par' && n >= 3) { const S = k => xs.reduce((t, x) => t + Math.pow(x, k), 0), Sy = k => xs.reduce((t, x, i) => t + Math.pow(x, k) * ys[i], 0);
+      const [a, b, c] = solveLin([[S(4), S(3), S(2)], [S(3), S(2), S(1)], [S(2), S(1), n]], [Sy(2), Sy(1), Sy(0)]); f = x => a * x * x + b * x + c; eq = `y = ${fmtC(a)}x² ${b < 0 ? '-' : '+'} ${fmtC(Math.abs(b))}x ${c < 0 ? '-' : '+'} ${fmtC(Math.abs(c))}`; }
+    if (f) s += drawPolyline(sampleFn(f, d, g, 600), { col: c2, w: lineWidth(e.ep), style: 0 });
+    if (e.cloud) P.forEach(p => { const X = g.X(p[0]), Y = g.Y(p[1]); s += `<path d="M${f2(X - 1.2)} ${f2(Y - 1.2)}l2.4 2.4M${f2(X - 1.2)} ${f2(Y + 1.2)}l2.4 -2.4" stroke="${c1}" stroke-width="0.35"/>`; });
+    if (e.gpoint) s += `<circle cx="${f2(g.X(mx))}" cy="${f2(g.Y(my))}" r="1.3" fill="${c1}"/>` + T_(g.X(mx) + 1.8, g.Y(my) - 1.8, 'G', { italic: true, size: 10, col: c1 });
+    if (e.show && eq) s += T_(g.X(e.tx), g.Y(e.ty), eq, { size: 10, col: c2 });
+    return s;
+  } };
+
+/* --- lois de probabilité --- */
+EX.loi = { label: 'Loi de probabilité', def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
+  fields: [['kind', 'loi', 'sel', 'grow', [['bin', 'Binomiale B(n ; p)'], ['poi', 'Poisson P(λ)'], ['nor', 'Normale N(μ ; σ)'], ['exp', 'Exponentielle E(λ)'], ['uni', 'Uniforme sur [a ; b]']]],
+    ['p1', 'n / λ / μ / a', 'num', 'w3', { step: 0.1 }], ['p2', 'p / σ / b', 'num', 'w3', { step: 0.05 }], 'br', ['zone', 'colorier P(a ≤ X ≤ b)', 'chk'], ['a', 'a', 'num', 'w3', { step: 0.5 }], ['b', 'b', 'num', 'w3', { step: 0.5 }],
+    ['ky', 'échelle verticale', 'num', 'w3', { step: 1 }], 'br', ['label', 'afficher la probabilité', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'trait', 'color'], ['couleur2', 'zone', 'color'], ['ep', 'ép.', 'num', 'w3']],
+  render(e, d, g) {
+    const st = exStroke(e), fc = tcolor(e.couleur2); let s = '', prob = NaN, name = ''; const K = e.kind;
+    if (K === 'bin' || K === 'poi') {
+      const n = K === 'bin' ? Math.round(e.p1) : Math.ceil(e.p1 + 6 * Math.sqrt(e.p1) + 10), pm = k => K === 'bin' ? binomPmf(k, n, e.p2) : poisPmf(k, e.p1);
+      prob = 0; for (let k = 0; k <= n; k++) { const v = pm(k), inz = e.zone && k >= Math.ceil(e.a - 1e-9) && k <= Math.floor(e.b + 1e-9); if (inz) prob += v;
+        const X0 = g.X(k - 0.4), X1 = g.X(k + 0.4), Y0 = g.Y(0), Y1 = g.Y(v * e.ky); if (Y0 - Y1 < 0.05) continue;
+        s += `<rect x="${f2(X0)}" y="${f2(Y1)}" width="${f2(X1 - X0)}" height="${f2(Y0 - Y1)}" fill="${inz ? fc : 'none'}" stroke="${st.col}" stroke-width="${f2(st.w * 0.6)}"/>`; }
+      name = K === 'bin' ? `B(${n} ; ${fmtC(e.p2)})` : `P(${fmtC(e.p1)})`;
+    } else {
+      const pdf = K === 'nor' ? x => normPdf(x, e.p1, e.p2) : K === 'exp' ? x => x < 0 ? 0 : e.p1 * Math.exp(-e.p1 * x) : x => x >= e.p1 && x <= e.p2 ? 1 / (e.p2 - e.p1) : 0;
+      const cdf = K === 'nor' ? x => normCdf(x, e.p1, e.p2) : K === 'exp' ? x => x < 0 ? 0 : 1 - Math.exp(-e.p1 * x) : x => clamp((x - e.p1) / (e.p2 - e.p1), 0, 1);
+      if (e.zone) { prob = cdf(e.b) - cdf(e.a); const N = 120, pts = []; for (let i = 0; i <= N; i++) { const x = e.a + (e.b - e.a) * i / N; pts.push(f2(g.X(x)) + ' ' + f2(g.Y(pdf(x) * e.ky))); }
+        s += `<path d="M${f2(g.X(e.a))} ${f2(g.Y(0))}L${pts.join('L')}L${f2(g.X(e.b))} ${f2(g.Y(0))}Z" fill="${fc}" fill-opacity="0.6" stroke="none"/>`; }
+      s += drawPolyline(sampleFn(x => pdf(x) * e.ky, d, g, 700), st);
+      name = K === 'nor' ? `N(${fmtC(e.p1)} ; ${fmtC(e.p2)}²)` : K === 'exp' ? `E(${fmtC(e.p1)})` : `U([${fmtC(e.p1)} ; ${fmtC(e.p2)}])`;
+    }
+    if (e.label) s += T_(g.X(e.lx), g.Y(e.ly), name + (Number.isFinite(prob) && e.zone ? `   P(${fmtC(e.a)} ≤ X ≤ ${fmtC(e.b)}) ≈ ${fmtC(prob)}` : ''), { size: 10 });
+    return s;
+  } };
+
+/* --- arbre de probabilités --- */
+function parseTree(txt) {
+  const root = { name: 'Ω', p: 1, ch: [], depth: 0 }, stack = [root];
+  for (const raw of linesOf(txt)) {
+    const lvl = Math.floor(raw.match(/^[ \t]*/)[0].replace(/\t/g, '  ').length / 2), toks = raw.trim().split(/\s+/);
+    const last = toks[toks.length - 1], pv = evalConst(last, NaN); let name = toks.slice(0, -1).join(' '), p = pv;
+    if (!Number.isFinite(pv)) { name = toks.join(' '); p = NaN; }
+    const node = { name, p, ch: [], depth: lvl + 1 }; while (stack.length > lvl + 1) stack.pop(); stack[stack.length - 1].ch.push(node); stack.length = lvl + 1; stack.push(node);
+  }
+  return root;
+}
+EX.arbre = { label: 'Arbre de probabilités', def: () => ({ data: 'A 0.3\n  B 0.4\n  B̄ 0.6\nĀ 0.7\n  B 0.2\n  B̄ 0.8', ox: 12, oy: 12, w: 110, h: 70, leaves: true, couleur: 0, couleur2: 8388608, size: 11 }),
+  fields: [['data', 'arbre : une branche par ligne « nom probabilité », 2 espaces par niveau', 'area', 'grow'], 'br', ['ox', 'x (mm)', 'num', 'w3'], ['oy', 'y (mm)', 'num', 'w3'], ['w', 'largeur', 'num', 'w3'], ['h', 'hauteur', 'num', 'w3'], ['size', 'taille', 'num', 'w3'],
+    ['leaves', 'probabilités des chemins', 'chk'], ['couleur', 'branches', 'color'], ['couleur2', 'probabilités', 'color']],
+  render(e) {
+    const root = parseTree(e.data); let maxD = 0, leaves = 0; (function w(n) { maxD = Math.max(maxD, n.depth); if (!n.ch.length) n.leaf = leaves++; n.ch.forEach(w); })(root);
+    if (!leaves) return ''; const colW = e.w / (maxD + (e.leaves ? 1.2 : 0.6)), sz = e.size, col = tcolor(e.couleur), pc = tcolor(e.couleur2); let s = '';
+    const yOf = n => n.ch.length ? mean(n.ch.map(yOf)) : e.oy + (n.leaf + 0.5) * e.h / leaves, xOf = n => e.ox + n.depth * colW;
+    (function draw(n, prod) {
+      n.ch.forEach(c => {
+        const pr = (Number.isFinite(c.p) ? c.p : 0), A = [xOf(n) + 1, yOf(n)], B = [xOf(c) - 1, yOf(c)];
+        s += lineSeg(A, B, col, 0.35) + T_((A[0] + B[0]) / 2, (A[1] + B[1]) / 2 - 1.3 + (B[1] > A[1] ? 0 : -0.3), Number.isFinite(c.p) ? fmtC(c.p) : '', { size: sz * 0.8, col: pc, anchor: 'middle' });
+        s += T_(B[0] + 1.2, B[1] + sz * 0.12, c.name, { size: sz, italic: true });
+        if (!c.ch.length && e.leaves) s += T_(e.ox + (maxD + 0.55) * colW, B[1] + sz * 0.12, 'P = ' + fmtC(prod * pr), { size: sz * 0.85, col: pc });
+        draw(c, prod * pr);
+      });
+    })(root, 1);
+    s += `<circle cx="${f2(e.ox)}" cy="${f2(yOf(root))}" r="1" fill="${col}"/>`; return s;
+  } };
+
+/* --- suites --- */
+EX.suite = { label: 'Suite numérique', def: () => ({ mode: 'expl', src: '1/(x+1)', u0: 1, n0: 0, n1: 12, couleur: 16711680, couleur2: 32768, ep: 2, curve: true }),
+  fields: [['mode', 'type', 'sel', 'grow', [['expl', 'u(n) = f(n)'], ['rec', 'u(n+1) = f(u(n))   (points)'], ['toile', 'u(n+1) = f(u(n))   (escalier / toile d’araignée)']]], ['src', 'f(x)', 'text', 'grow'], 'br',
+    ['u0', 'u(n₀)', 'num', 'w3', { step: 0.1 }], ['n0', 'n₀', 'num', 'w3'], ['n1', 'n max', 'num', 'w3'], ['curve', 'tracer y=f(x) et y=x', 'chk'], ['couleur', 'points', 'color'], ['couleur2', 'courbe', 'color'], ['ep', 'ép.', 'num', 'w3']],
+  render(e, d, g, ctx) {
+    const f = fnOf(e.src, ctx), c1 = tcolor(e.couleur), c2 = tcolor(e.couleur2); let s = ''; const N = clamp(Math.round(e.n1), e.n0, e.n0 + 500), dot = (X, Y) => `<circle cx="${f2(X)}" cy="${f2(Y)}" r="1.1" fill="${c1}"/>`;
+    if (e.mode === 'expl') { for (let n = e.n0; n <= N; n++) { const v = f(n); if (Number.isFinite(v)) s += dot(g.X(n), g.Y(v)); } return s; }
+    const u = [e.u0]; for (let n = e.n0; n < N; n++) u.push(f(u[u.length - 1]));
+    if (e.mode === 'rec') { u.forEach((v, i) => { if (Number.isFinite(v)) s += dot(g.X(e.n0 + i), g.Y(v)); }); return s; }
+    if (e.curve) s += drawPolyline(sampleFn(f, d, g, 500), { col: c2, w: lineWidth(e.ep), style: 0 }) + lineSeg([g.X(g.xOf(-5)), g.Y(g.xOf(-5))], [g.X(g.xOf(d.W + 5)), g.Y(g.xOf(d.W + 5))], '#666', 0.3);
+    let path = `M${f2(g.X(u[0]))} ${f2(g.Y(0))}`; for (let i = 0; i < u.length - 1; i++) { if (!Number.isFinite(u[i]) || !Number.isFinite(u[i + 1])) break; path += `L${f2(g.X(u[i]))} ${f2(g.Y(u[i + 1]))}L${f2(g.X(u[i + 1]))} ${f2(g.Y(u[i + 1]))}`; }
+    s += `<path d="${path}" fill="none" stroke="${c1}" stroke-width="0.3"/>`; u.slice(0, 12).forEach((v, i) => { s += T_(g.X(v) + 0.8, g.Y(0) + 4, 'u' + (e.n0 + i), { size: 7, col: c1 }); });
+    return s;
+  } };
+
+/* --- intégrale --- */
+EX.integ = { label: 'Intégrale (aire, rectangles, trapèzes)', def: () => ({ src: 'f1', a: 0, b: 2, mode: 'aire', n: 8, couleur: 255, couleur2: 16776960, opa: 0.4, ep: 2, label: true, lx: 0, ly: 0 }),
+  fields: [['src', 'f(x)', 'text', 'grow'], ['a', 'a', 'num', 'w3', { step: 0.1 }], ['b', 'b', 'num', 'w3', { step: 0.1 }], 'br', ['mode', 'méthode', 'sel', 'grow', [['aire', 'Aire sous la courbe'], ['gauche', 'Rectangles à gauche'], ['droite', 'Rectangles à droite'], ['milieu', 'Rectangles au milieu'], ['trap', 'Trapèzes']]],
+    ['n', 'nb de subdivisions', 'num', 'w3'], 'br', ['couleur', 'contour', 'color'], ['couleur2', 'remplissage', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['label', 'afficher la valeur', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }]],
+  render(e, d, g, ctx) {
+    const f = fnOf(e.src, ctx), a = e.a, b = e.b, st = exStroke(e), fill = `fill="${tcolor(e.couleur2)}" fill-opacity="${e.opa}"`; let s = '', approx = 0; const n = clamp(Math.round(e.n), 1, 500);
+    let exact = 0; { const M = 2000, hh = (b - a) / M; for (let i = 0; i < M; i += 1) { const x0 = a + i * hh; exact += hh / 6 * (f(x0) + 4 * f(x0 + hh / 2) + f(x0 + hh)); } }
+    if (e.mode === 'aire') { const N = 200, pts = []; for (let i = 0; i <= N; i++) { const x = a + (b - a) * i / N; pts.push(f2(g.X(x)) + ' ' + f2(g.Y(f(x)))); }
+      s += `<path d="M${f2(g.X(a))} ${f2(g.Y(0))}L${pts.join('L')}L${f2(g.X(b))} ${f2(g.Y(0))}Z" ${fill} stroke="none"/>`; approx = exact; }
+    else { const h = (b - a) / n; for (let i = 0; i < n; i++) { const x0 = a + i * h, x1 = x0 + h; let poly;
+      if (e.mode === 'trap') { poly = [[x0, 0], [x0, f(x0)], [x1, f(x1)], [x1, 0]]; approx += h * (f(x0) + f(x1)) / 2; }
+      else { const y = e.mode === 'gauche' ? f(x0) : e.mode === 'droite' ? f(x1) : f((x0 + x1) / 2); poly = [[x0, 0], [x0, y], [x1, y], [x1, 0]]; approx += h * y; }
+      s += `<path d="M${poly.map(p => f2(g.X(p[0])) + ' ' + f2(g.Y(p[1]))).join('L')}Z" ${fill} stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>`; } }
+    s += drawPolyline(sampleFn(f, d, g, 600), st);
+    if (e.label) s += T_(g.X(e.lx), g.Y(e.ly), `∫ de ${fmtC(a)} à ${fmtC(b)} ≈ ${fmtC(exact, 6)}` + (e.mode !== 'aire' ? `   (approx. ${fmtC(approx, 6)})` : ''), { size: 10 });
+    return s;
+  } };
+
+/* --- courbes implicites / coniques / inéquations --- */
+function splitRel(src) { const m = String(src).replace(/≤/g, '<=').replace(/≥/g, '>=').match(/^(.*?)(<=|>=|=<|=>|<|>|=)(.*)$/); if (!m) throw new Error('Il faut un signe =, <, >, ≤ ou ≥'); return { l: m[1], op: m[2], r: m[3] }; }
+function implicitFn(src, ctx) { const { l, op, r } = splitRel(src), fl = compileExpr(l, ctx.F, 10), fr = compileExpr(r, ctx.F, 10); return { f: (x, y) => fl(x, y, 0) - fr(x, y, 0), op }; }
+function contourPath(F, d, g, cell = 0.8) {
+  const nx = Math.ceil(d.W / cell), ny = Math.ceil(d.H / cell); let path = '';
+  const val = (i, j) => { const x = g.xOf(i * cell), y = g.yOf(j * cell); const v = F(x, y); return Number.isFinite(v) ? v : NaN; };
+  let prev = Array.from({ length: nx + 1 }, (_, i) => val(i, 0));
+  for (let j = 0; j < ny; j++) {
+    const cur = Array.from({ length: nx + 1 }, (_, i) => val(i, j + 1));
+    for (let i = 0; i < nx; i++) {
+      const v = [prev[i], prev[i + 1], cur[i + 1], cur[i]], P = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]];
+      if (v.some(Number.isNaN)) continue; const pts = [];
+      for (let k = 0; k < 4; k++) { const a = v[k], b = v[(k + 1) % 4]; if ((a < 0) !== (b < 0)) { const t = a / (a - b), A = P[k], B = P[(k + 1) % 4]; pts.push([(A[0] + (B[0] - A[0]) * t) * cell, (A[1] + (B[1] - A[1]) * t) * cell]); } }
+      if (pts.length === 2) path += `M${f2(pts[0][0])} ${f2(pts[0][1])}L${f2(pts[1][0])} ${f2(pts[1][1])}`;
+      else if (pts.length === 4) path += `M${f2(pts[0][0])} ${f2(pts[0][1])}L${f2(pts[1][0])} ${f2(pts[1][1])}M${f2(pts[2][0])} ${f2(pts[2][1])}L${f2(pts[3][0])} ${f2(pts[3][1])}`;
+    }
+    prev = cur;
+  }
+  return path;
+}
+EX.impl = { label: 'Courbe d’équation F(x,y)=0 (coniques…)', def: () => ({ eq: 'x^2/4+y^2=1', couleur: 8388608, ep: 2, style: 0 }),
+  fields: [['eq', 'équation (x et y)  ex. x^3+y^3-3xy=0 ; y^2=4x ; x²+y²-2x=3', 'text', 'grow'], ['couleur', 'couleur', 'color'], ['ep', 'ép.', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY]],
+  render(e, d, g, ctx) { const { f } = implicitFn(e.eq, ctx), st = exStroke(e); const dash = st.style === 1 ? ' stroke-dasharray="2 1"' : st.style === 2 ? ' stroke-dasharray="0.5 1"' : '';
+    return `<path d="${contourPath(f, d, g)}" fill="none" stroke="${st.col}" stroke-width="${f2(st.w)}" stroke-linecap="round"${dash}/>`; } };
+EX.ineq = { label: 'Système d’inéquations', def: () => ({ data: 'y>x^2-2\nx+y<=3', couleur: 16711680, opa: 0.28, border: true, ep: 2 }),
+  fields: [['data', 'inéquations (une par ligne, variables x et y)', 'area', 'grow'], 'br', ['couleur', 'couleur', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['border', 'tracer les frontières', 'chk'], ['ep', 'ép.', 'num', 'w3']],
+  render(e, d, g, ctx) {
+    const conds = linesOf(e.data).map(l => implicitFn(l, ctx)); if (!conds.length) return ''; const cell = 1.2, nx = Math.ceil(d.W / cell), ny = Math.ceil(d.H / cell); let rects = '';
+    for (let j = 0; j < ny; j++) { let run = -1; for (let i = 0; i <= nx; i++) { let ok = false; if (i < nx) { const x = g.xOf((i + 0.5) * cell), y = g.yOf((j + 0.5) * cell);
+          ok = conds.every(c => { const v = c.f(x, y); return c.op === '<' || c.op === '<=' || c.op === '=<' ? v < 0 || (c.op !== '<' && v === 0) : c.op === '=' ? Math.abs(v) < 0.05 : v > 0 || (c.op !== '>' && v === 0); }); }
+        if (ok && run < 0) run = i; else if (!ok && run >= 0) { rects += `M${f2(run * cell)} ${f2(j * cell)}h${f2((i - run) * cell)}v${f2(cell + 0.02)}h${f2(-(i - run) * cell)}z`; run = -1; } } }
+    let s = `<path d="${rects}" fill="${tcolor(e.couleur)}" fill-opacity="${e.opa}" stroke="none"/>`;
+    if (e.border) conds.forEach(c => { s += `<path d="${contourPath(c.f, d, g)}" fill="none" stroke="${tcolor(e.couleur)}" stroke-width="${f2(lineWidth(e.ep))}"${c.op === '<' || c.op === '>' ? ' stroke-dasharray="2 1"' : ''}/>`; });
+    return s;
+  } };
+
+/* --- tableaux de signes et de variations --- */
+function parseXs(txt) { return String(txt).split(/[;\s]+/).filter(Boolean).map(t => /^[-−]?\s*(inf|∞)/i.test(t) ? -Infinity : /^\+?\s*(inf|∞)/i.test(t) ? Infinity : evalConst(t, NaN)); }
+EX.tab = { label: 'Tableau de signes ou de variations', def: () => ({ kind: 'var', src: 'x^3-3x', xs: '-inf;-1;1;+inf', ox: 10, oy: 10, w: 120, rh: 9, couleur: 0, size: 10 }),
+  fields: [['kind', 'tableau', 'sel', 'w2', [['var', 'Tableau de variations de f'], ['sign', 'Tableau de signes de f']]], ['src', 'f(x)', 'text', 'grow'], ['xs', 'valeurs de x (séparées par ;) — « -inf » et « +inf » permis', 'text', 'grow'], 'br',
+    ['ox', 'x (mm)', 'num', 'w3'], ['oy', 'y (mm)', 'num', 'w3'], ['w', 'largeur', 'num', 'w3'], ['rh', 'hauteur ligne', 'num', 'w3'], ['size', 'taille', 'num', 'w3'], ['couleur', 'trait', 'color']],
+  render(e, d, g, ctx) {
+    const f = fnOf(e.src, ctx), xs = parseXs(e.xs).filter(v => !Number.isNaN(v)); if (xs.length < 2) throw new Error('Donnez au moins deux valeurs de x');
+    const col = tcolor(e.couleur), sz = e.size, lab = 22, cw = (e.w - lab) / (xs.length - 1), isVar = e.kind === 'var', rh = e.rh, x0 = e.ox, y0 = e.oy;
+    const rows = isVar ? [rh, rh, rh * 2.2] : [rh, rh]; const H = rows.reduce((a, b) => a + b, 0), cx = i => x0 + lab + i * cw; let s = '';
+    s += `<rect x="${f2(x0)}" y="${f2(y0)}" width="${f2(e.w)}" height="${f2(H)}" fill="#fff" stroke="${col}" stroke-width="0.4"/>`;
+    let yy = y0; rows.forEach(r => { yy += r; if (yy < y0 + H - 0.1) s += lineSeg([x0, yy], [x0 + e.w, yy], col, 0.3); }); s += lineSeg([x0 + lab, y0], [x0 + lab, y0 + H], col, 0.3);
+    const fmtX = v => v === Infinity ? '+∞' : v === -Infinity ? '−∞' : fmtC(v), pad = v => (Math.abs(v) < 1e300 ? v : v);
+    const probe = (a, b) => { const A = Number.isFinite(a) ? a : (Number.isFinite(b) ? b - 10 - Math.abs(b) : -10), B = Number.isFinite(b) ? b : (Number.isFinite(a) ? a + 10 + Math.abs(a) : 10); return [A, B]; };
+    const mid = (a, b) => { const [A, B] = probe(a, b); return (A + B) / 2; };
+    const val = v => { if (!Number.isFinite(v)) { const t = v > 0 ? 1e6 : -1e6, y = f(t); return Math.abs(y) > 1e4 ? (y > 0 ? Infinity : -Infinity) : Number(y.toFixed(3)); } return f(v); };
+    const fmtV = y => y === Infinity ? '+∞' : y === -Infinity ? '−∞' : Number.isFinite(y) ? fmtC(y) : '||';
+    const h = 1e-5, df = x => (f(x + h) - f(x - h)) / (2 * h);
+    s += T_(x0 + 3, y0 + rh * 0.68, 'x', { size: sz, italic: true }); xs.forEach((v, i) => { s += T_(i === 0 ? cx(i) + 1.5 : i === xs.length - 1 ? cx(i) - 1.5 : cx(i), y0 + rh * 0.68, fmtX(v), { size: sz, anchor: i === 0 ? 'start' : i === xs.length - 1 ? 'end' : 'middle' }); });
+    for (let i = 1; i < xs.length - 1; i++) s += lineSeg([cx(i), y0], [cx(i), y0 + H], col, 0.2, '1 1');
+    const signRow = (fnc, ry, name) => {
+      s += T_(x0 + 3, ry + rh * 0.68, name, { size: sz, italic: true });
+      for (let i = 0; i < xs.length - 1; i++) { const m = mid(xs[i], xs[i + 1]), v = fnc(m); s += T_((cx(i) + cx(i + 1)) / 2, ry + rh * 0.68, Number.isFinite(v) ? (v > 0 ? '+' : v < 0 ? '−' : '0') : '', { size: sz * 1.1, anchor: 'middle', bold: true }); }
+      for (let i = 1; i < xs.length - 1; i++) { const v = fnc(xs[i]); s += T_(cx(i), ry + rh * 0.68, Number.isFinite(v) ? (Math.abs(v) < 1e-6 ? '0' : '') : '||', { size: sz, anchor: 'middle' }); }
+    };
+    if (!isVar) signRow(f, y0 + rh, 'f(x)');
+    else {
+      signRow(df, y0 + rh, "f ′(x)"); const ry = y0 + 2 * rh, rhh = rh * 2.2; s += T_(x0 + 3, ry + rhh * 0.55, 'f', { size: sz, italic: true });
+      const ys = xs.map(v => val(v)), top = ry + 2.2, bot = ry + rhh - 2.2;
+      const pos = ys.map((y, i) => { const nb = i === 0 ? df(mid(xs[0], xs[1])) : df(mid(xs[i - 1], xs[i])); return { y, up: nb > 0 }; });
+      for (let i = 0; i < xs.length; i++) { const dirNext = i < xs.length - 1 ? df(mid(xs[i], xs[i + 1])) > 0 : null, dirPrev = i > 0 ? df(mid(xs[i - 1], xs[i])) > 0 : null;
+        let at; if (i === 0) at = dirNext ? 'bot' : 'top'; else if (i === xs.length - 1) at = dirPrev ? 'top' : 'bot'; else at = dirPrev && !dirNext ? 'top' : !dirPrev && dirNext ? 'bot' : dirPrev ? 'mid' : 'mid';
+        pos[i].at = at; const Y = at === 'top' ? top : at === 'bot' ? bot : (top + bot) / 2, X = cx(i);
+        s += T_(i === 0 ? X + 2.5 : i === xs.length - 1 ? X - 2.5 : X, Y + sz * 0.12 + (at === 'top' ? 0.6 : at === 'bot' ? 0.2 : 0), fmtV(pos[i].y), { size: sz, anchor: i === 0 ? 'start' : i === xs.length - 1 ? 'end' : 'middle' }); pos[i].Y = Y; }
+      for (let i = 0; i < xs.length - 1; i++) { const up = df(mid(xs[i], xs[i + 1])) > 0, A = [cx(i) + (i === 0 ? 11 : 7), pos[i].Y + (up ? -1.5 : 1.5)], B = [cx(i + 1) - (i + 1 === xs.length - 1 ? 11 : 7), pos[i + 1].Y + (up ? 1.5 : -1.5)];
+        if (Math.abs(A[0] - B[0]) > 2) s += arrowSvg([A[0], pos[i].Y], [B[0], pos[i + 1].Y], col, 0.4); }
+    }
+    return s;
+  } };
+
+/* --- rapporteur --- */
+const RAP_DEF = () => ({ R: 65, ext: 0, deg: 0, rad: 1, quad: 2, val: 1, colCercles: 0, colGrad: 8388608, colQuad: 12632256, colVal: 32768 });
+
+/* ---------- Calculs : équation, table de valeurs, intégrale approchée ---------- */
+function solveEq(lhs, rhs, a, b, ctx) {
+  const fl = compileExpr(lhs, ctx.F, 10), fr = compileExpr(rhs || '0', ctx.F, 10), f = x => fl(x, 0, 0) - fr(x, 0, 0), out = []; const N = 4000; let px = a, pv = f(a);
+  for (let i = 1; i <= N; i++) { const x = a + (b - a) * i / N, v = f(x); if (Number.isFinite(pv) && Number.isFinite(v) && (pv === 0 || pv * v < 0)) {
+      if (pv === 0) out.push(px); else { let lo = px, hi = x, fl_ = pv; for (let k = 0; k < 80; k++) { const m = (lo + hi) / 2, fm = f(m); if (fl_ * fm <= 0) hi = m; else { lo = m; fl_ = fm; } } const r = (lo + hi) / 2; if (Math.abs(f(r)) < 1e-6 * (1 + Math.abs(r))) out.push(r); } }
+    px = x; pv = v; }
+  return out.filter((v, i) => !i || Math.abs(v - out[i - 1]) > 1e-7);
+}
+function integrate(src, a, b, ctx) { const f = fnOf(src, ctx), M = 4000, h = (b - a) / M; let s = 0; for (let i = 0; i < M; i++) { const x = a + i * h; s += h / 6 * (f(x) + 4 * f(x + h / 2) + f(x + h)); } return s; }
+
+function extrasSvg(d, ctx) {
+  let s = '';
+  d.extras.forEach(e => { e._err = ''; const T = EX[e.type]; if (!T) return;
+    try { s += T.render(e, d, ctx.g, ctx) || ''; } catch (err) { e._err = err.message; } });
+  return s;
+}
+/* ---------- 5. Interface ---------- */
+const state = { doc: null, ctx: null, scale: 3.78, hist: [], histPos: -1, dirty: false };
+const PAPER = { portrait: [210, 297], paysage: [297, 210] };
+const STYLE_NAMES = ['Continu', 'Tirets', 'Pointillés', 'Ronds', 'Points'];
+const STYLE_OPTS = [...STYLE_NAMES.map((n, i) => [i, n]), [10, 'Invisible']];
+const GRID_NAMES = ['Aucune grille', 'Petites croix', 'Pointillés fins', 'Pointillés moyens', 'Petits tirets', 'Petits carreaux', 'Papier millimétré', 'Papier pointé'];
+const POS_NAMES = [['0', 'Centré'], ['1', 'Nord-Est'], ['2', 'Est'], ['3', 'Sud-Est'], ['4', 'Sud'], ['5', 'Sud-Ouest'], ['6', 'Ouest'], ['7', 'Nord-Ouest'], ['8', 'Nord']];
+const openSections = new Set(['Page', 'Repère', 'Fonctions f(x)']);
+const errEls = [];
+
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, '');
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const k of kids.flat(Infinity)) { if (k == null || k === false) continue; e.append(k.nodeType ? k : document.createTextNode(k)); }
+  return e;
+}
+let rafId = 0;
+function redraw() { if (rafId) return; rafId = requestAnimationFrame(() => { rafId = 0; drawNow(); }); }
+function toast(msg, ms = 3500) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+/* --- historique (annuler / rétablir) --- */
+function snapshot() { return snapshotDoc(state.doc); }
+function commit() {
+  const s = snapshot();
+  if (state.hist[state.histPos] === s) return;
+  state.hist = state.hist.slice(0, state.histPos + 1); state.hist.push(s);
+  if (state.hist.length > 80) state.hist.shift();
+  state.histPos = state.hist.length - 1; state.dirty = true;
+  try { localStorage.setItem('sqn_autosave', JSON.stringify({ name: state.doc.name, text: s })); } catch (e) { /* quota */ }
+  updateTitle();
+}
+function restore(i) {
+  if (i < 0 || i >= state.hist.length) return;
+  state.histPos = i; const keepName = state.doc.name;
+  state.doc = docFromText(state.hist[i], keepName); buildPanel(); redraw();
+}
+const undo = () => restore(state.histPos - 1), redo = () => restore(state.histPos + 1);
+function updateTitle() { document.title = (state.dirty ? '• ' : '') + state.doc.name + ' — Sine qua non en ligne'; }
+
+/* --- champs de formulaire --- */
+function field(label, input, cls = '') { return h('label', { class: 'f ' + cls }, h('span', null, label), input); }
+function fText(label, obj, key, o = {}) {
+  const i = h('input', { type: 'text', value: obj[key], spellcheck: 'false', title: o.title || '',
+    oninput: e => { obj[key] = e.target.value; o.after && o.after(); redraw(); },
+    onchange: commit });
+  return field(label, i, o.cls);
+}
+function fNum(label, obj, key, o = {}) {
+  const i = h('input', { type: 'number', value: obj[key], min: o.min, max: o.max, step: o.step || 1,
+    oninput: e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) { obj[key] = v; o.after && o.after(); redraw(); } },
+    onchange: commit });
+  return field(label, i, o.cls);
+}
+function fColor(label, obj, key, o = {}) {
+  const i = h('input', { type: 'color', value: tcolor(obj[key]),
+    oninput: e => { obj[key] = fromCss(e.target.value); redraw(); }, onchange: commit });
+  return field(label, i, 'color ' + (o.cls || ''));
+}
+function fSel(label, obj, key, opts, o = {}) {
+  const i = h('select', { onchange: e => { obj[key] = o.num ? +e.target.value : e.target.value; o.after && o.after(); redraw(); commit(); } },
+    opts.map(([v, t]) => h('option', { value: v, selected: String(obj[key]) === String(v) }, t)));
+  return field(label, i, o.cls);
+}
+function fChk(label, obj, key, o = {}) {
+  const i = h('input', { type: 'checkbox', checked: !!obj[key],
+    onchange: e => { obj[key] = e.target.checked; o.rebuild ? buildPanel() : null; redraw(); commit(); } });
+  return h('label', { class: 'chk' }, i, h('span', null, label));
+}
+function errLine(get) { const e = h('div', { class: 'err' }); errEls.push([e, get]); return e; }
+function updateErrs() { for (const [e, get] of errEls) { const m = get(); e.textContent = m || ''; e.style.display = m ? 'block' : 'none'; } }
+
+function section(title, ...kids) {
+  const d = h('details', { class: 'sec', open: openSections.has(title) || null,
+    ontoggle: e => { e.target.open ? openSections.add(title) : openSections.delete(title); } }, h('summary', null, title), h('div', { class: 'body' }, kids));
+  return d;
+}
+const btn = (txt, fn, cls = '') => h('button', { type: 'button', class: 'btn ' + cls, onclick: fn }, txt);
+
+
+/* --- compléments : éditeur générique --- */
+function exEditor(e, k) {
+  const d = state.doc, T = EX[e.type], box = h('div', { class: 'item' });
+  box.append(h('div', { class: 'row' }, h('b', { class: 'grow' }, T.label), btn('✕', () => { d.extras.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')));
+  let row = h('div', { class: 'row' }); box.append(row);
+  for (const f of T.fields) {
+    if (f === 'br') { row = h('div', { class: 'row' }); box.append(row); continue; }
+    const [key, label, kind, cls = '', opt] = f;
+    if (kind === 'text') row.append(fText(label, e, key, { cls }));
+    else if (kind === 'num') row.append(fNum(label, e, key, Object.assign({ cls }, opt || {})));
+    else if (kind === 'color') row.append(fColor(label, e, key));
+    else if (kind === 'sel') row.append(fSel(label, e, key, opt, { cls, num: typeof opt[0][0] === 'number' }));
+    else if (kind === 'chk') row.append(fChk(label, e, key));
+    else if (kind === 'area') row.append(field(label, h('textarea', { rows: 6, spellcheck: 'false', oninput: ev => { e[key] = ev.target.value; redraw(); }, onchange: commit }, e[key]), cls));
+    else if (kind === 'btn') row.append(btn(label, () => { T.action(e, key); buildPanel(); redraw(); commit(); }, 'small'));
+  }
+  box.append(errLine(() => e._err));
+  return box;
+}
+function addExtra(type) { const d = state.doc; d.extras.push(Object.assign({ type }, EX[type].def())); openSections.add('Compléments'); buildPanel(); redraw(); commit(); }
+
+/* --- calculs --- */
+function calcSection() {
+  const st = state.calc || (state.calc = { l: 'x^2', r: '2', a: -10, b: 10, ts: 'f1', t0: -3, t1: 3, step: 1, is: 'f1', ia: 0, ib: 1, o1: '', o2: '', o3: '' });
+  const out = k => { const p = h('pre', { class: 'out' }, st[k]); return p; };
+  const run = (k, fn) => () => { try { st[k] = fn(); } catch (e) { st[k] = 'Erreur : ' + e.message; } buildPanel(); };
+  const ctx = () => buildCtx(state.doc);
+  return section('Calculs',
+    h('b', null, 'Résoudre une équation'),
+    h('div', { class: 'row' }, fText('f(x) =', st, 'l', { cls: 'w2' }), fText('g(x) =', st, 'r', { cls: 'w2' }), fNum('de', st, 'a', { cls: 'w3' }), fNum('à', st, 'b', { cls: 'w3' }),
+      btn('Résoudre', run('o1', () => { const s = solveEq(st.l, st.r, st.a, st.b, ctx()); return s.length ? s.map(v => 'x ≈ ' + fmtC(v, 8)).join('\n') : 'Aucune solution trouvée sur cet intervalle.'; }), 'small')), out('o1'),
+    h('b', null, 'Table de valeurs'),
+    h('div', { class: 'row' }, fText('fonction', st, 'ts', { cls: 'w2' }), fNum('de', st, 't0', { cls: 'w3', step: 0.5 }), fNum('à', st, 't1', { cls: 'w3', step: 0.5 }), fNum('pas', st, 'step', { cls: 'w3', step: 0.1 }),
+      btn('Calculer', run('o2', () => { const f = fnOf(st.ts, ctx()); const o = []; for (let x = st.t0, i = 0; x <= st.t1 + 1e-9 && i < 500; x += st.step, i++) o.push('x = ' + fmtC(x, 6).padEnd(8) + ' f(x) = ' + fmtC(f(x), 8)); return o.join('\n'); }), 'small')), out('o2'),
+    h('b', null, 'Valeur approchée d’une intégrale'),
+    h('div', { class: 'row' }, fText('fonction', st, 'is', { cls: 'w2' }), fNum('de', st, 'ia', { cls: 'w3', step: 0.5 }), fNum('à', st, 'ib', { cls: 'w3', step: 0.5 }),
+      btn('Calculer', run('o3', () => '∫ ≈ ' + fmtC(integrate(st.is, st.ia, st.ib, ctx()), 10)), 'small')), out('o3'));
+}
+
+/* --- panneau --- */
+function pointEditor(c, kind) {
+  const wrap = h('div', { class: 'pts' });
+  c.pts.forEach((p, k) => {
+    wrap.append(h('div', { class: 'pt' },
+      h('div', { class: 'row' }, fText(kind === 'fn' ? 'abscisse' : 't =', p, 'a', { cls: 'w2' }), fText('nom', p, 'nom', { cls: 'w2' }), fColor('', p, 'couleur'),
+        btn('✕', () => { c.pts.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')),
+      h('div', { class: 'row' }, fSel('nom en', p, 'pos', POS_NAMES, { num: true }), fChk('lignes de cote', p, 'cote'), fChk('tangente', p, 'tang')),
+      h('div', { class: 'row' }, fChk('double flèche tangente', p, 'ftang'), fChk('flèche normale', p, 'fnorm'))));
+  });
+  wrap.append(btn('+ point particulier', () => { c.pts.push(newPoint({ a: kind === 'fn' ? '0' : '0', nom: '' })); buildPanel(); redraw(); commit(); }, 'small'));
+  return h('details', { class: 'sub' }, h('summary', null, `Points particuliers (${c.pts.length})`), wrap);
+}
+function curveEditor(c, kind, label, onDelete) {
+  const rows = [];
+  if (kind === 'fn') rows.push(h('div', { class: 'row' }, h('span', { class: 'lab' }, label), fText('', c, 'expr', { cls: 'grow', title: 'ex. 0,5x^2-3 ; sin x ; racine(x²+1)' }), btn('✕', onDelete, 'x')));
+  else if (kind === 'param') rows.push(
+    h('div', { class: 'row' }, h('span', { class: 'lab' }, 'x(t)='), fText('', c, 'expr', { cls: 'grow' }), btn('✕', onDelete, 'x')),
+    h('div', { class: 'row' }, h('span', { class: 'lab' }, 'y(t)='), fText('', c, 'expr2', { cls: 'grow' })));
+  else rows.push(h('div', { class: 'row' }, h('span', { class: 'lab' }, 'r(t)='), fText('', c, 'expr', { cls: 'grow', title: 'ρ en fonction de t (radians)' }), btn('✕', onDelete, 'x')));
+  rows.push(errLine(() => c._err));
+  if (kind !== 'fn') rows.push(h('div', { class: 'row' }, fText('t min', c, 'tmin', { cls: 'w2' }), fText('t max', c, 'tmax', { cls: 'w2' }), fNum('nb valeurs', c, 'n', { min: 20, max: 20000, step: 50, cls: 'w2' })));
+  rows.push(h('div', { class: 'row' }, fColor('couleur', c, 'couleur'), fNum('épaisseur', c, 'ep', { min: 1, max: 10, cls: 'w2' }),
+    fSel('style', c, 'style', STYLE_OPTS, { num: true, cls: 'w2' })));
+  rows.push(h('div', { class: 'row' }, fChk('développée', c, 'dev'), fChk('enveloppe des tangentes', c, 'env')));
+  rows.push(pointEditor(c, kind));
+  return h('div', { class: 'item' }, rows);
+}
+
+function buildPanel() {
+  const d = state.doc, P = $('#panel'); errEls.length = 0; P.textContent = '';
+  const paperDims = PAPER[d.orient] || PAPER.portrait;
+
+  P.append(section('Page',
+    h('div', { class: 'row' }, fSel('orientation', d, 'orient', [['portrait', 'Portrait (A4)'], ['paysage', 'Paysage (A4)']], { after: () => { } , cls: 'w2'}),
+      fChk('cadre', d, 'cadre')),
+    h('div', { class: 'row' }, fNum('largeur (mm)', d, 'W', { min: 20, max: 420, cls: 'w2' }), fNum('hauteur (mm)', d, 'H', { min: 20, max: 420, cls: 'w2' })),
+    h('div', { class: 'row' }, fNum('marge gauche', d, 'mg', { min: 0, cls: 'w2' }), fNum('marge haute', d, 'mh', { min: 0, cls: 'w2' })),
+    h('div', { class: 'row' },
+      btn('Centrer ↔', () => { d.mg = Math.max(0, Math.round((paperDims[0] - d.W) / 2 * 10) / 10); buildPanel(); commit(); }, 'small'),
+      btn('Centrer ↕', () => { d.mh = Math.max(0, Math.round((paperDims[1] - d.H) / 2 * 10) / 10); buildPanel(); commit(); }, 'small'),
+      btn('Remplir la page', () => { d.W = paperDims[0] - 2 * d.mg; d.H = paperDims[1] - 2 * d.mh; buildPanel(); redraw(); commit(); }, 'small')),
+    h('div', { class: 'row' }, fColor('bordure', d, 'cadreCol'), fColor('fond', d, 'fondCol'))));
+
+  P.append(section('Repère',
+    h('div', { class: 'row' }, fChk('axes visibles', d, 'axesVis', { rebuild: true }),
+      !d.axesVis && fChk('garder Ox', d, 'keepX'), !d.axesVis && fChk('garder Oy', d, 'keepY')),
+    h('div', { class: 'row' }, fSel('graduations', d, 'grad', [['full', 'complètes'], ['first', 'première seulement'], ['none', 'aucune']], { cls: 'w2' }), fChk('basées sur les carreaux', d, 'gradGrille')),
+    h('div', { class: 'row' }, fText('origine Ox', d, 'ox', { cls: 'w2' }), fText('origine Oy', d, 'oy', { cls: 'w2' })),
+    h('div', { class: 'row' }, fText('unité Ox', d, 'ux', { cls: 'w2', title: 'ex. 1 ; 0,5 ; pi/6' }), fText('unité Oy', d, 'uy', { cls: 'w2' })),
+    h('div', { class: 'row' }, fSel('format Ox', d, 'fmtX', [['normal', 'décimal'], ['trig', 'multiples de π']], { cls: 'w2' }), fSel('format Oy', d, 'fmtY', [['normal', 'décimal'], ['trig', 'multiples de π']], { cls: 'w2' })),
+    h('div', { class: 'row' }, fNum('1 unité Ox = … mm', d, 'lx', { min: 1, step: 0.5, cls: 'w2' }), fNum('1 unité Oy = … mm', d, 'ly', { min: 1, step: 0.5, cls: 'w2' })),
+    h('div', { class: 'row' }, fNum('axe Ox à … mm du haut', d, 'dOx', { step: 5, cls: 'w2' }), fNum('axe Oy à … mm de la gauche', d, 'dOy', { step: 5, cls: 'w2' })),
+    h('div', { class: 'row' }, fNum('chiffres sign. Ox', d, 'sigX', { min: 3, max: 10, cls: 'w2' }), fNum('chiffres sign. Oy', d, 'sigY', { min: 3, max: 10, cls: 'w2' })),
+    h('div', { class: 'row' }, fText('nom axe Ox', d, 'nameX', { cls: 'w2' }), fText('nom axe Oy', d, 'nameY', { cls: 'w2' })),
+    h('div', { class: 'row' }, fSel('grille', d, 'gridStyle', GRID_NAMES.map((n, i) => [i, n]), { num: true, cls: 'w2' }), fNum('carreau (mm)', d, 'gridSize', { min: 2, max: 20, step: 1, cls: 'w2' })),
+    h('div', { class: 'row' }, fColor('couleur grille', d, 'gridCol'), fColor('couleur axes', d, 'repCol')),
+    h('div', { class: 'row' }, fChk('échelle logarithmique sur Ox', d.log, 'x'), fNum('module Ox (mm/décade)', d.log, 'mx', { min: 5, cls: 'w2' })),
+    h('div', { class: 'row' }, fChk('échelle logarithmique sur Oy', d.log, 'y'), fNum('module Oy (mm/décade)', d.log, 'my', { min: 5, cls: 'w2' })),
+    h('p', { class: 'hint' }, 'Astuce : à la souris, glissez l’origine (rond bleu), les carrés d’unité sur chaque axe, ou le bord droit / bas du dessin. En échelle logarithmique, l’origine doit être positive (0 devient 1).')));
+
+  // fonctions
+  const fnSec = [];
+  d.fns.forEach((c, k) => fnSec.push(curveEditor(c, 'fn', `f${k + 1}(x)=`, () => { d.fns.splice(k, 1); buildPanel(); redraw(); commit(); })));
+  if (d.fns.length < 10) fnSec.push(btn('+ Ajouter une fonction', () => { d.fns.push(newCurve({ couleur: [0, 16711680, 255, 32768, 8388736][d.fns.length % 5] })); buildPanel(); commit(); }));
+  fnSec.push(h('p', { class: 'hint' }, 'Syntaxe « calculatrice » : 3x+4, x², x^2, racine(x), sin x, ln x, exp(x), abs(x), x!, pi. Composition : f1of2(x). Domaine : (3/(x-1))(x>=2).'));
+  P.append(section('Fonctions f(x)', fnSec));
+
+  const pSec = [];
+  d.params.forEach((c, k) => pSec.push(curveEditor(c, 'param', '', () => { d.params.splice(k, 1); buildPanel(); redraw(); commit(); })));
+  if (d.params.length < 10) pSec.push(btn('+ Courbe paramétrée', () => { d.params.push(newCurve({ expr: 'cos(t)', expr2: 'sin(t)' })); buildPanel(); redraw(); commit(); }));
+  P.append(section('Courbes paramétrées', pSec));
+
+  const poSec = [];
+  d.polars.forEach((c, k) => poSec.push(curveEditor(c, 'polar', '', () => { d.polars.splice(k, 1); buildPanel(); redraw(); commit(); })));
+  if (d.polars.length < 10) poSec.push(btn('+ Courbe polaire', () => { d.polars.push(newCurve({ expr: '1+cos(t)', tmin: '0', tmax: '2pi' })); buildPanel(); redraw(); commit(); }));
+  P.append(section('Courbes polaires', poSec));
+
+  const drSec = [];
+  d.droites.forEach((r, k) => drSec.push(h('div', { class: 'item' },
+    h('div', { class: 'row' }, h('span', { class: 'lab' }, `D${k + 1}:`), fText('', r, 'eq', { cls: 'grow', title: 'y=2x-1 ou x=3' }),
+      btn('✕', () => { d.droites.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')),
+    errLine(() => r._err),
+    h('div', { class: 'row' }, fColor('couleur', r, 'couleur'), fNum('épaisseur', r, 'ep', { min: 1, max: 10, cls: 'w2' })))));
+  if (d.droites.length < 10) drSec.push(btn('+ Droite', () => { d.droites.push({ eq: 'y=x', couleur: 0, ep: 2, styleStr: '011', type: 1, a: '1', b: '0' }); buildPanel(); redraw(); commit(); }));
+  P.append(section('Droites', drSec));
+
+  const famSec = [];
+  if (!d.fam) famSec.push(btn('+ Famille de fonctions dépendant de p', () => {
+    d.fam = { expr: '(x^3-p*x)/10', pmin: '-3', pmax: '3', dp: '0.5', couleur: -1, vitesse: 0, ep: 3, style: 0, anim: true, animDet: false, show: false, abs: '0', pos: 1 };
+    buildPanel(); redraw(); commit();
+  }));
+  else {
+    const f = d.fam;
+    famSec.push(h('div', { class: 'item' },
+      h('div', { class: 'row' }, h('span', { class: 'lab' }, 'Fp(x)='), fText('', f, 'expr', { cls: 'grow' }), btn('✕', () => { d.fam = null; buildPanel(); redraw(); commit(); }, 'x')),
+      errLine(() => f._err),
+      h('div', { class: 'row' }, fText('p min', f, 'pmin', { cls: 'w3' }), fText('p max', f, 'pmax', { cls: 'w3' }), fText('pas', f, 'dp', { cls: 'w3' })),
+      h('div', { class: 'row' }, fNum('épaisseur', f, 'ep', { min: 1, max: 10, cls: 'w2' }), fSel('style', f, 'style', STYLE_OPTS, { num: true, cls: 'w2' })),
+      h('div', { class: 'row' }, fChk('couleur différente pour chaque p', { v: f.couleur === -1 }, 'v', {}),
+        fColor('couleur unique', f, 'couleur')),
+      h('div', { class: 'row' }, fChk('afficher les valeurs de p', f, 'show'), fText('à l’abscisse', f, 'abs', { cls: 'w2' }))));
+    // case « couleur multicolore » : liée à couleur = -1
+    const chk = famSec[0].querySelector('input[type=checkbox]'); chk.checked = f.couleur === -1;
+    chk.onchange = e => { f.couleur = e.target.checked ? -1 : 0; redraw(); commit(); };
+  }
+  P.append(section('Famille de fonctions', famSec));
+
+  const scSec = [];
+  d.objs.forEach((o, k) => {
+    if (o.kind === 'point') scSec.push(h('div', { class: 'item row' }, h('span', { class: 'lab' }, 'Point'), fText('nom', o, 'nom', { cls: 'w3' }), fNum('x', o, 'x', { step: 0.1, cls: 'w3' }), fNum('y', o, 'y', { step: 0.1, cls: 'w3' }), btn('✕', () => { d.objs.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')));
+    else if (o.kind === 'segment') scSec.push(h('div', { class: 'item' },
+      h('div', { class: 'row' }, h('span', { class: 'lab' }, 'Segment'), fNum('x1', o, 'x1', { step: 0.1, cls: 'w4' }), fNum('y1', o, 'y1', { step: 0.1, cls: 'w4' }), fNum('x2', o, 'x2', { step: 0.1, cls: 'w4' }), fNum('y2', o, 'y2', { step: 0.1, cls: 'w4' }), btn('✕', () => { d.objs.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')),
+      h('div', { class: 'row' }, fColor('couleur', o, 'couleur'), fSel('style', o, 'style', [[0, 'Continu'], [1, 'Tirets'], [2, 'Pointillés']], { num: true, cls: 'w2' }))));
+    else scSec.push(h('div', { class: 'item row dim' }, h('span', { class: 'grow' }, 'Objet non pris en charge (conservé dans le fichier) : ' + o.raw.split(',')[0]), btn('✕', () => { d.objs.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')));
+  });
+  scSec.push(h('div', { class: 'row' },
+    btn('+ Point', () => { d.objs.push({ kind: 'point', nom: 'A', pos: 1, x: 1, y: 1, tail: '7,1,2,0,0' }); buildPanel(); redraw(); commit(); }, 'small'),
+    btn('+ Segment', () => { d.objs.push({ kind: 'segment', x1: 0, y1: 0, x2: 1, y2: 1, style: 0, ep: 1, couleur: 0, e1: '[', e2: ']' }); buildPanel(); redraw(); commit(); }, 'small')));
+  P.append(section('Points et segments', scSec));
+
+  const txSec = [];
+  d.texts.forEach((t, k) => txSec.push(h('div', { class: 'item' },
+    h('div', { class: 'row' }, fText('', t, 'txt', { cls: 'grow' }), btn('✕', () => { d.texts.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')),
+    h('div', { class: 'row' }, fSel('police', t, 'font', ['Times New Roman', 'Arial', 'Courier New'].map(x => [x, x]), { cls: 'w2' }), fNum('taille', t, 'size', { min: 6, max: 72, cls: 'w3' }), fColor('', t, 'col')),
+    h('div', { class: 'row' }, fSel('style', t, 'style', [['normal', 'normal'], ['gras', 'gras'], ['italique', 'italique'], ['gras italique', 'gras italique']], { cls: 'w2' }), fNum('x', t, 'x', { step: 0.1, cls: 'w3' }), fNum('y', t, 'y', { step: 0.1, cls: 'w3' })))));
+  txSec.push(btn('+ Ajouter un texte', () => { d.texts.push({ txt: 'Texte', x: g0().xOf(d.dOy + 10), y: g0().yOf(d.dOx - 10), font: 'Times New Roman', size: 12, col: 0, style: 'normal' }); buildPanel(); redraw(); commit(); }));
+  txSec.push(h('p', { class: 'hint' }, 'Les textes se déplacent à la souris directement sur le dessin.'));
+  P.append(section('Textes', txSec));
+
+  const laSec = [];
+  d.latex.forEach((l, k) => laSec.push(h('div', { class: 'item' },
+    h('div', { class: 'row' }, fText('', l, 'src', { cls: 'grow', title: 'code LaTeX' }), btn('✕', () => { d.latex.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')),
+    h('div', { class: 'row' }, fNum('x', l, 'x', { step: 0.1, cls: 'w3' }), fNum('y', l, 'y', { step: 0.1, cls: 'w3' }), fNum('taille (1-5)', l, 'size', { min: 1, max: 5, cls: 'w3' })))));
+  laSec.push(btn('+ Expression LaTeX', () => { d.latex.push({ pre: '   3$ ', size: 3, src: '\\frac{a}{b}+\\sqrt{x^2+1}', x: g0().xOf(d.dOy + 10), y: g0().yOf(d.dOx - 20) }); buildPanel(); redraw(); commit(); }));
+  laSec.push(h('p', { class: 'hint' }, 'Rendu simplifié : fractions, exposants, indices, racines, lettres grecques, systèmes. Les cas complexes peuvent différer de MimeTeX.'));
+  P.append(section('Expressions LaTeX', laSec));
+
+  const exSec = [];
+  d.extras.forEach((e, k) => exSec.push(exEditor(e, k)));
+  exSec.push(h('div', { class: 'row' }, h('select', { id: 'exType', class: 'sel' }, Object.entries(EX).map(([k, T]) => h('option', { value: k }, T.label))),
+    btn('+ Ajouter', () => addExtra($('#exType').value), 'small')));
+  exSec.push(h('p', { class: 'hint' }, 'Statistiques, lois de probabilité, arbres, suites, intégrales, inéquations, coniques et tableaux. Les compléments sont enregistrés dans un fichier .sqnw.'));
+  if (d.extras.length) openSections.add('Compléments');
+  P.append(section('Compléments', exSec));
+
+  const rapSec = [];
+  if (!d.rap) rapSec.push(btn('+ Rapporteur trigonométrique', () => { d.rap = RAP_DEF(); openSections.add('Rapporteur trigonométrique'); buildPanel(); redraw(); commit(); }));
+  else {
+    const r = d.rap, onoff = [[0, 'non'], [1, 'oui']];
+    rapSec.push(h('div', { class: 'row' }, fNum('rayon (mm)', r, 'R', { min: 10, max: 200, step: 5, cls: 'w2' }), btn('✕ retirer', () => { d.rap = null; buildPanel(); redraw(); commit(); }, 'x')),
+      h('div', { class: 'row' }, fSel('graduations en radians', r, 'rad', onoff, { num: true, cls: 'w2' }), fSel('graduations en degrés', r, 'deg', onoff, { num: true, cls: 'w2' })),
+      h('div', { class: 'row' }, fSel('cercle extérieur', r, 'ext', onoff, { num: true, cls: 'w2' }), fSel('valeurs remarquables', r, 'val', onoff, { num: true, cls: 'w2' })),
+      h('div', { class: 'row' }, fSel('quadrillage intérieur', r, 'quad', [[0, 'aucun'], [1, 'rayons'], [2, 'rayons et lignes']], { num: true, cls: 'grow' })),
+      h('div', { class: 'row' }, fColor('cercles', r, 'colCercles'), fColor('graduations', r, 'colGrad'), fColor('quadrillage', r, 'colQuad'), fColor('valeurs', r, 'colVal')));
+  }
+  P.append(section('Rapporteur trigonométrique', rapSec));
+  P.append(calcSection());
+}
+const g0 = () => geom(state.doc);
+
+/* --- dessin à l'écran --- */
+function drawNow() {
+  const d = state.doc;
+  try {
+    state.ctx = buildCtx(d);
+    const paper = $('#paper'); paper.innerHTML = buildSvg(d, state.ctx, { ui: true });
+    const svg = paper.firstElementChild;
+    state.scale = 96 / 25.4 * (d.zoom / 100);
+    svg.setAttribute('width', f2(d.W * state.scale) + 'px'); svg.setAttribute('height', f2(d.H * state.scale) + 'px');
+    paper.style.width = f2(d.W * state.scale) + 'px'; paper.style.height = f2(d.H * state.scale) + 'px';
+    { const zs = $('#zoomsel'); if (zs) { const z = Math.round(d.zoom); if (![...zs.options].some(o => +o.value === z)) zs.append(h('option', { value: z }, z + ' %')); zs.value = z; } }
+    updateErrs();
+  } catch (e) { console.error(e); toast('Erreur de dessin : ' + e.message); }
+}
+
+/* --- souris : origine, unités, bords, textes --- */
+let drag = null;
+function mmFromEvent(e) {
+  const svg = $('#paper').firstElementChild, r = svg.getBoundingClientRect();
+  return [(e.clientX - r.left) / r.width * state.doc.W, (e.clientY - r.top) / r.height * state.doc.H];
+}
+function hitTest(e) {
+  const d = state.doc, g = geom(d), [mx, my] = mmFromEvent(e), tol = 9 / state.scale;
+  if (Math.hypot(mx - d.dOy, my - d.dOx) < tol) return { mode: 'origin', cur: 'move' };
+  if (Math.hypot(mx - (d.dOy + g.lx), my - d.dOx) < tol) return { mode: 'ux', cur: 'ew-resize' };
+  if (Math.hypot(mx - d.dOy, my - (d.dOx - g.ly)) < tol) return { mode: 'uy', cur: 'ns-resize' };
+  const t = e.target.closest && e.target.closest('[data-ti]');
+  if (t) return { mode: 'text', idx: +t.getAttribute('data-ti'), cur: 'move' };
+  if (Math.abs(mx - d.W) < tol * 0.6) return { mode: 'right', cur: 'col-resize' };
+  if (Math.abs(my - d.H) < tol * 0.6) return { mode: 'bottom', cur: 'row-resize' };
+  return null;
+}
+function snapMm(v, d, fine) { return d.gradGrille && !fine ? Math.round(v / d.gridSize) * d.gridSize : Math.round(v * 2) / 2; }
+function initMouse() {
+  const stage = $('#stage');
+  stage.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    const hit = hitTest(e); if (!hit) return;
+    const g = geom(state.doc); drag = Object.assign({ fine: e.shiftKey }, hit);
+    if (hit.mode === 'text') { const t = state.doc.texts[hit.idx], [mx, my] = mmFromEvent(e); drag.ox = mx - g.X(t.x); drag.oy = my - g.Y(t.y); }
+    stage.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  stage.addEventListener('pointermove', e => {
+    const d = state.doc;
+    if (!drag) { const hit = $('#paper').firstElementChild && hitTest(e); $('#paper').style.cursor = hit ? hit.cur : 'default'; return; }
+    const [mx, my] = mmFromEvent(e), fine = e.shiftKey;
+    if (drag.mode === 'origin') { d.dOy = snapMm(clamp(mx, 0, d.W), d, fine); d.dOx = snapMm(clamp(my, 0, d.H), d, fine); }
+    else if (drag.mode === 'ux') d.lx = Math.max(2, snapMm(mx - d.dOy, d, fine));
+    else if (drag.mode === 'uy') d.ly = Math.max(2, snapMm(d.dOx - my, d, fine));
+    else if (drag.mode === 'right') d.W = Math.max(40, Math.round(mx));
+    else if (drag.mode === 'bottom') d.H = Math.max(40, Math.round(my));
+    else if (drag.mode === 'text') { const g = geom(d), t = d.texts[drag.idx]; t.x = Math.round(g.xOf(mx - drag.ox) * 1000) / 1000; t.y = Math.round(g.yOf(my - drag.oy) * 1000) / 1000; }
+    drawNow(); drag.moved = true;
+  });
+  const end = () => { if (drag && drag.moved) { buildPanel(); commit(); } drag = null; };
+  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+}
+
+/* --- fichiers --- */
+function newDocument() {
+  if (state.dirty && !confirm('Le dessin en cours n’est pas enregistré. Continuer ?')) return;
+  loadDoc(defaultDoc(), 'sans titre');
+}
+function loadDoc(d, name) {
+  d.name = name; state.doc = d; state.hist = []; state.histPos = -1; state.dirty = false;
+  buildPanel(); drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle();
+}
+function openFile(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const u8 = new Uint8Array(r.result), isJson = u8[0] === 0x7B || (u8[0] === 0xEF && u8[3] === 0x7B);
+      const txt = isJson ? new TextDecoder('utf-8').decode(u8) : decodeCp1252(r.result);
+      const d = docFromText(txt, file.name.replace(/\.[^.]+$/, ''));
+      loadDoc(d, d.name); toast('« ' + file.name + ' » ouvert.');
+    } catch (e) { toast('Impossible d’ouvrir ce fichier : ' + e.message, 6000); }
+  };
+  r.readAsArrayBuffer(file);
+}
+function download(blob, name) {
+  const a = h('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+const fileBase = () => (state.doc.name || 'dessin').replace(/[\\/:*?"<>|]+/g, '_');
+function saveSqn() {
+  if (hasExtras(state.doc)) {
+    download(new Blob([snapshotDoc(state.doc)], { type: 'application/json' }), fileBase() + '.sqnw');
+    state.dirty = false; updateTitle(); toast('Enregistré en .sqnw (contient les compléments de la version en ligne). Le bouton « .sqn » produit un fichier pour la version Windows.', 6000);
+  } else exportSqnOnly(true);
+}
+function exportSqnOnly(clean) {
+  download(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn');
+  if (clean) { state.dirty = false; updateTitle(); }
+  toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments (stats, probabilités, etc.) n’y figurent pas.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
+}
+function exportSvg() { download(new Blob([buildSvg(state.doc, buildCtx(state.doc), {})], { type: 'image/svg+xml' }), fileBase() + '.svg'); }
+function exportPng() {
+  const d = state.doc, dpi = 300, wpx = Math.round(d.W / 25.4 * dpi), hpx = Math.round(d.H / 25.4 * dpi);
+  const svg = buildSvg(d, buildCtx(d), {}).replace(/width="[^"]*mm" height="[^"]*mm"/, `width="${wpx}" height="${hpx}"`);
+  const img = new Image();
+  img.onload = () => {
+    const c = h('canvas', { width: wpx, height: hpx }); const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, wpx, hpx); x.drawImage(img, 0, 0, wpx, hpx);
+    c.toBlob(b => download(b, fileBase() + '.png'), 'image/png');
+  };
+  img.onerror = () => toast('Export PNG impossible dans ce navigateur : utilisez l’export SVG.');
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+function printDoc() {
+  const d = state.doc, pg = PAPER[d.orient] || PAPER.portrait;
+  let st = $('#printStyle'); if (!st) { st = h('style', { id: 'printStyle' }); document.head.append(st); }
+  st.textContent = `@page{size:${pg[0]}mm ${pg[1]}mm;margin:0}@media print{html,body{margin:0;background:#fff}body>*:not(#printArea){display:none!important}#printArea{display:block!important;position:absolute;left:${d.mg}mm;top:${d.mh}mm}}`;
+  $('#printArea').innerHTML = buildSvg(d, buildCtx(d), {});
+  setTimeout(() => window.print(), 50);
+}
+
+/* --- zoom --- */
+function setZoom(z) { state.doc.zoom = clamp(Math.round(z), 25, 400); drawNow(); }
+function fitZoom() { const st = $('#stage'); setZoom((st.clientWidth - 48) / (state.doc.W * 96 / 25.4) * 100); }
+function fitIfLarge() { const st = $('#stage'); if (state.doc.W * 96 / 25.4 * (state.doc.zoom / 100) > st.clientWidth - 30) fitZoom(); }
+
+/* --- aide --- */
+function showHelp() { $('#help').showModal(); }
+
+/* --- démarrage --- */
+function init() {
+  buildChrome();
+  $('#file').onchange = e => { if (e.target.files[0]) openFile(e.target.files[0]); e.target.value = ''; };
+  $('#help-close').onclick = () => $('#help').close();
+  document.addEventListener('keydown', e => {
+    const mod = e.ctrlKey || e.metaKey, tag = (e.target.tagName || '').toLowerCase();
+    if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); saveSqn(); }
+    else if (mod && e.key.toLowerCase() === 'o') { e.preventDefault(); $('#file').click(); }
+    else if (mod && e.key.toLowerCase() === 'p') { e.preventDefault(); printDoc(); }
+    else if (mod && e.key.toLowerCase() === 'z' && tag !== 'input') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if (mod && e.key.toLowerCase() === 'y' && tag !== 'input') { e.preventDefault(); redo(); }
+  });
+  const stage = $('#stage');
+  ['dragover', 'drop'].forEach(ev => stage.addEventListener(ev, e => {
+    e.preventDefault(); if (ev === 'drop' && e.dataTransfer.files[0]) openFile(e.dataTransfer.files[0]);
+  }));
+  window.addEventListener('beforeunload', e => { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+  initMouse();
+  let d = null;
+  try {
+    const a = JSON.parse(localStorage.getItem('sqn_autosave') || 'null');
+    if (a && a.text) d = docFromText(a.text, a.name);
+  } catch (e) { d = null; }
+  loadDoc(d || defaultDoc(), d ? d.name : 'sans titre');
+}
+window.addEventListener('DOMContentLoaded', init);
+/* ---------- 7. Barre de menus et barre d'icônes (même organisation que le logiciel Windows) ---------- */
+const IC = {
+  new: '<path d="M6 3h8l4 4v14H6z" fill="#fff" stroke="#444"/><path d="M14 3v4h4" fill="none" stroke="#444"/>',
+  open: '<path d="M3 8h6l2 2h9v9H3z" fill="#f2c94c" stroke="#8a6d00"/><path d="M3 19l3-7h16l-3 7z" fill="#ffe08a" stroke="#8a6d00"/>',
+  print: '<rect x="7" y="3" width="10" height="5" fill="#fff" stroke="#444"/><rect x="3" y="8" width="18" height="8" rx="1" fill="#9aa5b1" stroke="#444"/><rect x="7" y="13" width="10" height="7" fill="#fff" stroke="#444"/>',
+  save: '<path d="M4 4h14l2 2v14H4z" fill="#3b6fb6" stroke="#1d3f73"/><rect x="7" y="4" width="9" height="6" fill="#fff"/><rect x="7" y="14" width="10" height="6" fill="#dfe6ee"/>',
+  export: '<path d="M4 4h14l2 2v14H4z" fill="#fff" stroke="#1d3f73"/><path d="M12 8v8m-3-3l3 3 3-3" fill="none" stroke="#1b5fbf" stroke-width="2"/>',
+  copy: '<rect x="4" y="3" width="11" height="14" fill="#fff" stroke="#444"/><rect x="9" y="7" width="11" height="14" fill="#eaf1fb" stroke="#444"/>',
+  tex: '<text x="12" y="16" font-size="12" font-weight="bold" text-anchor="middle" fill="#1b5fbf" font-family="serif">TeX</text>',
+  text: '<rect x="3" y="5" width="18" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><text x="12" y="16" font-size="10" text-anchor="middle" font-family="sans-serif">ab</text>',
+  axes: '<path d="M5 20V4m0 16h15" stroke="#222" stroke-width="1.6" fill="none"/><path d="M5 3l-2 4h4zM21 20l-4-2v4z" fill="#222"/>',
+  fn: '<path d="M3 18c4-14 8 6 12-6 2-6 4-6 6-5" fill="none" stroke="#1b5fbf" stroke-width="2"/>',
+  param: '<path d="M3 18c8-6-2-12 8-6s8-6 10-4M3 4l18 16" fill="none" stroke="#1b5fbf" stroke-width="2"/>',
+  polar: '<path d="M12 12c0-1 1-1 1 0s-2 2-3 0 2-4 5-3 4 6 0 8-9 0-9-6 7-8 11-3" fill="none" stroke="#1b5fbf" stroke-width="1.6"/>',
+  fam: '<path d="M3 20c3-14 6-14 9-14M6 20c2-10 5-12 8-12M9 20c1-6 4-9 8-9M12 20c1-3 3-6 7-6" fill="none" stroke="#7a2a8a" stroke-width="1.6"/>',
+  shape: '<path d="M4 18l4-12 10 3 2 9z" fill="#2e8b57" stroke="#14532d" stroke-width="1.4"/><circle cx="7" cy="17" r="3" fill="#f2c94c" stroke="#333"/>',
+  lines: '<path d="M3 5l18 12" stroke="#1b5fbf" stroke-width="2"/><path d="M3 19L21 6" stroke="#d62828" stroke-width="2"/>',
+  deriv: '<path d="M3 17c4-14 8-2 12-8 2-3 4-2 6-1" fill="none" stroke="#222" stroke-width="2"/><path d="M13 8l6 2" stroke="#d62828" stroke-width="1.6"/>',
+  prim: '<path d="M3 20c3 0 4-10 8-12s7 0 10-3" fill="none" stroke="#2e8b57" stroke-width="2"/><path d="M3 20h18" stroke="#222"/>',
+  stat1: '<rect x="4" y="12" width="3.5" height="8" fill="#1b5fbf"/><rect x="9" y="5" width="3.5" height="15" fill="#d62828"/><rect x="14" y="9" width="3.5" height="11" fill="#2e8b57"/>',
+  stat2: '<path d="M3 20L21 5" stroke="#d62828" stroke-width="1.6"/><g fill="#1b5fbf"><circle cx="6" cy="15" r="1.6"/><circle cx="10" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="18" cy="9" r="1.6"/></g>',
+  histo: '<g fill="#7bd88f" stroke="#1d6b34"><rect x="3" y="13" width="4" height="7"/><rect x="7" y="6" width="4" height="14"/><rect x="11" y="3" width="4" height="17"/><rect x="15" y="10" width="4" height="10"/></g>',
+  loi: '<path d="M3 20c4 0 4-15 9-15s5 15 9 15" fill="#f2c94c" stroke="#8a6d00" stroke-width="1.6"/><text x="19" y="6" font-size="7" font-weight="bold">N</text>',
+  arbre: '<path d="M4 12h5l5-6h6M9 12l5 6h6" fill="none" stroke="#333" stroke-width="1.6"/><g fill="#d62828"><circle cx="4" cy="12" r="1.8"/><circle cx="20" cy="6" r="1.8"/><circle cx="20" cy="18" r="1.8"/></g>',
+  de: '<rect x="4" y="4" width="16" height="16" rx="3" fill="#d62828" stroke="#7a1010"/><g fill="#fff"><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></g>',
+  suite: '<path d="M20 4L4 12l16 8" fill="none" stroke="#2e8b57" stroke-width="2.4"/>',
+  integ: '<path d="M3 19c3-10 7-12 11-12s5 2 7 3v9z" fill="#9ec0f4" stroke="#1b5fbf" stroke-width="1.5"/>',
+  ineq: '<path d="M3 6l18 10v5H3z" fill="#9ec0f4" stroke="#1b5fbf" stroke-width="1.4"/><path d="M3 18l18-12" stroke="#d62828" stroke-width="1.4"/>',
+  impl: '<ellipse cx="12" cy="12" rx="9" ry="5" fill="none" stroke="#7a2a8a" stroke-width="2"/>',
+  tab: '<rect x="3" y="4" width="18" height="16" fill="#fff" stroke="#333"/><path d="M3 9h18M3 14h18M8 4v16" stroke="#333"/><path d="M11 18l7-3" stroke="#d62828" stroke-width="1.4"/>',
+  rap: '<circle cx="12" cy="12" r="9" fill="none" stroke="#333"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4" stroke="#8a2a2a" stroke-width=".8"/>',
+  calc: '<rect x="5" y="3" width="14" height="18" rx="2" fill="#dfe6ee" stroke="#333"/><rect x="7" y="5" width="10" height="4" fill="#fff" stroke="#333" stroke-width=".7"/><g fill="#333"><circle cx="8.5" cy="13" r="1"/><circle cx="12" cy="13" r="1"/><circle cx="15.5" cy="13" r="1"/><circle cx="8.5" cy="17" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="15.5" cy="17" r="1"/></g>',
+  fp: '<text x="12" y="17" font-size="15" font-style="italic" text-anchor="middle" font-family="serif">f′</text>',
+  F: '<text x="12" y="18" font-size="16" font-weight="bold" text-anchor="middle" font-family="sans-serif">F</text>',
+  globe: '<circle cx="12" cy="12" r="9" fill="none" stroke="#0a7a3a" stroke-width="2"/><path d="M12 3v18M3 12h18M5 7c4 2 10 2 14 0M5 17c4-2 10-2 14 0" fill="none" stroke="#1b5fbf" stroke-width="1.2"/>',
+  zin: '<circle cx="10" cy="10" r="6" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6M10 7v6" stroke="#333" stroke-width="1.6"/>',
+  zout: '<circle cx="10" cy="10" r="6" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6" stroke="#333" stroke-width="1.6"/>',
+  grid: '<path d="M3 3l18 18M3 9l12 12M9 3l12 12" stroke="#333" stroke-width="1.8"/>',
+  undo: '<path d="M9 7L4 11l5 4M4 11h10a5 5 0 010 10h-3" fill="none" stroke="#333" stroke-width="2"/>',
+  redo: '<path d="M15 7l5 4-5 4M20 11H10a5 5 0 000 10h3" fill="none" stroke="#333" stroke-width="2"/>'
+};
+const svgIcon = k => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('width', 23); s.setAttribute('height', 23); s.innerHTML = IC[k]; return s; };
+
+function gotoSection(title) {
+  openSections.add(title); buildPanel();
+  const el = [...document.querySelectorAll('#panel details.sec > summary')].find(s => s.textContent === title);
+  if (el) { el.parentElement.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+}
+function copyPng() {
+  const d = state.doc, dpi = 150, wpx = Math.round(d.W / 25.4 * dpi), hpx = Math.round(d.H / 25.4 * dpi);
+  const svg = buildSvg(d, buildCtx(d), {}).replace(/width="[^"]*mm" height="[^"]*mm"/, `width="${wpx}" height="${hpx}"`), img = new Image();
+  img.onload = () => {
+    const c = h('canvas', { width: wpx, height: hpx }), x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, wpx, hpx); x.drawImage(img, 0, 0, wpx, hpx);
+    c.toBlob(b => { try { navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]).then(() => toast('Image copiée : collez-la dans votre traitement de texte (Ctrl+V).'), () => download(b, fileBase() + '.png')); } catch (e) { download(b, fileBase() + '.png'); } }, 'image/png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+function styleToggle(flag) {
+  const T = state.doc.texts; if (!T.length) { toast('Ajoutez d’abord un texte (bouton ab|).'); return; }
+  const t = T[T.length - 1], on = new Set(); if (/gras|bold/.test(t.style || '')) on.add('gras'); if (/ital/.test(t.style || '')) on.add('italique'); if (/soul/.test(t.style || '')) on.add('souligné');
+  on.has(flag) ? on.delete(flag) : on.add(flag); t.style = [...on].join(' ') || 'normal'; buildPanel(); redraw(); commit();
+}
+const addText = () => { const d = state.doc, g = geom(d); d.texts.push({ txt: 'Texte', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 10), font: 'Times New Roman', size: 12, col: 0, style: 'normal' }); gotoSection('Textes'); redraw(); commit(); };
+const addLatex = () => { const d = state.doc, g = geom(d); d.latex.push({ pre: '   3$ ', size: 3, src: '\\frac{a}{b}+\\sqrt{x^2+1}', x: g.xOf(d.dOy + 10), y: g.yOf(d.dOx - 20) }); gotoSection('Expressions LaTeX'); redraw(); commit(); };
+const ex = t => () => { addExtra(t); const p = $('#panel'); const sec = [...p.querySelectorAll('details.sec > summary')].find(s => s.textContent === 'Compléments'); if (sec) sec.parentElement.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+const go = t => () => gotoSection(t);
+
+function chromeSpec() {
+  const A = {
+    nouveau: ['Nouveau', 'Nouveau dessin', newDocument, 'new'], ouvrir: ['Ouvrir…', 'Ouvrir un dessin (.sqn)', () => $('#file').click(), 'open', 'Ctrl+O'],
+    enreg: ['Enregistrer', 'Enregistrer le dessin', saveSqn, 'save', 'Ctrl+S'], sqn: ['Exporter en .sqn (version Windows)', 'Exporter pour la version Windows', () => exportSqnOnly(false), 'export'],
+    copier: ['Copier l’image', 'Copier le dessin comme image', copyPng, 'copy'], png: ['Exporter en PNG', 'Image PNG', exportPng], svg: ['Exporter en SVG', 'Image vectorielle', exportSvg],
+    imprimer: ['Imprimer / PDF…', 'Imprimer à l’échelle réelle', printDoc, 'print', 'Ctrl+P'],
+    undo: ['Annuler', 'Annuler', undo, 'undo', 'Ctrl+Z'], redo: ['Rétablir', 'Rétablir', redo, 'redo', 'Ctrl+Y'],
+    zin: ['Zoom avant', 'Zoom avant', () => setZoom(state.doc.zoom + 25), 'zin'], zout: ['Zoom arrière', 'Zoom arrière', () => setZoom(state.doc.zoom - 25), 'zout'],
+    zfit: ['Ajuster à la largeur', 'Ajuster à la largeur', fitZoom], z100: ['Zoom 100 %', 'Zoom 100 %', () => setZoom(100)],
+    aide: ['Aide', 'Aide', showHelp], apropos: ['À propos', 'À propos', () => toast('Sine qua non en ligne — réécriture du logiciel de Patrice Rabiller et Patrick Pradeau. Les dessins .sqn de la version Windows s’ouvrent directement.', 7000)]
+  };
+  const D = (label, title, fn, icon) => [label, title, fn, icon];
+  const menus = [
+    ['Fichier', [A.nouveau, A.ouvrir, A.enreg, A.sqn, '-', A.copier, A.png, A.svg, A.imprimer]],
+    ['Définir', [D('Page…', 'Page', go('Page')), D('Repère…', 'Repère', go('Repère')), D('Fonctions f(x)…', '', go('Fonctions f(x)')), D('Courbes paramétrées…', '', go('Courbes paramétrées')), D('Courbes polaires…', '', go('Courbes polaires')),
+      D('Droites…', '', go('Droites')), D('Famille de fonctions…', '', go('Famille de fonctions')), D('Points et segments…', '', go('Points et segments')), '-', D('Texte', '', addText), D('Expression LaTeX', '', addLatex), D('Rapporteur trigonométrique…', '', go('Rapporteur trigonométrique'))]],
+    ['Outils', [A.undo, A.redo, '-', A.zin, A.zout, A.zfit, A.z100, '-', ...Object.entries(EX).map(([k, T]) => D('Ajouter : ' + T.label, '', ex(k)))]],
+    ['Calculs', [D('Résoudre une équation…', '', go('Calculs')), D('Table de valeurs…', '', go('Calculs')), D('Intégrale approchée…', '', go('Calculs')), '-', D('Dérivée', '', ex('deriv')), D('Primitive', '', ex('prim')), D('Statistiques à une variable', '', ex('stat1')), D('Statistiques à deux variables', '', ex('stat2')), D('Lois de probabilité', '', ex('loi')), D('Simulation', '', () => { ex('stat1')(); })]],
+    ['?', [A.aide, A.apropos]]
+  ];
+  const B = (title, icon, fn) => ({ title, icon, fn }), SEP = { sep: 1 };
+  const bar = [A.nouveau, A.ouvrir, A.imprimer, A.enreg, A.sqn, SEP, B('Copier le dessin comme image', 'copy', copyPng), SEP,
+    B('Expression LaTeX', 'tex', addLatex), B('Texte', 'text', addText), SEP, { fmt: 1 }, SEP,
+    B('Repère', 'axes', go('Repère')), B('Fonctions f(x)', 'fn', go('Fonctions f(x)')), B('Courbes paramétrées', 'param', go('Courbes paramétrées')), B('Courbes polaires', 'polar', go('Courbes polaires')), B('Famille de fonctions', 'fam', go('Famille de fonctions')),
+    B('Figures géométriques (cercle, polygone, vecteur…)', 'shape', ex('shape')), B('Droites, points et segments', 'lines', go('Droites')), B('Courbe point par point', 'prim', ex('pbp')),
+    B('Statistiques à une variable', 'stat1', ex('stat1')), B('Statistiques à deux variables', 'stat2', ex('stat2')), B('Histogramme', 'histo', () => { ex('stat1')(); const e = state.doc.extras[state.doc.extras.length - 1]; e.mode = 'histo'; e.data = '0;2;3\n2;4;8\n4;6;5\n6;8;2'; buildPanel(); redraw(); }),
+    B('Lois de probabilité', 'loi', ex('loi')), B('Arbre de probabilités', 'arbre', ex('arbre')), B('Simulation', 'de', ex('stat1')), B('Suites numériques', 'suite', ex('suite')),
+    B('Intégrale', 'integ', ex('integ')), B('Inéquations', 'ineq', ex('ineq')), B('Courbes implicites, coniques', 'impl', ex('impl')), B('Tableaux de signes et de variations', 'tab', ex('tab')),
+    B('Rapporteur trigonométrique', 'rap', go('Rapporteur trigonométrique')), B('Calculs', 'calc', go('Calculs')), B('Courbe dérivée', 'fp', ex('deriv')), B('Primitive', 'F', ex('prim')), B('Échelle logarithmique', 'globe', go('Repère')), SEP,
+    { zoom: 1 }, B('Quadrillage', 'grid', go('Repère')), A.zin, A.zout, { coords: 1 }];
+  return { menus, bar };
+}
+
+function buildChrome() {
+  const { menus, bar } = chromeSpec(), mb = $('#menubar'), ib = $('#iconbar'); let open = null;
+  const closeAll = () => { mb.querySelectorAll('.menu.open').forEach(m => m.classList.remove('open')); open = null; };
+  menus.forEach(([name, items]) => {
+    const m = h('div', { class: 'menu' }), b = h('button', { class: 'mt', type: 'button' }, name), dd = h('div', { class: 'dd' });
+    items.forEach(it => { if (it === '-') dd.append(h('hr')); else dd.append(h('button', { type: 'button', class: 'mi', onclick: () => { closeAll(); it[2](); } }, h('span', null, it[0]), it[4] ? h('kbd', null, it[4]) : null)); });
+    b.onclick = e => { e.stopPropagation(); const was = m.classList.contains('open'); closeAll(); if (!was) { m.classList.add('open'); open = m; } };
+    b.onmouseenter = () => { if (open && open !== m) { closeAll(); m.classList.add('open'); open = m; } };
+    m.append(b, dd); mb.append(m);
+  });
+  document.addEventListener('click', closeAll);
+  bar.forEach(it => {
+    if (it.sep) ib.append(h('span', { class: 'sep' }));
+    else if (it.fmt) { ib.append(h('span', { class: 'fontname' }, 'Times-12'), ...[['G', 'gras', 'Gras (dernier texte)'], ['I', 'italique', 'Italique (dernier texte)'], ['S', 'souligné', 'Souligné (dernier texte)']].map(([l, f, t]) => h('button', { class: 'ib txt', type: 'button', title: t, onclick: () => styleToggle(f), style: f === 'gras' ? 'font-weight:bold' : f === 'italique' ? 'font-style:italic' : 'text-decoration:underline' }, l))); }
+    else if (it.zoom) {
+      const sel = h('select', { id: 'zoomsel', title: 'Zoom', onchange: e => setZoom(+e.target.value) }, [25, 50, 75, 100, 125, 150, 200, 300, 400].map(z => h('option', { value: z }, z + ' %'))); ib.append(sel);
+    } else if (it.coords) ib.append(h('span', { id: 'coords' }, 'X=—  Y=—'));
+    else { const title = Array.isArray(it) ? it[1] : it.title, icon = Array.isArray(it) ? it[3] : it.icon, fn = Array.isArray(it) ? it[2] : it.fn; ib.append(h('button', { class: 'ib', type: 'button', title, onclick: fn }, svgIcon(icon))); }
+  });
+  $('#stage').addEventListener('pointermove', e => {
+    const svg = $('#paper').firstElementChild; if (!svg) return; const r = svg.getBoundingClientRect(), d = state.doc;
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+    const g = geom(d), mx = (e.clientX - r.left) / r.width * d.W, my = (e.clientY - r.top) / r.height * d.H, f = v => Number.isFinite(v) ? v.toFixed(2).replace('.', ',') : '—';
+    $('#coords').textContent = `X=${f(g.xOf(mx))}  Y=${f(g.yOf(my))}`;
+  });
+}
+
+</script>
+</body>
+</html>

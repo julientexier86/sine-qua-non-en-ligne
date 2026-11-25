@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sine qua non — en ligne</title>
+<style>
+:root{--bg:#e9ecef;--panel:#fff;--line:#d5d9de;--ink:#1f2933;--mut:#6b7785;--acc:#1b5fbf;--acc2:#e8f0fc;--err:#b3261e}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:#fff;border-bottom:1px solid var(--line)}
+header .brand{font-weight:700;color:var(--acc);margin-right:6px;white-space:nowrap}
+header .brand small{font-weight:400;color:var(--mut)}
+#docname{color:var(--mut);margin:0 8px;font-style:italic;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb{display:flex;gap:4px;align-items:center;padding-right:8px;margin-right:4px;border-right:1px solid var(--line)}
+.tb:last-child{border:0}
+button.t{font:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;color:var(--ink)}
+button.t:hover{background:var(--acc2);border-color:#b7cdf0}
+button.t.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+#menubar{display:flex;background:#fff;border-bottom:1px solid var(--line);padding:0 4px;font-size:14px;position:relative;z-index:20}
+.menu{position:relative}.mt{font:inherit;border:0;background:none;padding:6px 12px;cursor:pointer}.mt:hover,.menu.open .mt{background:#cde4fb}
+.dd{display:none;position:absolute;top:100%;left:0;min-width:270px;background:#fff;border:1px solid #bbb;box-shadow:0 6px 18px rgba(0,0,0,.25);padding:3px 0}
+.menu.open .dd{display:block}.mi{display:flex;justify-content:space-between;gap:20px;width:100%;font:inherit;border:0;background:none;text-align:left;padding:5px 18px;cursor:pointer}.mi:hover{background:#cde4fb}.mi kbd{font:12px inherit;color:#777}
+.dd hr{border:0;border-top:1px solid #ddd;margin:3px 0}
+#iconbar{display:flex;flex-wrap:wrap;align-items:center;gap:1px;background:#f4f5f7;border-bottom:1px solid #c9ced4;padding:3px 6px}
+.ib{border:1px solid transparent;background:none;border-radius:3px;padding:2px 3px;cursor:pointer;line-height:0;min-width:26px;height:30px;display:inline-flex;align-items:center;justify-content:center}
+.ib:hover{background:#d6e6fa;border-color:#8fb4e8}.ib.txt{font:italic 18px "Times New Roman",serif;line-height:1;color:#555}
+.sep{width:1px;align-self:stretch;margin:2px 5px;background:#bbb}
+.fontname{font:13px ui-monospace,Consolas,monospace;color:#777;padding:0 10px}
+#zoomsel{font:13px ui-monospace,Consolas,monospace;border:1px solid #7a9fd6;background:#fff;height:24px;margin:0 4px}
+#coords{font:14px ui-monospace,Consolas,monospace;padding:0 10px;min-width:170px;color:#222}
+main{flex:1;display:flex;min-height:0}
+#stage{flex:1;overflow:auto;padding:22px;background:#cfd4da;touch-action:none}
+#paper{margin:0 auto;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.28);position:relative;line-height:0}
+#paper svg{display:block}
+aside#panel{width:370px;max-width:46vw;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:6px 8px 60px}
+details.sec{border:1px solid var(--line);border-radius:8px;margin:7px 0;background:#fafbfc}
+details.sec>summary{cursor:pointer;padding:8px 10px;font-weight:600;list-style:none}
+details.sec>summary::before{content:"▸";display:inline-block;width:1em;color:var(--mut)}
+details.sec[open]>summary::before{content:"▾"}
+details.sec>.body{padding:2px 10px 10px}
+details.sub{margin-top:6px}
+details.sub>summary{cursor:pointer;color:var(--acc);font-size:13px}
+.item{border-top:1px dashed var(--line);padding:7px 0}
+.item:first-child{border-top:0}
+.row{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:flex-end;margin:4px 0}
+.f{display:flex;flex-direction:column;font-size:11.5px;color:var(--mut);flex:1 1 90px;min-width:70px}
+.f.grow{flex:1 1 140px}.f.w2{flex:1 1 120px}.f.w3{flex:1 1 70px}.f.w4{flex:1 1 52px}
+.f input,.f select{font:inherit;font-size:13.5px;color:var(--ink);padding:4px 6px;border:1px solid #c5ccd4;border-radius:5px;background:#fff;min-width:0;width:100%}
+.f input:focus,.f select:focus{outline:2px solid #9ec0f4;border-color:var(--acc)}
+.f.color input{padding:0;height:28px;width:44px;cursor:pointer}
+.f.color{flex:0 0 auto}
+.chk{display:flex;align-items:center;gap:5px;font-size:12.5px;white-space:nowrap}
+.lab{font-family:"Times New Roman",serif;font-style:italic;padding-bottom:6px;white-space:nowrap}
+.btn{font:inherit;border:1px solid #c5ccd4;background:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;margin-top:6px}
+.btn:hover{background:var(--acc2)}
+.btn.small{padding:3px 8px;font-size:12.5px}
+.btn.x{margin:0;padding:3px 7px;color:var(--err);border-color:#e6c4c1}
+.err{color:var(--err);font-size:12px;margin:0 0 2px 4px}
+.hint{font-size:12px;color:var(--mut);margin:8px 0 0}
+.out{background:#f3f5f8;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:4px 0 8px;font:12px/1.4 ui-monospace,Consolas,monospace;white-space:pre-wrap;max-height:180px;overflow:auto}
+textarea{font:12.5px/1.35 ui-monospace,Consolas,monospace;width:100%;padding:5px 6px;border:1px solid #c5ccd4;border-radius:5px;resize:vertical}
+.dim{color:var(--mut)}.grow{flex:1}
+.pt{border:1px solid #e3e7ec;border-radius:6px;padding:4px 6px;margin:5px 0;background:#fff}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:#1f2933;color:#fff;padding:9px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:.25s;z-index:30;max-width:90vw}
+#toast.show{opacity:.96;transform:translateX(-50%)}
+dialog{border:0;border-radius:12px;max-width:640px;width:92vw;padding:20px 24px;box-shadow:0 12px 50px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog h2{margin:.1em 0 .4em;font-size:18px}
+dialog code{background:#eef1f5;padding:1px 5px;border-radius:4px}
+dialog table{border-collapse:collapse;width:100%;font-size:13px}
+dialog td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+#printArea{display:none}
+@media (max-width:900px){main{flex-direction:column}aside#panel{width:100%;max-width:none;height:46vh;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="menubar"></div>
+<div id="iconbar"></div>
+<input type="file" id="file" accept=".sqn,.sqnw,.txt" hidden>
+<main>
+  <section id="stage"><div id="paper"></div></section>
+  <aside id="panel"></aside>
+</main>
+<div id="printArea"></div>
+<div id="toast"></div>
+<dialog id="help">
+  <h2>Aide rapide</h2>
+  <p><b>À la souris :</b> glissez l’origine du repère (rond bleu), les carrés d’unité sur Ox et Oy, le bord droit ou bas du dessin, ou un texte. <code>Maj</code> désactive l’aimantation à la grille.</p>
+  <table>
+    <tr><td>Fonctions</td><td><code>0,5x^2-3</code> · <code>(1/2)x²-3</code> · <code>racine(x²+1)</code> · <code>sin x</code> · <code>ln x</code> · <code>exp(x)</code> · <code>abs(x)</code> · <code>x!</code> · <code>pi</code></td></tr>
+    <tr><td>Priorité</td><td><code>1/2x</code> signifie 1/(2x) comme sur le logiciel d’origine ; en cas de doute, ajoutez des parenthèses.</td></tr>
+    <tr><td>Composition</td><td><code>f1of2(x)</code> ou <code>f1(f2(x))</code> (une fonction ne peut utiliser que celles définies avant elle)</td></tr>
+    <tr><td>Intervalle</td><td><code>(3/(x-1))(x&gt;=2)(x&lt;=5)</code></td></tr>
+    <tr><td>Paramétrées</td><td>variable <code>t</code> ; polaires : r(t), angle en radians</td></tr>
+    <tr><td>Familles</td><td>variable <code>p</code>, par ex. <code>(x^3-p*x)/10</code></td></tr>
+    <tr><td>Fichiers</td><td>« Ouvrir » lit les dessins <code>.sqn</code> du logiciel Windows ; « Enregistrer » produit un <code>.sqn</code> relisible par ce dernier.</td></tr>
+    <tr><td>Impression</td><td>« Imprimer / PDF » respecte les dimensions en millimètres (choisir « Échelle : 100 % », sans marges ni en-têtes).</td></tr>
+  </table>
+  <p style="color:#6b7785;font-size:12px">Réécriture en ligne du logiciel Sine qua non de Patrice Rabiller et Patrick Pradeau. Les compléments (statistiques, probabilités, arbres, suites, intégrales, inéquations, coniques, tableaux) sont propres à cette version : ils sont enregistrés dans un fichier <code>.sqnw</code> ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows, sans eux.</p>
+  <p style="text-align:right"><button class="t pri" id="help-close">Fermer</button></p>
+</dialog>
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>
