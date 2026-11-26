@@ -393,33 +393,57 @@ function newDocument() {
 }
 function loadDoc(d, name) {
   d.name = name; state.doc = d; state.hist = []; state.histPos = -1; state.dirty = false;
-  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle(); try { buildPanel(); } catch (e) { /* panneau fermé */ }
+  state.handle = null; drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle(); try { buildPanel(); } catch (e) { /* panneau fermé */ }
 }
-function openFile(file) {
+function openFile(file, handle) {
   const r = new FileReader();
   r.onload = () => {
     try {
       const u8 = new Uint8Array(r.result), isJson = u8[0] === 0x7B || (u8[0] === 0xEF && u8[3] === 0x7B);
       const txt = isJson ? new TextDecoder('utf-8').decode(u8) : decodeCp1252(r.result);
       const d = docFromText(txt, file.name.replace(/\.[^.]+$/, ''));
-      loadDoc(d, d.name); rememberRecent(d.name, snapshot()); toast('« ' + file.name + ' » ouvert.');
+      loadDoc(d, d.name); state.handle = handle && /\.(sqn|sqnw)$/i.test(file.name) ? handle : null; rememberRecent(d.name, snapshot()); toast('« ' + file.name + ' » ouvert.' + (state.handle ? ' « Enregistrer » écrira dans ce fichier.' : ''));
     } catch (e) { toast('Impossible d’ouvrir ce fichier : ' + e.message, 6000); }
   };
   r.readAsArrayBuffer(file);
+}
+async function openDialog() {
+  if (typeof window.showOpenFilePicker === 'function') {
+    try { const [hd] = await window.showOpenFilePicker({ types: [{ description: 'Dessins Sine qua non', accept: { 'application/octet-stream': ['.sqn', '.sqnw', '.txt'] } }] }); openFile(await hd.getFile(), hd); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  $('#file').click();
 }
 function download(blob, name) {
   const a = h('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
 const fileBase = () => (state.doc.name || 'dessin').replace(/[\\/:*?"<>|]+/g, '_');
-function saveSqn() {
-  if (hasExtras(state.doc)) {
-    download(new Blob([snapshotDoc(state.doc)], { type: 'application/json' }), fileBase() + '.sqnw');
-    rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); toast('Enregistré en .sqnw (contient les compléments de la version en ligne). Le bouton « .sqn » produit un fichier pour la version Windows.', 6000);
-  } else exportSqnOnly(true);
+// Chrome, Edge (et les Chromebooks) : enregistrement direct dans le fichier ou le dossier choisi (disque, Drive, Nextcloud monté…) ;
+// Firefox : téléchargement classique.
+async function saveBlob(blob, name, desc, accept, useHandle) {
+  if (typeof window.showSaveFilePicker === 'function') {
+    try {
+      let hd = useHandle && state.handle && state.handle.name.toLowerCase().endsWith(name.slice(name.lastIndexOf('.')).toLowerCase()) ? state.handle : null;
+      if (!hd) hd = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept }] });
+      const w = await hd.createWritable(); await w.write(blob); await w.close();
+      if (useHandle) state.handle = hd;
+      return hd.name;
+    } catch (e) { if (e && e.name === 'AbortError') return null; /* iframe, refus : repli sur le téléchargement */ }
+  }
+  download(blob, name); return name;
 }
-function exportSqnOnly(clean) {
-  download(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn');
+async function saveSqn(forcePick) {
+  if (forcePick === true) state.handle = null;
+  if (hasExtras(state.doc)) {
+    const n = await saveBlob(new Blob([snapshotDoc(state.doc)], { type: 'application/json' }), fileBase() + '.sqnw', 'Dessin Sine qua non en ligne', { 'application/json': ['.sqnw'] }, true);
+    if (n === null) return;
+    rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); toast('Enregistré en .sqnw (contient les compléments de la version en ligne). Le bouton « .sqn » produit un fichier pour la version Windows.', 6000);
+  } else await exportSqnOnly(true);
+}
+async function exportSqnOnly(clean) {
+  const n = await saveBlob(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn', 'Dessin Sine qua non', { 'application/octet-stream': ['.sqn'] }, !!clean);
+  if (n === null) return;
   if (clean) { rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); }
   toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments pris en charge y sont écrits (stats, lois, suites, inéquations…) ; arbres, simulations et tableaux ne sont pas modifiables dans le .sqn.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
 }
@@ -493,7 +517,7 @@ function init() {
   document.addEventListener('keydown', e => {
     const mod = e.ctrlKey || e.metaKey, tag = (e.target.tagName || '').toLowerCase();
     if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); saveSqn(); }
-    else if (mod && e.key.toLowerCase() === 'o') { e.preventDefault(); $('#file').click(); }
+    else if (mod && e.key.toLowerCase() === 'o') { e.preventDefault(); openDialog(); }
     else if (mod && e.key.toLowerCase() === 'p') { e.preventDefault(); printDoc(); }
     else if (mod && e.key.toLowerCase() === 'z' && tag !== 'input') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y' && tag !== 'input') { e.preventDefault(); redo(); }

@@ -69,8 +69,8 @@ const go = (t, title) => () => gotoSection(t, title);
 
 function chromeSpec() {
   const A = {
-    nouveau: ['Nouveau', 'Nouveau dessin', newDocument, 'new'], ouvrir: ['Ouvrir…', 'Ouvrir un dessin (.sqn)', () => $('#file').click(), 'open', 'Ctrl+O'],
-    enreg: ['Enregistrer', 'Enregistrer le dessin', saveSqn, 'save', 'Ctrl+S'], sqn: ['Exporter en .sqn (version Windows)', 'Exporter pour la version Windows', () => exportSqnOnly(false), 'export'],
+    nouveau: ['Nouveau', 'Nouveau dessin', newDocument, 'new'], ouvrir: ['Ouvrir…', 'Ouvrir un dessin (.sqn)', openDialog, 'open', 'Ctrl+O'],
+    enreg: ['Enregistrer', 'Enregistrer le dessin', () => saveSqn(), 'save', 'Ctrl+S'], sqn: ['Exporter en .sqn (version Windows)', 'Exporter pour la version Windows', () => exportSqnOnly(false), 'export'],
     copier: ['Copier l’image', 'Copier le dessin comme image', copyPng, 'copy'], png: ['Exporter en PNG', 'Image PNG', exportPng], svg: ['Exporter en SVG', 'Image vectorielle', exportSvg],
     imprimer: ['Imprimer / PDF…', 'Imprimer à l’échelle réelle', printDoc, 'print', 'Ctrl+P'],
     undo: ['Annuler', 'Annuler', undo, 'undo', 'Ctrl+Z'], redo: ['Rétablir', 'Rétablir', redo, 'redo', 'Ctrl+Y'],
@@ -81,7 +81,7 @@ function chromeSpec() {
   const D = (label, title, fn, icon) => [label, title, fn, icon];
   const unitStep = k => () => { const d = state.doc; d.lx = Math.max(1, d.lx + k); d.ly = Math.max(1, d.ly + k); redraw(); commit(); };
   const menus = [
-    ['Fichier', [A.nouveau, A.ouvrir, D('Réouvrir…', 'Les 10 derniers dessins', reopenRecent), D('Ouvrir exemple…', 'Exemples fournis', openExample), A.enreg, D('Enregistrer sous…', 'Enregistrer le dessin', saveSqn), D('Enregistrer l’image PNG…', 'Image PNG', exportPng), D('Enregistrer l’image JPEG…', '', exportJpg), D('Enregistrer l’image BMP…', '', exportBmp), D('Enregistrer l’image GIF…', '', exportGif), D('Enregistrer l’image vectorielle (SVG)…', '', exportSvg), D('Enregistrer au format EMF…', '', exportEmf), D('Enregistrer au format WMF…', '', exportWmf), D('Enregistrer au format EPS…', '', exportEps), A.sqn, '-', A.imprimer, D('Mise en page…', 'Page', go('Page'))]],
+    ['Fichier', [A.nouveau, A.ouvrir, D('Réouvrir…', 'Les 10 derniers dessins', reopenRecent), D('Ouvrir exemple…', 'Exemples fournis', openExample), A.enreg, D('Enregistrer sous…', 'Enregistrer le dessin', () => saveSqn(true)), D('Enregistrer l’image PNG…', 'Image PNG', exportPng), D('Enregistrer l’image JPEG…', '', exportJpg), D('Enregistrer l’image BMP…', '', exportBmp), D('Enregistrer l’image GIF…', '', exportGif), D('Enregistrer l’image vectorielle (SVG)…', '', exportSvg), D('Enregistrer au format EMF…', '', exportEmf), D('Enregistrer au format WMF…', '', exportWmf), D('Enregistrer au format EPS…', '', exportEps), A.sqn, '-', A.imprimer, D('Mise en page…', 'Page', go('Page'))]],
     ['Définir', [D('Repère…', 'Repère', go('Repère')), '-', D('Fonction f(x)', '', go('Fonctions f(x)')), D('Représentation paramétrique x(t), y(t)', '', go('Courbes paramétrées')), D('Courbe polaire r=f(t)', '', go('Courbes polaires')),
       D('Courbe définie point par point', '', ex('pbp')), D('Dérivée d’une fonction donnée', '', ex('deriv')), D('Primitive d’une fonction donnée', '', ex('prim')), '-', D('Famille de fonctions fp(x)', '', go('Famille de fonctions')), '-',
       D('Droite', '', go('Droites')), D('Schéma', '', go('Objets du schéma (points, droites, cercles…)', 'Objets du schéma')), D('Figure (polygone, cercle, flèche…)', '', ex('shape', null, 'Figure')), D('Texte', '', addText), '-',
