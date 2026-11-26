@@ -34,13 +34,13 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 - Suites numériques, intégrales (aire, rectangles, trapèzes), inéquations avec hachures, courbes point par point (pentes ou lissage de Bézier), tableaux de signes et de variations (modèles Var1 à Var8), table de valeurs, calculs.
 
 **Fichiers**
-- Ouverture et enregistrement des dessins `.sqn` de la version Windows. Les objets pédagogiques suivants sont lus et affichés à l'ouverture : lois, statistiques, suites, intégrales, inéquations, courbes point par point, arbres, simulations (boîtes et histogrammes), dérivée, primitive.
+- Ouverture et enregistrement des dessins `.sqn` de la version Windows. Les objets pédagogiques suivants sont lus et affichés à l'ouverture : lois, statistiques, suites, intégrales, inéquations, courbes point par point, arbres, simulations (boîtes et histogrammes), dérivée, primitive, tableaux de variations ou de signes, table de valeurs.
 - Export PNG (300 ppp), SVG, impression ou PDF à l'échelle réelle.
-- Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (sans ces compléments).
+- Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (les compléments pris en charge y sont écrits).
 
 ## Ce qui n'est pas encore reproduit
 
-- Les statistiques en boîte ou en droite de Henry sur données groupées, les graphiques de simulation « points » et « histogrammes des échantillons », l'échelle automatique des simulations.
+- La **droite de Henry** (papier gausso-arithmétique) sur données groupées. L'échelle automatique des simulations n'est pas recalculée : l'échelle enregistrée dans le fichier est reprise telle quelle.
 - Les objets lus à l'ouverture d'un `.sqn` Windows (lois, statistiques, suites, intégrales, inéquations, courbes, dérivées, primitives…) se modifient dans l'application et **sont réécrits dans le `.sqn` exporté**. Exception : les arbres de probabilités, les simulations, les tableaux de variations et les tables de valeurs ne sont pas réécrits (supprimés dans l'application, ils sont retirés du `.sqn` ; modifiés, ils gardent leur ancienne version dans le `.sqn`).
 - Les tableaux de variations ou de signes de Windows s'affichent à l'ouverture avec le même code ; la mise en page est proche mais pas identique.
 - Le rendu est fidèle aux couleurs, styles et valeurs du fichier, mais n'est pas identique pixel pour pixel à celui de Windows.

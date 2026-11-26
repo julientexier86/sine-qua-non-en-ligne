@@ -350,7 +350,7 @@ function deriveSqnExtras(d) {
   if (i >= 0) { const n = NUMD(val(all[i + 7] || '')); if (n > 0) { const S = NUMD(val(all[i + 2])), st = S % 10, eff = Math.floor((S % 100) / 10) === 1, rows = [];
     for (let k = 0; k < n; k++) rows.push([all[i + 8 + 3 * k], all[i + 9 + 3 * k], all[i + 10 + 3 * k]].join(';'));
     const tot = rows.reduce((t, r) => t + num(r.split(';')[2], 0), 0) || 1;
-    if (st === 0 || (st >= 3 && st <= 5)) out.push({ type: 'stat1', fromRaw: true, mode: st === 0 ? 'histo' : 'cumulf', title: val(all[i + 1]), data: rows.join('\n'), ky: eff ? 1 : 100 / tot, y0: -2, h: 1.2, showStats: false, table: /oui/i.test(val(all[i + 4])), sx: 0, sy: 0, tx: 0, ty: -3, couleur: 0, couleur2: NUMD(val(all[i + 5])), ep: 2, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }); } }
+    if (st <= 5 && st !== undefined) out.push({ type: 'stat1', fromRaw: true, deciles: st === 2, mode: st === 0 ? 'histo' : st <= 2 ? 'boitecl' : 'cumulf', title: val(all[i + 1]), data: rows.join('\n'), ky: eff ? 1 : 100 / tot, y0: -2, h: 1.2, showStats: false, table: /oui/i.test(val(all[i + 4])), sx: 0, sy: 0, tx: 0, ty: -3, couleur: 0, couleur2: NUMD(val(all[i + 5])), ep: 2, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }); } }
   // stat 2 variables
   i = at('Données statistiques 2 variables');
   if (i >= 0) { const n = NUMD(val(all[i + 14] || '')); if (n > 0) { const FIT = { 'linéaire': 'lin', 'logarithmique': 'log', 'exponentielle': 'exp', 'puissance': 'pow', 'polynômiale de degré 2': 'par', 'polynômiale de degré 3': 'pol3', 'polynômiale de degré 4': 'pol4', 'aucune': 'none', 'droite de mayer': 'mayer' };

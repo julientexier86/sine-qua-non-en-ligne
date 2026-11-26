@@ -121,7 +121,7 @@ EX.shape = { label: 'Figure (cercle, polygone, vecteur…)', def: () => ({ kind:
 /* --- statistiques à une variable --- */
 function stat1Data(e) { // renvoie {vals:[[x,eff]], classes:[[a,b,eff]], all:[valeurs]}
   const R = rowsOf(e.data).filter(r => r.every(Number.isFinite));
-  if (e.mode === 'histo' || e.mode === 'cumulf') { const cl = R.filter(r => r.length >= 3); return { classes: cl, all: [] }; }
+  if (e.mode === 'histo' || e.mode === 'cumulf' || e.mode === 'boitecl') { const cl = R.filter(r => r.length >= 3); return { classes: cl, all: [] }; }
   const map = new Map(); R.forEach(r => { map.set(r[0], (map.get(r[0]) || 0) + (r.length >= 2 ? r[1] : 1)); });
   const vals = [...map.entries()].sort((a, b) => a[0] - b[0]); const all = []; vals.forEach(([x, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push(x); });
   return { vals, all };
@@ -146,9 +146,9 @@ function tableSvg(rows, x, y, cw, rh, col, size = 9) { // rows: tableau de ligne
   return s;
 }
 EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons', data: '1;3\n2;5\n3;8\n4;4\n5;2', ky: 1, y0: -2, h: 1.2, showStats: true, sx: 0, sy: 0, table: false, tx: 0, ty: -3, couleur: 16711680, couleur2: 16777181, ep: 3, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }),
-  fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['cumul', 'Polygone des effectifs cumulés croissants'], ['cumulf', 'Polygone des fréquences cumulées (classes  a;b;effectif)'], ['multi', 'Boîtes à moustaches multiples  (nom;valeurs…)'], ['barres', 'Caractère qualitatif : barres  (modalité;effectif)'], ['camem', 'Caractère qualitatif : secteurs  (modalité;effectif)']]],
+  fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['boitecl', 'Boîte à moustaches sur classes  (a;b;effectif)'], ['cumul', 'Polygone des effectifs cumulés croissants'], ['cumulf', 'Polygone des fréquences cumulées (classes  a;b;effectif)'], ['multi', 'Boîtes à moustaches multiples  (nom;valeurs…)'], ['barres', 'Caractère qualitatif : barres  (modalité;effectif)'], ['camem', 'Caractère qualitatif : secteurs  (modalité;effectif)']]],
     ['data', 'données (une ligne par valeur)', 'area', 'grow'], 'br', ['ky', 'échelle verticale', 'num', 'w2', { step: 0.1 }], ['y0', 'boîte : y', 'num', 'w3', { step: 0.5 }], ['h', 'boîte : hauteur', 'num', 'w3', { step: 0.1 }], 'br',
-    ['couleur', 'trait', 'color'], ['couleur2', 'remplissage', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['showStats', 'afficher moyenne, médiane, écart-type', 'chk'], ['sx', 'x', 'num', 'w3', { step: 0.1 }], ['sy', 'y', 'num', 'w3', { step: 0.1 }], 'br', ['table', 'afficher le tableau statistique (effectifs, fréquences, cumuls)', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], 'br',
+    ['couleur', 'trait', 'color'], ['couleur2', 'remplissage', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['deciles', 'boîte sur classes : avec déciles', 'chk'], ['showStats', 'afficher moyenne, médiane, écart-type', 'chk'], ['sx', 'x', 'num', 'w3', { step: 0.1 }], ['sy', 'y', 'num', 'w3', { step: 0.1 }], 'br', ['table', 'afficher le tableau statistique (effectifs, fréquences, cumuls)', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], 'br',
     ['sim', 'simulation', 'sel', 'w2', [['unif', 'Loi uniforme discrète (1 à A)'], ['unifc', 'Loi uniforme continue (0 à A)'], ['bern', 'Loi de Bernoulli (p = A)'], ['bin', 'Loi binomiale (n = A ; p = B)'], ['geo', 'Loi géométrique (p = A)'], ['pois', 'Loi de Poisson (λ = A)'], ['norm', 'Loi normale (μ = A ; σ = B)'], ['exp', 'Loi exponentielle (λ = A)'], ['coin', 'Pièce : nombre de « face » sur A lancers'], ['de2', 'Somme de deux dés à A faces']]],
     ['simN', 'nb tirages', 'num', 'w3'], ['simA', 'A / n / μ / λ', 'num', 'w3', { step: 0.1 }], ['simB', 'p / σ', 'num', 'w3', { step: 0.05 }],
     ['@sim', 'Simuler → remplir les données', 'btn']],
@@ -169,6 +169,18 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
       for (const [x, n] of D.vals) s += lineSeg([g.X(x), g.Y(0)], [g.X(x), g.Y(n * e.ky)], st.col, st.w * 1.6);
     } else if (e.mode === 'histo' || e.mode === 'cumulf') {
       for (const [a, b, n] of D.classes) { const hgt = n / (b - a) * e.ky; s += `<rect x="${f2(g.X(a))}" y="${f2(g.Y(hgt))}" width="${f2(g.X(b) - g.X(a))}" height="${f2(g.Y(0) - g.Y(hgt))}" fill="${fillc}" stroke="${st.col}" stroke-width="${f2(st.w * 0.6)}"/>`; }
+      D.classes.forEach(([a, b, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push((a + b) / 2); });
+    } else if (e.mode === 'boitecl' && D.classes.length) { // quartiles et déciles par interpolation linéaire dans la classe, comme Windows
+      const N = D.classes.reduce((t, c) => t + Math.round(c[2]), 0) || 1, q = {}; let cum = 0;
+      D.classes.forEach(([a, b, n]) => { n = Math.round(n); [[0.1, 'd1'], [0.25, 'q1'], [0.5, 'md'], [0.75, 'q3'], [0.9, 'd9']].forEach(([p, k]) => { if (cum / N < p && (cum + n) / N >= p) q[k] = a + (b - a) * (p - cum / N) / n * N; }); cum += n; });
+      const mn = D.classes[0][0], mx = D.classes[D.classes.length - 1][1], y0 = g.Y(0), X = g.X, dec = !!e.deciles, K = (x, y1, y2, col, w) => `<rect x="${f2(X(x) - w / 2)}" y="${f2(y0 - y2)}" width="${f2(w)}" height="${f2(y2 - y1)}" fill="${col}"/>`;
+      s += `<rect x="${f2(X(dec ? q.d1 : mn))}" y="${f2(y0 - 10.5)}" width="${f2(X(dec ? q.d9 : mx) - X(dec ? q.d1 : mn))}" height="1" fill="#000"/>`;
+      if (dec) s += K(q.d1, 7, 13, '#008000', 0.4);
+      s += `<rect x="${f2(X(q.q1))}" y="${f2(y0 - 15)}" width="${f2(X(q.q3) - X(q.q1))}" height="10" fill="${fillc}" stroke="#000" stroke-width="0.2"/>`;
+      if (dec) s += K(q.d9, 7, 13, '#008000', 0.4);
+      s += K(q.md, 5, 15, '#f00', 0.4);
+      if (dec) s += lineSeg([X(mn), y0 - 10], [X(q.d1), y0 - 10], '#000', 0.3) + lineSeg([X(mx), y0 - 10], [X(q.d9), y0 - 10], '#000', 0.3);
+      info = `min=${fmtC(mn)}  Q1=${fmtC(q.q1)}  méd=${fmtC(q.md)}  Q3=${fmtC(q.q3)}  max=${fmtC(mx)}`;
       D.classes.forEach(([a, b, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push((a + b) / 2); });
     } else if (e.mode === 'boite' && all.length) {
       const v = all.slice().sort((a, b) => a - b); s += boxSvg(v, e.y0, e.h, st, fillc, g);

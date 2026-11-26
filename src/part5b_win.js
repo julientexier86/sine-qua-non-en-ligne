@@ -118,13 +118,18 @@ function markSvg(X, Y, k, sz, col) {
 
 /* --- simulations statistiques (résultats enregistrés dans le .sqn) --- */
 EX.simw = { label: 'Simulation (format Windows)', def: () => ({ gtype: 4, title: '', nbcl: 10, dist: 10, couleur: 65535, samples: [], calcs: [], general: [] }),
-  fields: [['gtype', 'graphique : 2 boîtes multiples, 3 histogramme général, 4 boîte générale, 5 histogramme des moyennes, 6 boîte des moyennes, 7 dispersion des moyennes', 'num', 'w3'], ['nbcl', 'classes', 'num', 'w3'], ['dist', 'distance entre boîtes (mm)', 'num', 'w3'], ['title', 'titre', 'text', 'grow'], ['couleur', 'couleur', 'color']],
+  fields: [['gtype', 'graphique : 0 points, 1 histogramme du dernier échantillon, 2 boîtes multiples, 3 histogramme général, 4 boîte générale, 5 histogramme des moyennes, 6 boîte des moyennes, 7 dispersion des moyennes', 'num', 'w3'], ['nbcl', 'classes', 'num', 'w3'], ['dist', 'distance entre boîtes (mm)', 'num', 'w3'], ['title', 'titre', 'text', 'grow'], ['couleur', 'couleur', 'color']],
   render(e, d, g) {
     const fill = tcolor(e.couleur), t = e.gtype | 0; let s = ''; const means = e.calcs.map(c => c[0]).filter(Number.isFinite);
     const box = (v, off) => { const [mn, d1, q1, md, q3, d9, mx] = v, P = x => g.X(x), L = (a, b, c2, d2, w = 0.5) => lineSeg([a, b], [c2, d2], '#000', w);
       return L(P(mn), off, P(q1), off) + L(P(q3), off, P(mx), off) + `<rect x="${f2(P(q1))}" y="${f2(off - 5)}" width="${f2(P(q3) - P(q1))}" height="10" fill="${fill}" stroke="#000" stroke-width="0.5"/>` + L(P(md), off - 5, P(md), off + 5) + L(P(d1), off - 3, P(d1), off + 3) + L(P(d9), off - 3, P(d9), off + 3); };
     const hist = (vals, lo, hi, n) => { const w = (hi - lo) / n || 1, c = Array(n).fill(0); vals.forEach(v => { c[Math.min(n - 1, Math.max(0, Math.floor((v - lo) / w)))]++; }); let r = ''; c.forEach((k, j) => { if (k) r += `<rect x="${f2(g.X(lo + j * w))}" y="${f2(g.Y(k))}" width="${f2(g.X(lo + (j + 1) * w) - g.X(lo + j * w))}" height="${f2(g.Y(0) - g.Y(k))}" fill="${fill}" stroke="#000" stroke-width="0.3"/>`; }); return r; };
-    if (t === 2) e.calcs.forEach((c, i) => { if (c.length >= 9 && c.slice(2, 9).every(Number.isFinite)) s += box(c.slice(2, 9), g.Y(0) - (i + 1) * e.dist); });
+    const ns = e.calcs.length, tl = ns ? Math.round(e.samples.length / ns) : 0, smp = i => e.samples.slice(i * tl, (i + 1) * tl), y0 = g.Y(0);
+    if (t === 0 && tl) { for (let i = 0; i < ns; i++) smp(i).forEach(v => { s += `<circle cx="${f2(g.X(v))}" cy="${f2(y0 - (i + 1))}" r="0.4" fill="${fill}" stroke="${fill}" stroke-width="0.1"/>`; }); }
+    else if (t === 1 && tl) { const v = smp(ns - 1), c = e.calcs[ns - 1] || [], rect = (a, b, n) => (n ? `<rect x="${f2(g.X(a))}" y="${f2(g.Y(n))}" width="${f2(g.X(b) - g.X(a))}" height="${f2(y0 - g.Y(n))}" fill="${fill}" stroke="#000" stroke-width="0.2"/>` : '');
+      if (v.every(Number.isInteger)) { const lo = Math.min(...v), hi = Math.max(...v); for (let k = lo; k <= hi; k++) s += rect(k - 0.4, k + 0.4, v.filter(x => x === k).length); }
+      else { const lo = Number.isFinite(c[2]) ? c[2] : Math.min(...v), hi = Number.isFinite(c[8]) ? c[8] : Math.max(...v), n = e.nbcl || 10, w = (hi - lo) / n; for (let k = 0; k < n; k++) s += rect(lo + k * w, lo + (k + 1) * w, v.filter(x => lo + k * w < x && x < lo + (k + 1) * w).length); } }
+    else if (t === 2) e.calcs.forEach((c, i) => { if (c.length >= 9 && c.slice(2, 9).every(Number.isFinite)) s += box(c.slice(2, 9), g.Y(0) - (i + 1) * e.dist); });
     else if (t === 4 && e.general.length >= 10 && e.general.slice(3, 10).every(Number.isFinite)) s += box(e.general.slice(3, 10), g.Y(0) - 20);
     else if (t === 3 && e.samples.length) { const lo = Math.min(...e.samples), hi = Math.max(...e.samples); s += hist(e.samples, lo, hi, e.nbcl); }
     else if (t === 5 && means.length) s += hist(means, Math.min(...means), Math.max(...means), 20);
