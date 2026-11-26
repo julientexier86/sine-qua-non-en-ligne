@@ -72,10 +72,15 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 
 ## Ce qui n'est pas encore reproduit
 
-- Les graphiques et simulations dont j'ai pu contrôler le rendu sont reproduits d'après le code d'origine, mais faute de fichiers `.sqn` Windows de référence pour la droite de Henry, l'échelle automatique des simulations et la table de valeurs, ces trois points sont à vérifier sur vos fichiers.
-- Les objets lus à l'ouverture d'un `.sqn` Windows (lois, statistiques, suites, intégrales, inéquations, courbes, dérivées, primitives…) se modifient dans l'application et **sont réécrits dans le `.sqn` exporté**. Exception : les arbres de probabilités, les simulations, les tableaux de variations et les tables de valeurs ne sont pas réécrits (supprimés dans l'application, ils sont retirés du `.sqn` ; modifiés, ils gardent leur ancienne version dans le `.sqn`).
-- Les tableaux de variations ou de signes de Windows s'affichent à l'ouverture avec le même code ; la mise en page est proche mais pas identique.
-- Le rendu est fidèle aux couleurs, styles et valeurs du fichier, mais n'est pas identique pixel pour pixel à celui de Windows.
+La version 1.2.0 couvre l'ensemble des fonctions décrites dans le mode d'emploi de la version Windows (v2.9.3). Restent les écarts suivants :
+
+- **Rendu des schémas** : le tracé des extrémités de segments, des hachures et des mesures de coniques est reconstitué d'après les sources, mais n'a pas été comparé point par point avec Windows. Les règles de nommage de l'original (noms de points de 3 caractères au plus) ne sont pas imposées.
+- **Exports EMF, WMF et EPS** : ils contiennent une image, pas un dessin vectoriel. Pour un rendu vectoriel, utiliser le SVG.
+- **« Réouvrir »** : la liste des 10 derniers dessins est conservée dans le navigateur (pas de chemin de fichier) ; elle est propre à chaque poste.
+- **Limites de l'original** (10 fonctions, 60 textes, environ 50 expressions LaTeX) : volontairement non reproduites.
+- **Réécriture dans le `.sqn` exporté** : les objets lus à l'ouverture (lois, statistiques, suites, intégrales, inéquations, courbes, dérivées, primitives, schémas…) se modifient et sont réécrits. Exception : arbres de probabilités, simulations, tableaux de variations et tables de valeurs (supprimés dans l'application, ils sont retirés du `.sqn` ; modifiés, ils gardent leur ancienne version).
+- **À vérifier sur vos fichiers** : droite de Henry, échelle automatique des simulations et table de valeurs (faute de fichiers `.sqn` de référence), et mise en page des tableaux de variations ou de signes, proche mais pas identique.
+- Le rendu est fidèle aux couleurs, styles et valeurs du fichier, mais pas identique pixel pour pixel à celui de Windows.
 
 Merci de signaler tout écart avec le logiciel d'origine via les *tickets* du projet, idéalement avec le fichier `.sqn` concerné.
 
