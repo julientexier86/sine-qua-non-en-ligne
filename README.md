@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **État : beta 6.** Utilisable, mais incomplète : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.** Utilisable en classe ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -47,6 +47,17 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 - Plusieurs outils ouvrent un panneau de réglages à la place d'une boîte de dialogue.
 
 Merci de signaler tout écart avec le logiciel d'origine via les *tickets* du projet, idéalement avec le fichier `.sqn` concerné.
+
+## Enregistrer sans stockage local : une question ouverte
+
+Les postes visés (« carbonBook » sous Fedora Kinoite, avec Firefox) sont conçus pour n'utiliser aucun stockage local. Or Firefox ne permet pas à une page web d'écrire directement dans un dossier : **« Enregistrer » produit aujourd'hui un téléchargement**, qui passe par le disque du poste. À court terme, il faut régler Firefox pour demander l'emplacement à chaque fois et vérifier si le dossier Téléchargements est vidé à la fin de la session.
+
+Pistes à étudier, selon ce que permettent le Nuage (Nextcloud) et les postes :
+- **Enseignants** : enregistrer dans leur espace Nuage ; une écriture directe depuis l'application dépend d'un réglage côté serveur, à vérifier auprès de ses administrateurs.
+- **Élèves** : un lien Nextcloud de *dépôt de fichiers* (sans compte, en écriture seule) permettrait de remettre un travail ; il ne permet pas de le rouvrir. Pour reprendre un travail, il faut un dossier partagé par classe (lisible par toute la classe) ou un espace personnel, si les élèves ont un compte.
+- **Dans l'application** : un bouton « Déposer dans le dossier de la classe » (lien fourni par l'enseignant), une copie de secours dans le navigateur contre la perte d'un dessin en cours, et la copie de la figure dans le presse-papiers pour la coller dans un document.
+
+Rien de cela n'est encore réalisé : le mécanisme reste à définir avec l'établissement.
 
 ## Développement
 
