@@ -303,8 +303,34 @@ function parseSqn(text, name = 'sans titre') {
   }
   if (!d.rawMiddle.length) d.rawMiddle = RAW_MIDDLE_DEFAULT.slice();
   if (!d.rawTail.length) d.rawTail = RAW_TAIL_DEFAULT.slice();
+  try { d.extras = deriveSqnExtras(d); } catch (err) { d.extras = []; }
   return d;
 }
+
+/** Objets pédagogiques lus nativement dans un .sqn Windows (affichage ; le bloc brut reste intact pour l'export). */
+function deriveSqnExtras(d) {
+  const L = d.rawMiddle, out = [];
+  const block = head => { const i = L.findIndex(l => l.trim() === head); if (i < 0) return null; const kv = {}, flags = [];
+    for (let j = i + 1; j < L.length && /^\s/.test(L[j]); j++) { const t = L[j].trim(), m = t.match(/^([^:=]+?)\s*[:=]\s*(.*)$/); if (m) kv[m[1].trim().toLowerCase()] = m[2]; else flags.push(t); } return { kv, flags }; };
+  const num = (v, dflt) => { const x = parseFloat(String(v).replace(',', '.')); return Number.isFinite(x) ? x : dflt; };
+  const common = (b, def) => ({ fromRaw: true, title: b.kv['titre'] || '', couleur: num(b.kv["couleur de l'histogramme"] ?? b.kv['couleur de la courbe de gauss'], def), couleur2: num(b.kv['couleur de la zone à visualiser'], 255),
+    ep: num(b.kv['épaisseur des traits'], 1), ky: 1, lx: 0, ly: 0, label: b.flags.includes('Affichage des résultats'), params: b.flags.includes('Affichage des paramètres'), zone: true });
+  let b = block('Loi binômiale');
+  if (b) { const n = num(b.kv['nombre de répétitions'], 10), k = num(b.kv['k'], 0), t = num(b.kv['type de calcul'], 0), A = num(b.kv['a'], 0), B = num(b.kv['b'], n);
+    const [a, bb] = [[k, k], [0, k], [k, n], [A, B]][t] || [k, k];
+    out.push(Object.assign({ type: 'loi', kind: 'bin', p1: n, p2: num(b.kv["probabilité d'un succès"], 0.5), a, b: bb }, common(b, 16711680))); }
+  b = block('Loi de Poisson');
+  if (b) { const lam = num(b.kv['paramètre de la loi'], 3), k = num(b.kv['k'], 0), t = num(b.kv['type de calcul'], 0), A = num(b.kv['a'], 0), B = num(b.kv['b'], 0), big = Math.ceil(lam + 6 * Math.sqrt(lam) + 10);
+    const [a, bb] = [[k, k], [0, k], [k, big], [A, B]][t] || [k, k];
+    out.push(Object.assign({ type: 'loi', kind: 'poi', p1: lam, p2: 0, a, b: bb }, common(b, 16711680))); }
+  b = block('Loi normale');
+  if (b) { const m = num(b.kv['moyenne'], 0), sg = num(b.kv['ecart type'], 1), t = num(b.kv['type de calcul'], 0), A = num(b.kv['a'], 0), B = num(b.kv['b'], 0), deg = num(b.kv['degré'], 95);
+    let a = m - 10 * sg, bb = A;
+    if (t === 1) { a = A; bb = m + 10 * sg; } else if (t === 2) { a = A; bb = B; } else if (t === 3) { let lo = 0, hi = 10; const tg = 0.5 + deg / 200; for (let q = 0; q < 60; q++) { const mid = (lo + hi) / 2; (0.5 * (1 + erf(mid / Math.SQRT2)) < tg ? lo = mid : hi = mid); } a = m - lo * sg; bb = m + lo * sg; }
+    out.push(Object.assign({ type: 'loi', kind: 'nor', p1: m, p2: sg, a, b: bb }, common(b, 0))); }
+  return out;
+}
+
 
 function parseObj(line) {
   let m;
@@ -420,13 +446,13 @@ function tailWithRap(d) {
   if (i >= 0) t.splice(i, t.length - i, ...block); else if (j >= 0) t.splice(j, 1, ...block); else t.push(...block);
   return t;
 }
-const hasExtras = d => d.extras.length > 0 || d.log.x || d.log.y;
+const hasExtras = d => d.extras.some(e => !e.fromRaw) || d.log.x || d.log.y;
 /** Instantané complet (.sqn + compléments propres à la version en ligne) */
-function snapshotDoc(d) { return JSON.stringify({ format: 'sqnw', sqn: serializeSqn(d), extras: d.extras, log: d.log }); }
+function snapshotDoc(d) { return JSON.stringify({ format: 'sqnw', sqn: serializeSqn(d), extras: d.extras.filter(e => !e.fromRaw), log: d.log }); }
 function docFromText(text, name) {
   if (text.trim().startsWith('{')) {
     const j = JSON.parse(text); if (j.format !== 'sqnw') throw new Error('Format de fichier inconnu.');
-    const d = parseSqn(j.sqn, name); d.extras = j.extras || []; d.log = Object.assign({ x: false, y: false, mx: 40, my: 40 }, j.log || {}); return d;
+    const d = parseSqn(j.sqn, name); d.extras = d.extras.concat(j.extras || []); d.log = Object.assign({ x: false, y: false, mx: 40, my: 40 }, j.log || {}); return d;
   }
   return parseSqn(text, name);
 }

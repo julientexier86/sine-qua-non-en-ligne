@@ -243,7 +243,7 @@ EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: ()
 EX.loi = { label: 'Loi de probabilité', init(e) { const K = { bin: [10, 0.5, 3, 6, 20], poi: [3, 0, 1, 4, 20], nor: [0, 1, -1, 1, 10], exp: [0.5, 0, 0, 3, 10], uni: [-3, 3, -1, 2, 10] }[e.kind]; if (K) [e.p1, e.p2, e.a, e.b, e.ky] = K; }, def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
   fields: [['kind', 'loi', 'sel', 'grow', [['bin', 'Binomiale B(n ; p)'], ['poi', 'Poisson P(λ)'], ['nor', 'Normale N(μ ; σ)'], ['exp', 'Exponentielle E(λ)'], ['uni', 'Uniforme sur [a ; b]']]],
     ['p1', 'n / λ / μ / a', 'num', 'w3', { step: 0.1 }], ['p2', 'p / σ / b', 'num', 'w3', { step: 0.05 }], 'br', ['zone', 'colorier P(a ≤ X ≤ b)', 'chk'], ['a', 'a', 'num', 'w3', { step: 0.5 }], ['b', 'b', 'num', 'w3', { step: 0.5 }],
-    ['ky', 'échelle verticale', 'num', 'w3', { step: 1 }], 'br', ['label', 'afficher la probabilité', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'trait', 'color'], ['couleur2', 'zone', 'color'], ['ep', 'ép.', 'num', 'w3']],
+    ['ky', 'échelle verticale', 'num', 'w3', { step: 1 }], 'br', ['label', 'afficher la probabilité', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'trait', 'color'], ['couleur2', 'zone', 'color'], ['ep', 'ép.', 'num', 'w3'], 'br', ['title', 'titre', 'text', 'grow'], ['params', 'afficher les paramètres', 'chk']],
   render(e, d, g) {
     const st = exStroke(e), fc = tcolor(e.couleur2); let s = '', prob = NaN, name = ''; const K = e.kind;
     if (K === 'bin' || K === 'poi') {
@@ -260,6 +260,8 @@ EX.loi = { label: 'Loi de probabilité', init(e) { const K = { bin: [10, 0.5, 3,
       s += drawPolyline(sampleFn(x => pdf(x) * e.ky, d, g, 700), st);
       name = K === 'nor' ? `N(${fmtC(e.p1)} ; ${fmtC(e.p2)}²)` : K === 'exp' ? `E(${fmtC(e.p1)})` : `U([${fmtC(e.p1)} ; ${fmtC(e.p2)}])`;
     }
+    if (e.title) s += T_(g.X(g.xOf(d.W / 2)), 8, e.title, { size: 12, anchor: 'middle', bold: true, italic: true });
+    if (e.params) s += T_(g.X(0) + 2, g.Y(0) + 5, 'Loi ' + name, { size: 10 });
     if (e.label) s += T_(g.X(e.lx), g.Y(e.ly), name + (Number.isFinite(prob) && e.zone ? `   P(${fmtC(e.a)} ≤ X ≤ ${fmtC(e.b)}) ≈ ${fmtC(prob)}` : ''), { size: 10 });
     return s;
   } };
