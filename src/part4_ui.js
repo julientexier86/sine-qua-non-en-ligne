@@ -344,15 +344,27 @@ function hitTest(e) {
 function snapMm(v, d, fine) { return d.gradGrille && !fine ? Math.round(v / d.gridSize) * d.gridSize : Math.round(v * 2) / 2; }
 function initMouse() {
   const stage = $('#stage');
+  const fingers = new Map(); let pinch = null, pan = null;
+  const two = () => { const [a, b] = [...fingers.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
   stage.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') {
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingers.size === 2) { drag = null; pan = null; const t = two(); pinch = { d: t.d, z: state.doc.zoom, x: t.x, y: t.y, sl: stage.scrollLeft, st: stage.scrollTop }; return; }
+    }
     if (e.button !== 0) return;
-    const hit = hitTest(e); if (!hit) return;
+    const hit = hitTest(e);
+    if (!hit) { if (e.pointerType === 'touch' && fingers.size === 1) pan = { x: e.clientX, y: e.clientY, sl: stage.scrollLeft, st: stage.scrollTop }; return; }
     const g = geom(state.doc); drag = Object.assign({ fine: e.shiftKey }, hit);
     if (hit.mode === 'text') { const t = state.doc.texts[hit.idx], [mx, my] = mmFromEvent(e); drag.ox = mx - g.X(t.x); drag.oy = my - g.Y(t.y); }
     stage.setPointerCapture(e.pointerId); e.preventDefault();
   });
   stage.addEventListener('pointermove', e => {
     const d = state.doc;
+    if (e.pointerType === 'touch' && fingers.has(e.pointerId)) {
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && fingers.size >= 2) { const t = two(); setZoom(pinch.z * t.d / pinch.d); stage.scrollLeft = pinch.sl - (t.x - pinch.x); stage.scrollTop = pinch.st - (t.y - pinch.y); return; }
+      if (pan && !drag) { stage.scrollLeft = pan.sl - (e.clientX - pan.x); stage.scrollTop = pan.st - (e.clientY - pan.y); return; }
+    }
     if (!drag) { const hit = $('#paper').firstElementChild && hitTest(e); $('#paper').style.cursor = hit ? hit.cur : 'default'; return; }
     const [mx, my] = mmFromEvent(e), fine = e.shiftKey;
     if (drag.mode === 'origin') { d.dOy = snapMm(clamp(mx, 0, d.W), d, fine); d.dOx = snapMm(clamp(my, 0, d.H), d, fine); }
@@ -363,7 +375,7 @@ function initMouse() {
     else if (drag.mode === 'text') { const g = geom(d), t = d.texts[drag.idx]; t.x = Math.round(g.xOf(mx - drag.ox) * 1000) / 1000; t.y = Math.round(g.yOf(my - drag.oy) * 1000) / 1000; }
     drawNow(); drag.moved = true;
   });
-  const end = () => { if (drag && drag.moved) { buildPanel(); commit(); } drag = null; };
+  const end = e => { if (e && e.pointerType === 'touch') { fingers.delete(e.pointerId); if (fingers.size < 2) pinch = null; if (!fingers.size) pan = null; } if (drag && drag.moved) { buildPanel(); commit(); } drag = null; };
   stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
 }
 
