@@ -279,29 +279,50 @@ EX.stat2 = { label: 'Statistique à deux variables (nuage, ajustement)', def: ()
   } };
 
 /* --- lois de probabilité --- */
-EX.loi = { label: 'Loi de probabilité', init(e) { const K = { bin: [10, 0.5, 3, 6, 20], poi: [3, 0, 1, 4, 20], nor: [0, 1, -1, 1, 10], exp: [0.5, 0, 0, 3, 10], uni: [-3, 3, -1, 2, 10] }[e.kind]; if (K) [e.p1, e.p2, e.a, e.b, e.ky] = K; }, def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
-  fields: [['kind', 'loi', 'sel', 'grow', [['bin', 'Binomiale B(n ; p)'], ['poi', 'Poisson P(λ)'], ['nor', 'Normale N(μ ; σ)'], ['exp', 'Exponentielle E(λ)'], ['uni', 'Uniforme sur [a ; b]']]],
-    ['p1', 'n / λ / μ / a', 'num', 'w3', { step: 0.1 }], ['p2', 'p / σ / b', 'num', 'w3', { step: 0.05 }], 'br', ['zone', 'colorier P(a ≤ X ≤ b)', 'chk'], ['a', 'a', 'num', 'w3', { step: 0.5 }], ['b', 'b', 'num', 'w3', { step: 0.5 }],
-    ['ky', 'échelle verticale', 'num', 'w3', { step: 1 }], 'br', ['label', 'afficher la probabilité', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'trait', 'color'], ['couleur2', 'zone', 'color'], ['ep', 'ép.', 'num', 'w3'], 'br', ['title', 'titre', 'text', 'grow'], ['params', 'afficher les paramètres', 'chk']],
+EX.loi = { label: 'Loi de probabilité', init(e) { const K = { bin: [10, 0.5, 3, 6, 20], poi: [3, 0, 1, 4, 20], nor: [0, 1, -1, 1, 10], exp: [0.5, 0, 0, 3, 10], uni: [-3, 3, -1, 2, 10] }[e.kind]; if (K) [e.p1, e.p2, e.a, e.b, e.ky] = K; },
+  def: () => ({ kind: 'bin', p1: 10, p2: 0.5, a: 3, b: 6, calc: 'ab', tab: false, niv: 95, pinv: 0.9, zone: true, ky: 20, label: true, lx: 0, ly: 0, couleur: 16711680, couleur2: 16776960, ep: 2 }),
+  fields: [['kind', 'loi', 'sel', 'grow', [['bin', 'Binomiale B(n ; p)  (n de 1 à 100)'], ['poi', 'Poisson P(λ)'], ['nor', 'Normale N(μ ; σ)'], ['exp', 'Exponentielle E(λ)'], ['uni', 'Uniforme sur [a ; b]']]],
+    ['p1', 'n / λ / μ / a', 'num', 'w3', { step: 0.1 }], ['p2', 'p / σ / b', 'num', 'w3', { step: 0.05 }], 'br',
+    ['calc', 'calcul', 'sel', 'grow', [['ab', 'p(a ≤ X ≤ b)'], ['eq', 'p(X = a)   (lois discrètes)'], ['le', 'p(X ≤ a)'], ['ge', 'p(X ≥ a)'], ['ic', 'intervalle de confiance centré sur la moyenne  (loi normale)'], ['inv', 'seuil t tel que p(X ≤ t) = p  (loi normale)']]],
+    ['a', 'a', 'num', 'w3', { step: 0.5 }], ['b', 'b', 'num', 'w3', { step: 0.5 }], ['niv', 'niveau (%)', 'num', 'w3', { step: 1, min: 1, max: 99.9 }], ['pinv', 'p', 'num', 'w3', { step: 0.01, min: 0.001, max: 0.999 }], 'br',
+    ['zone', 'colorier la zone du calcul', 'chk'], ['ky', 'échelle verticale', 'num', 'w3', { step: 1 }], 'br', ['label', 'afficher les résultats', 'chk'], ['lx', 'x', 'num', 'w3', { step: 0.1 }], ['ly', 'y', 'num', 'w3', { step: 0.1 }], ['couleur', 'trait', 'color'], ['couleur2', 'zone', 'color'], ['ep', 'ép.', 'num', 'w3'], 'br', ['title', 'titre', 'text', 'grow'], ['params', 'afficher les paramètres', 'chk'], ['tab', 'tableau des probabilités (lois discrètes)', 'chk']],
   render(e, d, g) {
-    const st = exStroke(e), fc = tcolor(e.couleur2); let s = '', prob = NaN, name = ''; const K = e.kind;
+    const st = exStroke(e), fc = tcolor(e.couleur2); let s = '', prob = NaN, name = '', res = '', par = ''; const K = e.kind, C = e.calc || 'ab';
+    const INF = 1e9, cp = n => String(+n.toPrecision(6)).replace('.', ',');
     if (K === 'bin' || K === 'poi') {
-      const n = K === 'bin' ? Math.round(e.p1) : Math.ceil(e.p1 + 6 * Math.sqrt(e.p1) + 10), pm = k => K === 'bin' ? binomPmf(k, n, e.p2) : poisPmf(k, e.p1);
-      prob = 0; for (let k = 0; k <= n; k++) { const v = pm(k), inz = e.zone && k >= Math.ceil(e.a - 1e-9) && k <= Math.floor(e.b + 1e-9); if (inz) prob += v;
+      const nb = K === 'bin' ? clamp(Math.round(e.p1), 1, 100) : 0, n = K === 'bin' ? nb : Math.ceil(e.p1 + 6 * Math.sqrt(e.p1) + 10), pm = k => K === 'bin' ? binomPmf(k, n, e.p2) : poisPmf(k, e.p1);
+      const [lo, hi] = C === 'eq' ? [e.a, e.a] : C === 'le' ? [0, e.a] : C === 'ge' ? [e.a, INF] : [e.a, e.b], zon = e.zone !== false;
+      const a0 = Math.ceil(lo - 1e-9), b0 = Math.min(Math.floor(hi + 1e-9), n); prob = 0;
+      for (let k = 0; k <= n; k++) { const v = pm(k), inz = zon && k >= a0 && k <= b0; if (k >= a0 && k <= b0) prob += v;
         const X0 = g.X(k - 0.4), X1 = g.X(k + 0.4), Y0 = g.Y(0), Y1 = g.Y(v * e.ky); if (Y0 - Y1 < 0.05) continue;
         s += `<rect x="${f2(X0)}" y="${f2(Y1)}" width="${f2(X1 - X0)}" height="${f2(Y0 - Y1)}" fill="${inz ? fc : 'none'}" stroke="${st.col}" stroke-width="${f2(st.w * 0.6)}"/>`; }
       name = K === 'bin' ? `B(${n} ; ${fmtC(e.p2)})` : `P(${fmtC(e.p1)})`;
+      const A = fmtC(e.a), B = fmtC(e.b); res = (C === 'eq' ? `p(X = ${A})` : C === 'le' ? `p(X ≤ ${A})` : C === 'ge' ? `p(X ≥ ${A})` : `p(${A} ≤ X ≤ ${B})`) + ' = ' + cp(prob);
+      const m = K === 'bin' ? n * e.p2 : e.p1, sg = K === 'bin' ? Math.sqrt(n * e.p2 * (1 - e.p2)) : Math.sqrt(e.p1); par = `m = ${cp(m)}   σ = ${cp(sg)}`;
     } else {
       const pdf = K === 'nor' ? x => normPdf(x, e.p1, e.p2) : K === 'exp' ? x => x < 0 ? 0 : e.p1 * Math.exp(-e.p1 * x) : x => x >= e.p1 && x <= e.p2 ? 1 / (e.p2 - e.p1) : 0;
       const cdf = K === 'nor' ? x => normCdf(x, e.p1, e.p2) : K === 'exp' ? x => x < 0 ? 0 : 1 - Math.exp(-e.p1 * x) : x => clamp((x - e.p1) / (e.p2 - e.p1), 0, 1);
-      if (e.zone) { prob = cdf(e.b) - cdf(e.a); const N = 120, pts = []; for (let i = 0; i <= N; i++) { const x = e.a + (e.b - e.a) * i / N; pts.push(f2(g.X(x)) + ' ' + f2(g.Y(pdf(x) * e.ky))); }
-        s += `<path d="M${f2(g.X(e.a))} ${f2(g.Y(0))}L${pts.join('L')}L${f2(g.X(e.b))} ${f2(g.Y(0))}Z" fill="${fc}" fill-opacity="0.6" stroke="none"/>`; }
+      const inv = q => { let lo = -1e6, hi = 1e6; if (K === 'exp') { lo = 0; hi = 1e6; } for (let i = 0; i < 200; i++) { const mid = (lo + hi) / 2; cdf(mid) < q ? lo = mid : hi = mid; } return (lo + hi) / 2; };
+      let lo = e.a, hi = e.b; const A = fmtC(e.a), B = fmtC(e.b);
+      if (C === 'le' || C === 'eq') { lo = -INF; hi = e.a; } else if (C === 'ge') { lo = e.a; hi = INF; }
+      else if (C === 'ic' && K === 'nor') { const q = inv(0.5 + e.niv / 200); lo = 2 * e.p1 - q; hi = q; }
+      else if (C === 'inv') { hi = inv(e.pinv); lo = -INF; }
+      prob = cdf(hi) - cdf(lo);
+      if (C === 'ic' && K === 'nor') res = `Intervalle de confiance de niveau ${cp(e.niv / 100)} : [${cp(lo)} ; ${cp(hi)}]`;
+      else if (C === 'inv') res = `p(X ≤ t) = ${cp(e.pinv)} pour t = ${cp(hi)}`;
+      else res = (C === 'le' || C === 'eq' ? `p(X ≤ ${A})` : C === 'ge' ? `p(X ≥ ${A})` : `p(${A} ≤ X ≤ ${B})`) + ' = ' + cp(prob);
+      if (e.zone !== false) { const L = Math.max(lo, g.xOf(0) - 1), H = Math.min(hi, g.xOf(d.W) + 1); if (H > L) { const N = 160, pts = []; for (let i = 0; i <= N; i++) { const x = L + (H - L) * i / N; pts.push(f2(g.X(x)) + ' ' + f2(g.Y(pdf(x) * e.ky))); }
+        s += `<path d="M${f2(g.X(L))} ${f2(g.Y(0))}L${pts.join('L')}L${f2(g.X(H))} ${f2(g.Y(0))}Z" fill="${fc}" fill-opacity="0.6" stroke="none"/>`; } }
       s += drawPolyline(sampleFn(x => pdf(x) * e.ky, d, g, 700), st);
       name = K === 'nor' ? `N(${fmtC(e.p1)} ; ${fmtC(e.p2)}²)` : K === 'exp' ? `E(${fmtC(e.p1)})` : `U([${fmtC(e.p1)} ; ${fmtC(e.p2)}])`;
+      par = K === 'nor' ? `m = ${cp(e.p1)}   σ = ${cp(e.p2)}` : K === 'exp' ? `durée de vie 1/λ = ${cp(1 / e.p1)}   demi-vie ln2/λ = ${cp(Math.LN2 / e.p1)}` : `m = ${cp((e.p1 + e.p2) / 2)}   σ = ${cp((e.p2 - e.p1) / Math.sqrt(12))}`;
     }
     if (e.title) s += T_(g.X(g.xOf(d.W / 2)), 8, e.title, { size: 12, anchor: 'middle', bold: true, italic: true });
-    if (e.params) s += T_(g.X(0) + 2, g.Y(0) + 5, 'Loi ' + name, { size: 10 });
-    if (e.label) s += T_(g.X(e.lx), g.Y(e.ly), name + (Number.isFinite(prob) && e.zone ? `   P(${fmtC(e.a)} ≤ X ≤ ${fmtC(e.b)}) ≈ ${fmtC(prob)}` : ''), { size: 10 });
+    if (e.params) s += T_(g.X(0) + 2, g.Y(0) + 5, 'Loi ' + name + '   ' + par, { size: 10 });
+    if (e.tab && (K === 'bin' || K === 'poi')) { const n = K === 'bin' ? clamp(Math.round(e.p1), 1, 100) : Math.ceil(e.p1 + 4 * Math.sqrt(e.p1) + 4), pm = k => K === 'bin' ? binomPmf(k, n, e.p2) : poisPmf(k, e.p1); let cum = 0;
+      s += T_(d.W - 52, 8, 'k', { size: 9, bold: true }) + T_(d.W - 44, 8, 'p(X=k)', { size: 9, bold: true }) + T_(d.W - 24, 8, 'p(X≤k)', { size: 9, bold: true });
+      for (let k = 0, row = 0; k <= n && row < 22; k++) { const v = pm(k); cum += v; if (v < 5e-7 && k > e.p1) continue; const yy = 13 + 4.2 * row++; s += T_(d.W - 52, yy, String(k), { size: 9 }) + T_(d.W - 44, yy, v.toFixed(5).replace('.', ','), { size: 9 }) + T_(d.W - 24, yy, Math.min(1, cum).toFixed(5).replace('.', ','), { size: 9 }); } }
+    if (e.label) s += T_(g.X(e.lx), g.Y(e.ly), name + '   ' + res, { size: 10 });
     return s;
   } };
 

@@ -438,7 +438,7 @@ function buildSvg(d, ctx, opts = {}) {
     if (pts && pts.every(p => Number.isFinite(p[0]) && Number.isFinite(p[1])))
       curves += `<path d="M${f2(pts[0][0])} ${f2(pts[0][1])}L${f2(pts[1][0])} ${f2(pts[1][1])}" stroke="${col}" stroke-width="${f2(st.w)}" fill="none"/>`;
   });
-  d.objs.forEach(o => { curves += objSvg(o, g, d); });
+  curves += schDraw(d, g);
   curves += extrasSvg(d, ctx);
 
   // textes
@@ -447,7 +447,11 @@ function buildSvg(d, ctx, opts = {}) {
     const sz = t.size * MM_PER_PT, X = g.X(t.x), Y = g.Y(t.y);
     const lines = String(t.txt).split(/\\n|\n/);
     lines.forEach((ln, li) => {
-      texts += `<text data-ti="${k}" x="${f2(X)}" y="${f2(Y + sz * 0.82 + li * sz * 1.2)}" font-size="${f2(sz)}" font-family="${FONT_STACK(t.font)}"${fontAttrs(t.style)} fill="${tcolor(t.col)}"${opts.ui ? ' style="cursor:move"' : ''}>${esc(ln)}</text>`;
+      let ang = 0; const ma = li === 0 && ln.match(/^\/(-?\d+);([\s\S]*)$/); if (ma) { ang = +ma[1]; ln = ma[2]; } // « /45;texte » : inclinaison en degrés
+      const yy = Y + sz * 0.82 + li * sz * 1.2; let inner = esc(ln);
+      if (/^[^\s\d]\d$/.test(ln)) inner = esc(ln[0]) + `<tspan font-style="normal" font-size="${f2(sz * 0.7)}" dy="${f2(sz * 0.25)}">${esc(ln[1])}</tspan>`; // a1, B0 : indice romain
+      else if (/^C[fgh]$/.test(ln)) inner = 'C' + `<tspan font-style="italic" font-family="'Times New Roman',Times,serif" font-size="${f2(sz * 0.7)}" dy="${f2(sz * 0.25)}">${esc(ln[1])}</tspan>`; // Cf, Cg, Ch
+      texts += `<text data-ti="${k}" x="${f2(X)}" y="${f2(yy)}"${ang ? ` transform="rotate(${-ang} ${f2(X)} ${f2(Y)})"` : ''} font-size="${f2(sz)}" font-family="${FONT_STACK(t.font)}"${fontAttrs(t.style)} fill="${tcolor(t.col)}"${opts.ui ? ' style="cursor:move"' : ''}>${inner}</text>`;
     });
   });
   // LaTeX

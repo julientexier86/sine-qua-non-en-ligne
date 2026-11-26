@@ -430,20 +430,7 @@ function deriveSqnExtras(d) {
 }
 
 
-function parseObj(line) {
-  let m;
-  if ((m = line.match(/^Point ([^,]*),(-?\d+),(.*)$/))) {
-    const parts = m[3].split(';');
-    return { kind: 'point', nom: m[1].trim(), pos: +m[2], x: parseNum(parts[0]), y: parseNum(parts[1]), tail: parts.slice(2).join(';') || '7,1,2,0,0' };
-  }
-  if ((m = line.match(/^Segment,(\d+),(.),(.),(.*)$/))) {
-    const parts = m[4].split(';');
-    const f = (parts[4] || ',,,,0,1,0,0,30').split(',');
-    return { kind: 'segment', x1: parseNum(parts[0]), y1: parseNum(parts[1]), x2: parseNum(parts[2]), y2: parseNum(parts[3]),
-      style: parseInt(f[4]) || 0, ep: parseInt(f[5]) || 1, couleur: parseInt(f[6]) || 0, e1: m[2], e2: m[3], f: f };
-  }
-  return { kind: 'raw', raw: line };
-}
+function parseObj(line) { return { kind: 'raw', raw: line }; }
 
 /* ----- écriture ----- */
 function serializeCurveAttrs(c, mode) {
@@ -518,7 +505,8 @@ function serializeSqn(d, plain) {
   d.droites.forEach((r, k) => o.push(`Équation de D${k + 1}:${r.eq}`, `    Couleur :${r.couleur}`, `    Épaisseur :${r.ep}`,
     `    Style :${r.styleStr}`, `    Type de droite :${r.type}`, `    Coef a :${r.a}`, `    Coef b :${r.b}`));
   o.push(`Nombre d'objets graphiques : ${d.objs.length}\t${d.objsTail || 1}`);
-  d.objs.forEach(ob => o.push(serializeObj(ob, '7,1,2,0,0')));
+  if (typeof schRefresh === 'function') schRefresh(d.objs);
+  d.objs.forEach(ob => o.push(serializeObj(typeof schNorm === 'function' ? schNorm(ob) : ob, '7,1,2,0,0')));
   o.push(...RW.mid);
   if (d.latex.length) {
     o.push(d.latexPlain ? 'Expressions LaTeX' : `Expressions LaTeX (${d.latexOpaque ? 'opaques' : 'transparentes'})`);

@@ -256,16 +256,12 @@ function buildPanel() {
 
   const scSec = [];
   d.objs.forEach((o, k) => {
-    if (o.kind === 'point') scSec.push(h('div', { class: 'item row' }, h('span', { class: 'lab' }, 'Point'), fText('nom', o, 'nom', { cls: 'w3' }), fNum('x', o, 'x', { step: 0.1, cls: 'w3' }), fNum('y', o, 'y', { step: 0.1, cls: 'w3' }), btn('✕', () => { d.objs.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')));
-    else if (o.kind === 'segment') scSec.push(h('div', { class: 'item' },
-      h('div', { class: 'row' }, h('span', { class: 'lab' }, 'Segment'), fNum('x1', o, 'x1', { step: 0.1, cls: 'w4' }), fNum('y1', o, 'y1', { step: 0.1, cls: 'w4' }), fNum('x2', o, 'x2', { step: 0.1, cls: 'w4' }), fNum('y2', o, 'y2', { step: 0.1, cls: 'w4' }), btn('✕', () => { d.objs.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')),
-      h('div', { class: 'row' }, fColor('couleur', o, 'couleur'), fSel('style', o, 'style', [[0, 'Continu'], [1, 'Tirets'], [2, 'Pointillés']], { num: true, cls: 'w2' }))));
-    else scSec.push(h('div', { class: 'item row dim' }, h('span', { class: 'grow' }, 'Objet non pris en charge (conservé dans le fichier) : ' + o.raw.split(',')[0]), btn('✕', () => { d.objs.splice(k, 1); buildPanel(); redraw(); commit(); }, 'x')));
+    schNorm(o); const kd = o.kind === 'raw' ? schKind(o.raw) : null;
+    if (kd) scSec.push(schEditor(o, kd, k, buildPanel));
+    else scSec.push(h('div', { class: 'item row dim' }, h('span', { class: 'grow' }, 'Objet conservé tel quel dans le fichier : ' + o.raw.split(/[ ,]/)[0]), btn('✕', () => { d.objs.splice(k, 1); buildPanel(); redraw(); commit(); }, 'small')));
   });
-  scSec.push(h('div', { class: 'row' },
-    btn('+ Point', () => { d.objs.push({ kind: 'point', nom: 'A', pos: 1, x: 1, y: 1, tail: '7,1,2,0,0' }); buildPanel(); redraw(); commit(); }, 'small'),
-    btn('+ Segment', () => { d.objs.push({ kind: 'segment', x1: 0, y1: 0, x2: 1, y2: 1, style: 0, ep: 1, couleur: 0, e1: '[', e2: ']' }); buildPanel(); redraw(); commit(); }, 'small')));
-  P.append(section('Points et segments', scSec));
+  scSec.push(schAddButtons(buildPanel));
+  P.append(section('Objets du schéma (points, droites, cercles…)', scSec));
 
   const txSec = [];
   d.texts.forEach((t, k) => txSec.push(h('div', { class: 'item' },
@@ -337,6 +333,9 @@ function hitTest(e) {
   if (Math.hypot(mx - d.dOy, my - (d.dOx - g.ly)) < tol) return { mode: 'uy', cur: 'ns-resize' };
   const t = e.target.closest && e.target.closest('[data-ti]');
   if (t) return { mode: 'text', idx: +t.getAttribute('data-ti'), cur: 'move' };
+  const sp = schHitPoint(d, g, mx, my, tol); if (sp >= 0) return { mode: 'spt', idx: sp, cur: 'move' };
+  if (Math.abs(mx) < tol * 0.6) return { mode: 'left', cur: 'col-resize' };
+  if (Math.abs(my) < tol * 0.6) return { mode: 'top', cur: 'row-resize' };
   if (Math.abs(mx - d.W) < tol * 0.6) return { mode: 'right', cur: 'col-resize' };
   if (Math.abs(my - d.H) < tol * 0.6) return { mode: 'bottom', cur: 'row-resize' };
   return null;
@@ -346,6 +345,11 @@ function initMouse() {
   const stage = $('#stage');
   const fingers = new Map(); let pinch = null, pan = null;
   const two = () => { const [a, b] = [...fingers.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+  // molette : Ctrl = zoom d'affichage, Maj = unités des axes ±0,5 cm (comme dans le logiciel d'origine)
+  stage.addEventListener('wheel', e => {
+    if (e.ctrlKey) { e.preventDefault(); setZoom(state.doc.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); }
+    else if (e.shiftKey) { e.preventDefault(); const k = (e.deltaY || e.deltaX) < 0 ? 5 : -5, d = state.doc; d.lx = Math.max(5, d.lx + k); d.ly = Math.max(5, d.ly + k); drawNow(); commit(); }
+  }, { passive: false });
   stage.addEventListener('pointerdown', e => {
     if (e.pointerType === 'touch') {
       fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -370,8 +374,11 @@ function initMouse() {
     if (drag.mode === 'origin') { d.dOy = snapMm(clamp(mx, 0, d.W), d, fine); d.dOx = snapMm(clamp(my, 0, d.H), d, fine); }
     else if (drag.mode === 'ux') d.lx = Math.max(2, snapMm(mx - d.dOy, d, fine));
     else if (drag.mode === 'uy') d.ly = Math.max(2, snapMm(d.dOx - my, d, fine));
+    else if (drag.mode === 'left') { const dx = Math.round(mx); if (d.W - dx >= 40) { d.mg = Math.max(0, d.mg + dx); d.W -= dx; d.dOy -= dx; } }
+    else if (drag.mode === 'top') { const dy = Math.round(my); if (d.H - dy >= 40) { d.mh = Math.max(0, d.mh + dy); d.H -= dy; d.dOx -= dy; } }
     else if (drag.mode === 'right') d.W = Math.max(40, Math.round(mx));
     else if (drag.mode === 'bottom') d.H = Math.max(40, Math.round(my));
+    else if (drag.mode === 'spt') { const g = geom(d), o = d.objs[drag.idx], p = schDefs.Point.parse(o.raw), q = fine ? 1000 : 20, X = Math.round(g.xOf(mx) * q) / q, Y = Math.round(g.yOf(my) * q) / q; p.def = fmtNum(X) + ';' + fmtNum(Y); o.raw = schDefs.Point.build(p); }
     else if (drag.mode === 'text') { const g = geom(d), t = d.texts[drag.idx]; t.x = Math.round(g.xOf(mx - drag.ox) * 1000) / 1000; t.y = Math.round(g.yOf(my - drag.oy) * 1000) / 1000; }
     drawNow(); drag.moved = true;
   });
@@ -395,7 +402,7 @@ function openFile(file) {
       const u8 = new Uint8Array(r.result), isJson = u8[0] === 0x7B || (u8[0] === 0xEF && u8[3] === 0x7B);
       const txt = isJson ? new TextDecoder('utf-8').decode(u8) : decodeCp1252(r.result);
       const d = docFromText(txt, file.name.replace(/\.[^.]+$/, ''));
-      loadDoc(d, d.name); toast('« ' + file.name + ' » ouvert.');
+      loadDoc(d, d.name); rememberRecent(d.name, snapshot()); toast('« ' + file.name + ' » ouvert.');
     } catch (e) { toast('Impossible d’ouvrir ce fichier : ' + e.message, 6000); }
   };
   r.readAsArrayBuffer(file);
@@ -408,16 +415,16 @@ const fileBase = () => (state.doc.name || 'dessin').replace(/[\\/:*?"<>|]+/g, '_
 function saveSqn() {
   if (hasExtras(state.doc)) {
     download(new Blob([snapshotDoc(state.doc)], { type: 'application/json' }), fileBase() + '.sqnw');
-    state.dirty = false; updateTitle(); toast('Enregistré en .sqnw (contient les compléments de la version en ligne). Le bouton « .sqn » produit un fichier pour la version Windows.', 6000);
+    rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); toast('Enregistré en .sqnw (contient les compléments de la version en ligne). Le bouton « .sqn » produit un fichier pour la version Windows.', 6000);
   } else exportSqnOnly(true);
 }
 function exportSqnOnly(clean) {
   download(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn');
-  if (clean) { state.dirty = false; updateTitle(); }
+  if (clean) { rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); }
   toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments pris en charge y sont écrits (stats, lois, suites, inéquations…) ; arbres, simulations et tableaux ne sont pas modifiables dans le .sqn.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
 }
-function exportSvg() { download(new Blob([buildSvg(state.doc, buildCtx(state.doc), {})], { type: 'image/svg+xml' }), fileBase() + '.svg'); }
-function exportPng() {
+function _exportSvg() { download(new Blob([buildSvg(state.doc, buildCtx(state.doc), {})], { type: 'image/svg+xml' }), fileBase() + '.svg'); }
+function _exportPng() {
   const d = state.doc, dpi = 300, wpx = Math.round(d.W / 25.4 * dpi), hpx = Math.round(d.H / 25.4 * dpi);
   const svg = buildSvg(d, buildCtx(d), {}).replace(/width="[^"]*mm" height="[^"]*mm"/, `width="${wpx}" height="${hpx}"`);
   const img = new Image();
@@ -428,7 +435,7 @@ function exportPng() {
   img.onerror = () => toast('Export PNG impossible dans ce navigateur : utilisez l’export SVG.');
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
-function printDoc() {
+function _printDoc() {
   const d = state.doc, pg = PAPER[d.orient] || PAPER.portrait;
   let st = $('#printStyle'); if (!st) { st = h('style', { id: 'printStyle' }); document.head.append(st); }
   st.textContent = `@page{size:${pg[0]}mm ${pg[1]}mm;margin:0}@media print{html,body{margin:0;background:#fff}body>*:not(#printArea){display:none!important}#printArea{display:block!important;position:absolute;left:${d.mg}mm;top:${d.mh}mm}}`;
@@ -505,3 +512,9 @@ function init() {
   loadDoc(d || defaultDoc(), d ? d.name : 'sans titre');
 }
 window.addEventListener('DOMContentLoaded', init);
+
+function exportSvg() { schWarm(() => _exportSvg()); }
+
+function exportPng() { schWarm(() => _exportPng()); }
+
+function printDoc() { schWarm(() => _printDoc()); }

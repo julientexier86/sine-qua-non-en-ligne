@@ -48,7 +48,7 @@ const DLGHELP = {
   'Repère': 'Les longueurs sont en cm, comme dans la version Windows. Vous pouvez aussi glisser l’origine et les unités à la souris dans le dessin.'
 };
 function gotoSection(title, titleDlg) { openDlg([title], { title: titleDlg || title, help: DLGHELP[title] }); }
-function copyPng() {
+function _copyPng() {
   const d = state.doc, dpi = 150, wpx = Math.round(d.W / 25.4 * dpi), hpx = Math.round(d.H / 25.4 * dpi);
   const svg = buildSvg(d, buildCtx(d), {}).replace(/width="[^"]*mm" height="[^"]*mm"/, `width="${wpx}" height="${hpx}"`), img = new Image();
   img.onload = () => {
@@ -81,10 +81,10 @@ function chromeSpec() {
   const D = (label, title, fn, icon) => [label, title, fn, icon];
   const unitStep = k => () => { const d = state.doc; d.lx = Math.max(1, d.lx + k); d.ly = Math.max(1, d.ly + k); redraw(); commit(); };
   const menus = [
-    ['Fichier', [A.nouveau, A.ouvrir, A.enreg, D('Enregistrer sous…', 'Enregistrer le dessin', saveSqn), D('Enregistrer l’image…', 'Image PNG', exportPng), D('Enregistrer l’image vectorielle (SVG)…', '', exportSvg), A.sqn, '-', A.imprimer, D('Mise en page…', 'Page', go('Page'))]],
+    ['Fichier', [A.nouveau, A.ouvrir, D('Réouvrir…', 'Les 10 derniers dessins', reopenRecent), D('Ouvrir exemple…', 'Exemples fournis', openExample), A.enreg, D('Enregistrer sous…', 'Enregistrer le dessin', saveSqn), D('Enregistrer l’image PNG…', 'Image PNG', exportPng), D('Enregistrer l’image JPEG…', '', exportJpg), D('Enregistrer l’image BMP…', '', exportBmp), D('Enregistrer l’image GIF…', '', exportGif), D('Enregistrer l’image vectorielle (SVG)…', '', exportSvg), D('Enregistrer au format EMF…', '', exportEmf), D('Enregistrer au format WMF…', '', exportWmf), D('Enregistrer au format EPS…', '', exportEps), A.sqn, '-', A.imprimer, D('Mise en page…', 'Page', go('Page'))]],
     ['Définir', [D('Repère…', 'Repère', go('Repère')), '-', D('Fonction f(x)', '', go('Fonctions f(x)')), D('Représentation paramétrique x(t), y(t)', '', go('Courbes paramétrées')), D('Courbe polaire r=f(t)', '', go('Courbes polaires')),
       D('Courbe définie point par point', '', ex('pbp')), D('Dérivée d’une fonction donnée', '', ex('deriv')), D('Primitive d’une fonction donnée', '', ex('prim')), '-', D('Famille de fonctions fp(x)', '', go('Famille de fonctions')), '-',
-      D('Droite', '', go('Droites')), D('Schéma', '', ex('shape', null, 'Objets du schéma')), D('Texte', '', addText), '-',
+      D('Droite', '', go('Droites')), D('Schéma', '', go('Objets du schéma (points, droites, cercles…)', 'Objets du schéma')), D('Figure (polygone, cercle, flèche…)', '', ex('shape', null, 'Figure')), D('Texte', '', addText), '-',
       D('Série statistique simple …', '', ex('stat1')), D('Série statistique double …', '', ex('stat2')), D('Simulations …', '', ex('stat1', null, 'Simulations statistiques')), '-',
       D('Loi binomiale', '', ex('loi', 'bin', 'Loi binomiale')), D('Loi de Poisson', '', ex('loi', 'poi', 'Loi de Poisson')), D('Loi normale', '', ex('loi', 'nor', 'Loi normale')), D('Loi exponentielle', '', ex('loi', 'exp', 'Loi exponentielle')),
       D('Arbre de probabilités', '', ex('arbre')), D('Tableau de signes ou de variations', '', ex('tab')), '-',
@@ -98,7 +98,7 @@ function chromeSpec() {
     B('Expression LaTeX', 'tex', addLatex), B('Texte', 'text', addText), SEP, { fmt: 1 }, SEP,
     B('Définir le repère', 'axes', go('Repère', 'Définir le repère')), B('Liste des fonctions', 'fn', go('Fonctions f(x)', 'Liste des fonctions')), B('Liste des courbes paramétrées', 'param', go('Courbes paramétrées', 'Liste des courbes paramétrées')),
     B('Liste des courbes polaires r=f(t)', 'polar', go('Courbes polaires', 'Liste des courbes polaires r=f(t)')), B('Famille de fonctions', 'fam', go('Famille de fonctions')),
-    B('Objets du schéma : figures géométriques', 'shape', ex('shape', null, 'Objets du schéma')), B('Droites', 'lines', go('Droites')), B('Courbe point par point', 'prim', ex('pbp')),
+    B('Objets du schéma : figures géométriques', 'shape', go('Objets du schéma (points, droites, cercles…)', 'Objets du schéma')), B('Droites', 'lines', go('Droites')), B('Courbe point par point', 'prim', ex('pbp')),
     B('Statistiques à une variable', 'stat1', ex('stat1')), B('Statistiques à 2 variables', 'stat2', ex('stat2')),
     B('Loi binomiale', 'histo', ex('loi', 'bin', 'Loi binomiale')), B('Loi de Poisson', 'poi', ex('loi', 'poi', 'Loi de Poisson')), B('Loi normale', 'loi', ex('loi', 'nor', 'Loi normale')), B('Loi exponentielle', 'expo', ex('loi', 'exp', 'Loi exponentielle')),
     B('Simulations statistiques', 'de', ex('stat1', null, 'Simulations statistiques')), B('Tableau de signes ou de variations', 'tab', ex('tab')), B('Suites numériques', 'suite', ex('suite')),
@@ -134,3 +134,5 @@ function buildChrome() {
     $('#coords').textContent = `X=${f(g.xOf(mx))}  Y=${f(g.yOf(my))}`;
   });
 }
+
+function copyPng() { schWarm(() => _copyPng()); }
