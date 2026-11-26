@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **Version 1.2.1.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.3.0.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -37,10 +37,13 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 
 **Fichiers**
 - Ouverture et enregistrement des dessins `.sqn` de la version Windows. Les objets pédagogiques suivants sont lus et affichés à l'ouverture : lois, statistiques, suites, intégrales, inéquations, courbes point par point, arbres, simulations (boîtes et histogrammes), dérivée, primitive, tableaux de variations ou de signes, table de valeurs.
-- Export PNG, JPEG, BMP, GIF, SVG, EMF, WMF, EPS (EMF, WMF et EPS contiennent une image), impression ou PDF à l'échelle réelle. « Réouvrir » (10 derniers dessins) et « Ouvrir exemple ».
+- Export PNG, JPEG, BMP, GIF, SVG, EMF, WMF, EPS (EMF, WMF et EPS contiennent une image), impression ou PDF à l'échelle réelle. « Réouvrir » (10 derniers dessins) et « Ouvrir exemple ». Enregistrement direct dans le fichier choisi sous Chrome et Edge.
 - Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (les compléments pris en charge y sont écrits).
 
 ## Historique des versions
+
+**1.3.0**
+- « Enregistrer » et « Ouvrir » passent par le sélecteur de fichiers du système sur Chrome, Edge et Chromebook : le dessin est écrit directement dans le fichier ou le dossier choisi (disque, Drive, dossier Nextcloud monté), et « Enregistrer » réécrit ensuite le même fichier sans nouveau téléchargement. « Enregistrer sous… » demande un nouvel emplacement. Sous Firefox, le comportement reste un téléchargement.
 
 **1.2.1**
 - Points des schémas : formes des marques corrigées (5 et 6 pleines, 7 à 9 à fond blanc), tailles d'après l'original, noms écrits avec la police « points » du dessin, centrés, dernier caractère en indice, option « aucun nom ».
@@ -89,16 +92,17 @@ La version 1.2.0 couvre l'ensemble des fonctions décrites dans le mode d'emploi
 
 Merci de signaler tout écart avec le logiciel d'origine via les *tickets* du projet, idéalement avec le fichier `.sqn` concerné.
 
-## Enregistrer sans stockage local : une question ouverte
+## Enregistrer sans stockage local
 
-Les postes visés (« carbonBook » sous Fedora Kinoite, avec Firefox) sont conçus pour n'utiliser aucun stockage local. Or Firefox ne permet pas à une page web d'écrire directement dans un dossier : **« Enregistrer » produit aujourd'hui un téléchargement**, qui passe par le disque du poste. À court terme, il faut régler Firefox pour demander l'emplacement à chaque fois et vérifier si le dossier Téléchargements est vidé à la fin de la session.
+Les postes visés (« carbonBook » sous Fedora Kinoite, Chromebook) sont conçus pour n'utiliser aucun stockage local.
 
-Pistes à étudier, selon ce que permettent le Nuage (Nextcloud) et les postes :
-- **Enseignants** : enregistrer dans leur espace Nuage ; une écriture directe depuis l'application dépend d'un réglage côté serveur, à vérifier auprès de ses administrateurs.
-- **Élèves** : un lien Nextcloud de *dépôt de fichiers* (sans compte, en écriture seule) permettrait de remettre un travail ; il ne permet pas de le rouvrir. Pour reprendre un travail, il faut un dossier partagé par classe (lisible par toute la classe) ou un espace personnel, si les élèves ont un compte.
-- **Dans l'application** : un bouton « Déposer dans le dossier de la classe » (lien fourni par l'enseignant), une copie de secours dans le navigateur contre la perte d'un dessin en cours, et la copie de la figure dans le presse-papiers pour la coller dans un document.
+- **Chrome, Edge, Chromebook** : depuis la 1.3.0, « Enregistrer » écrit directement dans l'emplacement choisi dans le sélecteur de fichiers, y compris un dossier réseau ou cloud accessible depuis l'application Fichiers. Rien ne passe par le dossier Téléchargements.
+- **Firefox** : une page web ne peut pas écrire dans un dossier ; « Enregistrer » produit un téléchargement, qui passe par le disque du poste. À court terme, il faut régler Firefox pour demander l'emplacement à chaque fois et vérifier si le dossier Téléchargements est vidé à la fin de la session.
+- Une copie de secours du dessin en cours est conservée dans le navigateur (reprise proposée à la réouverture).
 
-Rien de cela n'est encore réalisé : le mécanisme reste à définir avec l'établissement.
+Pistes restant à étudier avec l'établissement, selon ce que permettent le Nuage (Nextcloud) et les postes :
+- **Élèves** : un lien Nextcloud de *dépôt de fichiers* (sans compte, en écriture seule) permettrait de remettre un travail ; il ne permet pas de le rouvrir. Pour reprendre un travail, il faut un dossier partagé par classe ou un espace personnel, si les élèves ont un compte.
+- **Dans l'application** : un bouton « Déposer dans le dossier de la classe » (lien fourni par l'enseignant) ; il dépend d'un réglage côté serveur à tester sur votre Nextcloud.
 
 ## Développement
 

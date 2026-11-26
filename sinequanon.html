@@ -104,7 +104,7 @@ dialog.pick{border:1px solid #888;border-radius:8px;padding:0;min-width:340px;ma
 <div id="toast"></div>
 <dialog id="about">
   <h2>À propos</h2>
-  <p><b>Sine qua non en ligne</b>, version 1.2.1 : réécriture en ligne, non officielle, du logiciel <b>Sine qua non</b> de <b>Patrice Rabiller</b> et <b>Patrick Pradeau</b>. Cette réécriture n’est ni validée ni soutenue par les auteurs ; pour la version de référence, utilisez leur logiciel.</p>
+  <p><b>Sine qua non en ligne</b>, version 1.3.0 : réécriture en ligne, non officielle, du logiciel <b>Sine qua non</b> de <b>Patrice Rabiller</b> et <b>Patrick Pradeau</b>. Cette réécriture n’est ni validée ni soutenue par les auteurs ; pour la version de référence, utilisez leur logiciel.</p>
   <p><b>Licence :</b> <a href="https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne/-/blob/main/LICENSE" target="_blank" rel="noopener">GNU AGPL v3</a> (code de cette réécriture).</p>
   <p><b>Auteur de la réécriture :</b> Julien Texier. Projet de la <b>Forge des communs numériques éducatifs</b> : <a href="https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne" target="_blank" rel="noopener">page du dépôt</a>.</p>
   <p style="color:#6b7785;font-size:12px">Cette réécriture a été réalisée avec l’aide d’une IA générative (Claude, d’Anthropic) ; le code a été testé sur des fichiers .sqn de la version Windows. Aucune donnée n’est envoyée : tout fonctionne dans votre navigateur.</p>
@@ -3378,33 +3378,57 @@ function newDocument() {
 }
 function loadDoc(d, name) {
   d.name = name; state.doc = d; state.hist = []; state.histPos = -1; state.dirty = false;
-  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle(); try { buildPanel(); } catch (e) { /* panneau fermé */ }
+  state.handle = null; drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle(); try { buildPanel(); } catch (e) { /* panneau fermé */ }
 }
-function openFile(file) {
+function openFile(file, handle) {
   const r = new FileReader();
   r.onload = () => {
     try {
       const u8 = new Uint8Array(r.result), isJson = u8[0] === 0x7B || (u8[0] === 0xEF && u8[3] === 0x7B);
       const txt = isJson ? new TextDecoder('utf-8').decode(u8) : decodeCp1252(r.result);
       const d = docFromText(txt, file.name.replace(/\.[^.]+$/, ''));
-      loadDoc(d, d.name); rememberRecent(d.name, snapshot()); toast('« ' + file.name + ' » ouvert.');
+      loadDoc(d, d.name); state.handle = handle && /\.(sqn|sqnw)$/i.test(file.name) ? handle : null; rememberRecent(d.name, snapshot()); toast('« ' + file.name + ' » ouvert.' + (state.handle ? ' « Enregistrer » écrira dans ce fichier.' : ''));
     } catch (e) { toast('Impossible d’ouvrir ce fichier : ' + e.message, 6000); }
   };
   r.readAsArrayBuffer(file);
+}
+async function openDialog() {
+  if (typeof window.showOpenFilePicker === 'function') {
+    try { const [hd] = await window.showOpenFilePicker({ types: [{ description: 'Dessins Sine qua non', accept: { 'application/octet-stream': ['.sqn', '.sqnw', '.txt'] } }] }); openFile(await hd.getFile(), hd); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  $('#file').click();
 }
 function download(blob, name) {
   const a = h('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
 const fileBase = () => (state.doc.name || 'dessin').replace(/[\\/:*?"<>|]+/g, '_');
-function saveSqn() {
-  if (hasExtras(state.doc)) {
-    download(new Blob([snapshotDoc(state.doc)], { type: 'application/json' }), fileBase() + '.sqnw');
-    rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); toast('Enregistré en .sqnw (contient les compléments de la version en ligne). Le bouton « .sqn » produit un fichier pour la version Windows.', 6000);
-  } else exportSqnOnly(true);
+// Chrome, Edge (et les Chromebooks) : enregistrement direct dans le fichier ou le dossier choisi (disque, Drive, Nextcloud monté…) ;
+// Firefox : téléchargement classique.
+async function saveBlob(blob, name, desc, accept, useHandle) {
+  if (typeof window.showSaveFilePicker === 'function') {
+    try {
+      let hd = useHandle && state.handle && state.handle.name.toLowerCase().endsWith(name.slice(name.lastIndexOf('.')).toLowerCase()) ? state.handle : null;
+      if (!hd) hd = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: desc, accept }] });
+      const w = await hd.createWritable(); await w.write(blob); await w.close();
+      if (useHandle) state.handle = hd;
+      return hd.name;
+    } catch (e) { if (e && e.name === 'AbortError') return null; /* iframe, refus : repli sur le téléchargement */ }
+  }
+  download(blob, name); return name;
 }
-function exportSqnOnly(clean) {
-  download(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn');
+async function saveSqn(forcePick) {
+  if (forcePick === true) state.handle = null;
+  if (hasExtras(state.doc)) {
+    const n = await saveBlob(new Blob([snapshotDoc(state.doc)], { type: 'application/json' }), fileBase() + '.sqnw', 'Dessin Sine qua non en ligne', { 'application/json': ['.sqnw'] }, true);
+    if (n === null) return;
+    rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); toast('Enregistré en .sqnw (contient les compléments de la version en ligne). Le bouton « .sqn » produit un fichier pour la version Windows.', 6000);
+  } else await exportSqnOnly(true);
+}
+async function exportSqnOnly(clean) {
+  const n = await saveBlob(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn', 'Dessin Sine qua non', { 'application/octet-stream': ['.sqn'] }, !!clean);
+  if (n === null) return;
   if (clean) { rememberRecent(state.doc.name, snapshot()); state.dirty = false; updateTitle(); }
   toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments pris en charge y sont écrits (stats, lois, suites, inéquations…) ; arbres, simulations et tableaux ne sont pas modifiables dans le .sqn.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
 }
@@ -3478,7 +3502,7 @@ function init() {
   document.addEventListener('keydown', e => {
     const mod = e.ctrlKey || e.metaKey, tag = (e.target.tagName || '').toLowerCase();
     if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); saveSqn(); }
-    else if (mod && e.key.toLowerCase() === 'o') { e.preventDefault(); $('#file').click(); }
+    else if (mod && e.key.toLowerCase() === 'o') { e.preventDefault(); openDialog(); }
     else if (mod && e.key.toLowerCase() === 'p') { e.preventDefault(); printDoc(); }
     else if (mod && e.key.toLowerCase() === 'z' && tag !== 'input') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y' && tag !== 'input') { e.preventDefault(); redo(); }
@@ -3574,8 +3598,8 @@ const go = (t, title) => () => gotoSection(t, title);
 
 function chromeSpec() {
   const A = {
-    nouveau: ['Nouveau', 'Nouveau dessin', newDocument, 'new'], ouvrir: ['Ouvrir…', 'Ouvrir un dessin (.sqn)', () => $('#file').click(), 'open', 'Ctrl+O'],
-    enreg: ['Enregistrer', 'Enregistrer le dessin', saveSqn, 'save', 'Ctrl+S'], sqn: ['Exporter en .sqn (version Windows)', 'Exporter pour la version Windows', () => exportSqnOnly(false), 'export'],
+    nouveau: ['Nouveau', 'Nouveau dessin', newDocument, 'new'], ouvrir: ['Ouvrir…', 'Ouvrir un dessin (.sqn)', openDialog, 'open', 'Ctrl+O'],
+    enreg: ['Enregistrer', 'Enregistrer le dessin', () => saveSqn(), 'save', 'Ctrl+S'], sqn: ['Exporter en .sqn (version Windows)', 'Exporter pour la version Windows', () => exportSqnOnly(false), 'export'],
     copier: ['Copier l’image', 'Copier le dessin comme image', copyPng, 'copy'], png: ['Exporter en PNG', 'Image PNG', exportPng], svg: ['Exporter en SVG', 'Image vectorielle', exportSvg],
     imprimer: ['Imprimer / PDF…', 'Imprimer à l’échelle réelle', printDoc, 'print', 'Ctrl+P'],
     undo: ['Annuler', 'Annuler', undo, 'undo', 'Ctrl+Z'], redo: ['Rétablir', 'Rétablir', redo, 'redo', 'Ctrl+Y'],
@@ -3586,7 +3610,7 @@ function chromeSpec() {
   const D = (label, title, fn, icon) => [label, title, fn, icon];
   const unitStep = k => () => { const d = state.doc; d.lx = Math.max(1, d.lx + k); d.ly = Math.max(1, d.ly + k); redraw(); commit(); };
   const menus = [
-    ['Fichier', [A.nouveau, A.ouvrir, D('Réouvrir…', 'Les 10 derniers dessins', reopenRecent), D('Ouvrir exemple…', 'Exemples fournis', openExample), A.enreg, D('Enregistrer sous…', 'Enregistrer le dessin', saveSqn), D('Enregistrer l’image PNG…', 'Image PNG', exportPng), D('Enregistrer l’image JPEG…', '', exportJpg), D('Enregistrer l’image BMP…', '', exportBmp), D('Enregistrer l’image GIF…', '', exportGif), D('Enregistrer l’image vectorielle (SVG)…', '', exportSvg), D('Enregistrer au format EMF…', '', exportEmf), D('Enregistrer au format WMF…', '', exportWmf), D('Enregistrer au format EPS…', '', exportEps), A.sqn, '-', A.imprimer, D('Mise en page…', 'Page', go('Page'))]],
+    ['Fichier', [A.nouveau, A.ouvrir, D('Réouvrir…', 'Les 10 derniers dessins', reopenRecent), D('Ouvrir exemple…', 'Exemples fournis', openExample), A.enreg, D('Enregistrer sous…', 'Enregistrer le dessin', () => saveSqn(true)), D('Enregistrer l’image PNG…', 'Image PNG', exportPng), D('Enregistrer l’image JPEG…', '', exportJpg), D('Enregistrer l’image BMP…', '', exportBmp), D('Enregistrer l’image GIF…', '', exportGif), D('Enregistrer l’image vectorielle (SVG)…', '', exportSvg), D('Enregistrer au format EMF…', '', exportEmf), D('Enregistrer au format WMF…', '', exportWmf), D('Enregistrer au format EPS…', '', exportEps), A.sqn, '-', A.imprimer, D('Mise en page…', 'Page', go('Page'))]],
     ['Définir', [D('Repère…', 'Repère', go('Repère')), '-', D('Fonction f(x)', '', go('Fonctions f(x)')), D('Représentation paramétrique x(t), y(t)', '', go('Courbes paramétrées')), D('Courbe polaire r=f(t)', '', go('Courbes polaires')),
       D('Courbe définie point par point', '', ex('pbp')), D('Dérivée d’une fonction donnée', '', ex('deriv')), D('Primitive d’une fonction donnée', '', ex('prim')), '-', D('Famille de fonctions fp(x)', '', go('Famille de fonctions')), '-',
       D('Droite', '', go('Droites')), D('Schéma', '', go('Objets du schéma (points, droites, cercles…)', 'Objets du schéma')), D('Figure (polygone, cercle, flèche…)', '', ex('shape', null, 'Figure')), D('Texte', '', addText), '-',
