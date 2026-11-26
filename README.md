@@ -44,7 +44,6 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 - La table de valeurs affichée à l'écran (seules ses marques sont lues), les statistiques en boîte ou en droite de Henry sur données groupées, les graphiques de simulation « points » et « histogrammes des échantillons », l'échelle automatique des simulations.
 - Les objets lus à l'ouverture d'un `.sqn` Windows se modifient dans l'application, mais **les modifications ne sont pas réécrites dans le `.sqn` exporté**, qui garde les blocs d'origine ; un objet supprimé réapparaît dans ce `.sqn`.
 - Le rendu est fidèle aux couleurs, styles et valeurs du fichier, mais n'est pas identique pixel pour pixel à celui de Windows.
-- Plusieurs outils ouvrent un panneau de réglages à la place d'une boîte de dialogue.
 
 Merci de signaler tout écart avec le logiciel d'origine via les *tickets* du projet, idéalement avec le fichier `.sqn` concerné.
 
