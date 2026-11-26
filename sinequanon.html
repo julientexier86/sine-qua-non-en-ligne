@@ -3038,7 +3038,7 @@ function chromeSpec() {
     undo: ['Annuler', 'Annuler', undo, 'undo', 'Ctrl+Z'], redo: ['Rétablir', 'Rétablir', redo, 'redo', 'Ctrl+Y'],
     zin: ['Zoom avant', 'Zoom avant', () => setZoom(state.doc.zoom + 25), 'zin'], zout: ['Zoom arrière', 'Zoom arrière', () => setZoom(state.doc.zoom - 25), 'zout'],
     zfit: ['Ajuster à la largeur', 'Ajuster à la largeur', fitZoom], z100: ['Zoom 100 %', 'Zoom 100 %', () => setZoom(100)],
-    aide: ['Aide', 'Aide', showHelp], apropos: ['À propos', 'À propos', () => toast('Sine qua non en ligne, version 1 — réécriture du logiciel de Patrice Rabiller et Patrick Pradeau. Les dessins .sqn de la version Windows s’ouvrent directement.', 7000)]
+    aide: ['Aide', 'Aide', showHelp], apropos: ['À propos', 'À propos', () => toast('Sine qua non en ligne, version 1.1 — réécriture du logiciel de Patrice Rabiller et Patrick Pradeau. Les dessins .sqn de la version Windows s’ouvrent directement.', 7000)]
   };
   const D = (label, title, fn, icon) => [label, title, fn, icon];
   const unitStep = k => () => { const d = state.doc; d.lx = Math.max(1, d.lx + k); d.ly = Math.max(1, d.ly + k); redraw(); commit(); };

@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **Version 1.** Utilisable en classe ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.1.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -39,6 +39,17 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 - Ouverture et enregistrement des dessins `.sqn` de la version Windows. Les objets pédagogiques suivants sont lus et affichés à l'ouverture : lois, statistiques, suites, intégrales, inéquations, courbes point par point, arbres, simulations (boîtes et histogrammes), dérivée, primitive, tableaux de variations ou de signes, table de valeurs.
 - Export PNG (300 ppp), SVG, impression ou PDF à l'échelle réelle.
 - Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (les compléments pris en charge y sont écrits).
+
+## Historique des versions
+
+**1.1**
+- Les objets lus à l'ouverture d'un `.sqn` Windows se modifient et sont réécrits dans le `.sqn` exporté.
+- Tableaux de variations ou de signes de Windows : affichés à l'ouverture.
+- Table de valeurs affichée sous le dessin.
+- Statistiques et simulations : boîtes à moustaches, déciles, droite de Henry (papier gausso-arithmétique), échelle automatique des simulations.
+- Adaptation tablette et téléphone : menus défilants, boutons plus grands, zoom à deux doigts, déplacement de la feuille au doigt.
+
+**1.0** : première version utilisable en classe (sortie de la bêta).
 
 ## Ce qui n'est pas encore reproduit
 
