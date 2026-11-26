@@ -121,7 +121,7 @@ EX.shape = { label: 'Figure (cercle, polygone, vecteur…)', def: () => ({ kind:
 /* --- statistiques à une variable --- */
 function stat1Data(e) { // renvoie {vals:[[x,eff]], classes:[[a,b,eff]], all:[valeurs]}
   const R = rowsOf(e.data).filter(r => r.every(Number.isFinite));
-  if (e.mode === 'histo' || e.mode === 'cumulf' || e.mode === 'boitecl') { const cl = R.filter(r => r.length >= 3); return { classes: cl, all: [] }; }
+  if (e.mode === 'histo' || e.mode === 'cumulf' || e.mode === 'boitecl' || e.mode === 'henry') { const cl = R.filter(r => r.length >= 3); return { classes: cl, all: [] }; }
   const map = new Map(); R.forEach(r => { map.set(r[0], (map.get(r[0]) || 0) + (r.length >= 2 ? r[1] : 1)); });
   const vals = [...map.entries()].sort((a, b) => a[0] - b[0]); const all = []; vals.forEach(([x, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push(x); });
   return { vals, all };
@@ -146,7 +146,7 @@ function tableSvg(rows, x, y, cw, rh, col, size = 9) { // rows: tableau de ligne
   return s;
 }
 EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons', data: '1;3\n2;5\n3;8\n4;4\n5;2', ky: 1, y0: -2, h: 1.2, showStats: true, sx: 0, sy: 0, table: false, tx: 0, ty: -3, couleur: 16711680, couleur2: 16777181, ep: 3, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }),
-  fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['boitecl', 'Boîte à moustaches sur classes  (a;b;effectif)'], ['cumul', 'Polygone des effectifs cumulés croissants'], ['cumulf', 'Polygone des fréquences cumulées (classes  a;b;effectif)'], ['multi', 'Boîtes à moustaches multiples  (nom;valeurs…)'], ['barres', 'Caractère qualitatif : barres  (modalité;effectif)'], ['camem', 'Caractère qualitatif : secteurs  (modalité;effectif)']]],
+  fields: [['mode', 'représentation', 'sel', 'grow', [['batons', 'Diagramme en bâtons  (valeur;effectif)'], ['histo', 'Histogramme  (a;b;effectif)'], ['boite', 'Boîte à moustaches  (valeurs brutes)'], ['boitecl', 'Boîte à moustaches sur classes  (a;b;effectif)'], ['henry', 'Droite de Henry sur classes  (a;b;effectif)'], ['cumul', 'Polygone des effectifs cumulés croissants'], ['cumulf', 'Polygone des fréquences cumulées (classes  a;b;effectif)'], ['multi', 'Boîtes à moustaches multiples  (nom;valeurs…)'], ['barres', 'Caractère qualitatif : barres  (modalité;effectif)'], ['camem', 'Caractère qualitatif : secteurs  (modalité;effectif)']]],
     ['data', 'données (une ligne par valeur)', 'area', 'grow'], 'br', ['ky', 'échelle verticale', 'num', 'w2', { step: 0.1 }], ['y0', 'boîte : y', 'num', 'w3', { step: 0.5 }], ['h', 'boîte : hauteur', 'num', 'w3', { step: 0.1 }], 'br',
     ['couleur', 'trait', 'color'], ['couleur2', 'remplissage', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['deciles', 'boîte sur classes : avec déciles', 'chk'], ['showStats', 'afficher moyenne, médiane, écart-type', 'chk'], ['sx', 'x', 'num', 'w3', { step: 0.1 }], ['sy', 'y', 'num', 'w3', { step: 0.1 }], 'br', ['table', 'afficher le tableau statistique (effectifs, fréquences, cumuls)', 'chk'], ['tx', 'x', 'num', 'w3', { step: 0.1 }], ['ty', 'y', 'num', 'w3', { step: 0.1 }], 'br',
     ['sim', 'simulation', 'sel', 'w2', [['unif', 'Loi uniforme discrète (1 à A)'], ['unifc', 'Loi uniforme continue (0 à A)'], ['bern', 'Loi de Bernoulli (p = A)'], ['bin', 'Loi binomiale (n = A ; p = B)'], ['geo', 'Loi géométrique (p = A)'], ['pois', 'Loi de Poisson (λ = A)'], ['norm', 'Loi normale (μ = A ; σ = B)'], ['exp', 'Loi exponentielle (λ = A)'], ['coin', 'Pièce : nombre de « face » sur A lancers'], ['de2', 'Somme de deux dés à A faces']]],
@@ -170,6 +170,30 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
     } else if (e.mode === 'histo' || e.mode === 'cumulf') {
       for (const [a, b, n] of D.classes) { const hgt = n / (b - a) * e.ky; s += `<rect x="${f2(g.X(a))}" y="${f2(g.Y(hgt))}" width="${f2(g.X(b) - g.X(a))}" height="${f2(g.Y(0) - g.Y(hgt))}" fill="${fillc}" stroke="${st.col}" stroke-width="${f2(st.w * 0.6)}"/>`; }
       D.classes.forEach(([a, b, n]) => { for (let i = 0; i < n && all.length < 100000; i++) all.push((a + b) / 2); });
+    } else if (e.mode === 'henry' && D.classes.length >= 2) { // papier gausso-arithmétique
+      const C = D.classes, n = C.length, N = C.reduce((t, c) => t + Math.round(c[2]), 0) || 1, xL = 14, xR = d.W - 12, yT = 8, yB = d.H - 24, gc = '#9a9a9a', a1 = C[0][0], bn = C[n - 1][1];
+      const inv = p => { if (p <= 0) return -8; if (p >= 1) return 8; const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239], b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572], c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783], u = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+        if (p < 0.02425) { const q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((u[0] * q + u[1]) * q + u[2]) * q + u[3]) * q + 1); }
+        if (p > 1 - 0.02425) { const q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((u[0] * q + u[1]) * q + u[2]) * q + u[3]) * q + 1); }
+        const q = p - 0.5, r = q * q; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); };
+      const Y = p => Math.max(yT, yB - (inv(p) + 3) / 6 * (yB - yT)), X = v => xL + (v - a1) / (bn - a1) * (xR - xL), fc = v => String(fmtC(v)).replace('.', ',');
+      s += `<rect x="0" y="0" width="${f2(d.W)}" height="${f2(d.H)}" fill="#fff"/>`;
+      C.forEach(([a]) => { s += lineSeg([X(a), yB], [X(a), yT], gc, 0.2) + T_(X(a), yB + 4, fc(a), { size: 9, anchor: 'middle' }); });
+      s += lineSeg([xR, yB], [xR, yT], gc, 0.2) + T_(xR, yB + 4, fc(bn), { size: 9, anchor: 'middle' });
+      const H = []; for (let i = 0; i <= 6; i++) { H.push([0.5 + 0.05 * i, i % 2 ? '' : String(50 + 5 * i)], [0.5 - 0.05 * i, i % 2 ? '' : String(50 - 5 * i)]); }
+      for (let i = 1; i <= 5; i++) H.push([0.8 + 0.02 * i, i === 5 ? '90' : ''], [0.2 - 0.02 * i, i === 5 ? '10' : '']);
+      for (let i = 1; i <= 9; i++) H.push([0.9 + 0.01 * i, i === 5 ? '95' : i === 9 ? '99' : ''], [0.1 - 0.01 * i, i === 5 ? '5' : i === 9 ? '1' : '']);
+      for (let i = 1; i <= 8; i++) H.push([0.99 + 0.001 * i, i === 8 ? '99,8' : ''], [0.01 - 0.001 * i, i === 8 ? '0,2' : '']);
+      H.forEach(([p, lab]) => { const y = Y(p); s += lineSeg([xL, y], [xR, y], gc, 0.2); if (lab) s += lineSeg([xL, y], [xL - 2, y], '#000', 0.2) + T_(xL - 3, y + 1.2, lab, { size: 9, anchor: 'end' }); });
+      for (let i = 0; i <= 6; i++) { const y = yB - i / 6 * (yB - yT); s += lineSeg([xR, y], [xR + 1, y], gc, 0.2) + T_(xR + 5, y + 1.2, String(i - 3), { size: 9 }); }
+      let cum = 0, sx = 0, sxx = 0, sy = 0, sxy = 0, mx = 0, mxx = 0, my = 0, mxy = 0; const pts = [];
+      for (let i = 0; i < n - 1; i++) { cum += Math.round(C[i][2]) / N; const xm = X(C[i][1]), ym = Y(cum), q = inv(cum); pts.push([xm, ym]); mx += xm; mxx += xm * xm; my += ym; mxy += xm * ym; sx += C[i][1]; sxx += C[i][1] ** 2; sy += q; sxy += C[i][1] * q; }
+      pts.forEach(([x, y]) => { s += `<circle cx="${f2(x)}" cy="${f2(y)}" r="0.7" fill="#000"/>`; });
+      const m = n - 1, sl = (mxy / m - mx / m * my / m) / (mxx / m - (mx / m) ** 2), yy = x => my / m + sl * (x - mx / m);
+      if (Number.isFinite(sl)) s += lineSeg([xL, yy(xL)], [xR, yy(xR)], '#000', 0.4);
+      const t2 = (sxy / m - sx / m * sy / m) / (sxx / m - (sx / m) ** 2), t3 = sy / m - t2 * sx / m;
+      if (t2 && Number.isFinite(t2)) s += T_(xL, yB + 10, `Droite de Henry obtenue : y = ${fmtC(t2, 4)} x + ${fmtC(t3, 4)}`.replace(/\./g, ','), { size: 10 }) + T_(xL, yB + 18, `Estimation de la série statistique par la loi normale N(${fmtC(-t3 / t2, 4)} ; ${fmtC(1 / t2, 4)})`.replace(/\./g, ','), { size: 10 });
+      D.classes.forEach(([a, b, n2]) => { for (let i = 0; i < n2 && all.length < 100000; i++) all.push((a + b) / 2); });
     } else if (e.mode === 'boitecl' && D.classes.length) { // quartiles et déciles par interpolation linéaire dans la classe, comme Windows
       const N = D.classes.reduce((t, c) => t + Math.round(c[2]), 0) || 1, q = {}; let cum = 0;
       D.classes.forEach(([a, b, n]) => { n = Math.round(n); [[0.1, 'd1'], [0.25, 'q1'], [0.5, 'md'], [0.75, 'q3'], [0.9, 'd9']].forEach(([p, k]) => { if (cum / N < p && (cum + n) / N >= p) q[k] = a + (b - a) * (p - cum / N) / n * N; }); cum += n; });

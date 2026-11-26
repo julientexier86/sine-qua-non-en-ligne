@@ -218,3 +218,19 @@ EX.tabv = { label: 'Table de valeurs (affichée sous le dessin)', below: true, d
       if (txt) s += T_(X + cw / 2, Y + rh / 2 + 1.2, txt, { size: 10, anchor: 'middle', font: 'Arial,Helvetica,sans-serif' });
     }
     return s; } };
+
+/* --- échelle automatique des simulations (reprend le calcul de DessinerTout) --- */
+function simAutoScale(d, e) {
+  const gt = e.gtype | 0, G = e.general || [], C = e.calcs || [], ns = C.length, tl = ns ? Math.round(e.samples.length / ns) : 0, means = C.map(c => c[0]).filter(Number.isFinite);
+  if (!ns || !tl) return; const cont = e.loi === 1 || e.loi === 6, nb = e.nbcl || 10, smp = i => e.samples.slice(i * tl, (i + 1) * tl), R = v => +v.toPrecision(12);
+  const mn = gt <= 4 ? G[3] : Math.min(...means), mx = gt <= 4 ? G[9] : Math.max(...means); if (!Number.isFinite(mn) || !Number.isFinite(mx) || !(mx > mn)) return;
+  const lg = Math.log10(mx - mn); let Ux = Math.pow(10, lg >= 0 ? Math.trunc(lg) : Math.trunc(lg - 1)), k = 1, U = 10;
+  const ox = (Math.trunc(mn / Ux) - 1) * Ux; while ((mx - ox) / Ux * (k + 1) * U < d.W - 20) k++; U *= k; if (k >= 5) { Ux /= 5; U = 10; }
+  d.ox = String(R(ox)); d.ux = String(R(Ux)); d.dOy = 20; d.lx = U; d.dOx = d.H - 20;
+  if ([1, 3, 5].includes(gt)) { // sommet de l'histogramme
+    const hist = (vals, lo, hi) => { let top = 0; if (cont || gt === 5) { const w = (hi - lo) / nb; for (let q = 0; q < nb; q++) top = Math.max(top, vals.filter(v => lo + q * w < v && v < lo + q * w + w).length); } else for (let q = Math.round(lo); q <= Math.round(hi); q++) top = Math.max(top, vals.filter(v => (gt === 1 ? v === q : Math.round(v) === q)).length); return top; };
+    let top = 0; if (gt === 1) { for (let i = cont ? ns - 1 : 0; i < ns; i++) top = Math.max(top, hist(smp(i), C[i][2], C[i][8])); } else if (gt === 3) top = hist(e.samples, Math.min(...C.map(c => c[2])), Math.max(...C.map(c => c[8]))); else top = hist(means, Math.min(...means), Math.max(...means));
+    if (top > 0) { let Uy = Math.pow(10, Math.trunc(Math.log10(top))), kk = 1, V = 10; while (top / Uy * (kk + 1) * V < d.H - 20) kk++; V *= kk; if (kk >= 5) { Uy /= 5; V = 10; } d.uy = String(R(Uy)); d.ly = V; }
+    d.nameY = 'Effectifs'; if (gt === 5) d.nameY = 'Échantillons'; else if (gt === 1 || gt === 3) d.nameY = 'Effectifs';
+  } else if (gt === 0 || gt === 7) { d.uy = '10'; d.ly = 10; d.nameY = 'Échantillons'; }
+}

@@ -40,7 +40,7 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 
 ## Ce qui n'est pas encore reproduit
 
-- La **droite de Henry** (papier gausso-arithmétique) sur données groupées. L'échelle automatique des simulations n'est pas recalculée : l'échelle enregistrée dans le fichier est reprise telle quelle.
+- Les graphiques et simulations dont j'ai pu contrôler le rendu sont reproduits d'après le code d'origine, mais faute de fichiers `.sqn` Windows de référence pour la droite de Henry, l'échelle automatique des simulations et la table de valeurs, ces trois points sont à vérifier sur vos fichiers.
 - Les objets lus à l'ouverture d'un `.sqn` Windows (lois, statistiques, suites, intégrales, inéquations, courbes, dérivées, primitives…) se modifient dans l'application et **sont réécrits dans le `.sqn` exporté**. Exception : les arbres de probabilités, les simulations, les tableaux de variations et les tables de valeurs ne sont pas réécrits (supprimés dans l'application, ils sont retirés du `.sqn` ; modifiés, ils gardent leur ancienne version dans le `.sqn`).
 - Les tableaux de variations ou de signes de Windows s'affichent à l'ouverture avec le même code ; la mise en page est proche mais pas identique.
 - Le rendu est fidèle aux couleurs, styles et valeurs du fichier, mais n'est pas identique pixel pour pixel à celui de Windows.

@@ -350,7 +350,7 @@ function deriveSqnExtras(d) {
   if (i >= 0) { const n = NUMD(val(all[i + 7] || '')); if (n > 0) { const S = NUMD(val(all[i + 2])), st = S % 10, eff = Math.floor((S % 100) / 10) === 1, rows = [];
     for (let k = 0; k < n; k++) rows.push([all[i + 8 + 3 * k], all[i + 9 + 3 * k], all[i + 10 + 3 * k]].join(';'));
     const tot = rows.reduce((t, r) => t + num(r.split(';')[2], 0), 0) || 1;
-    if (st <= 5 && st !== undefined) out.push({ type: 'stat1', fromRaw: true, deciles: st === 2, mode: st === 0 ? 'histo' : st <= 2 ? 'boitecl' : 'cumulf', title: val(all[i + 1]), data: rows.join('\n'), ky: eff ? 1 : 100 / tot, y0: -2, h: 1.2, showStats: false, table: /oui/i.test(val(all[i + 4])), sx: 0, sy: 0, tx: 0, ty: -3, couleur: 0, couleur2: NUMD(val(all[i + 5])), ep: 2, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }); } }
+    if (st <= 5 && st !== undefined) out.push({ type: 'stat1', fromRaw: true, deciles: st === 2, mode: st === 0 ? 'histo' : st <= 2 ? 'boitecl' : st === 4 ? 'henry' : 'cumulf', title: val(all[i + 1]), data: rows.join('\n'), ky: eff ? 1 : 100 / tot, y0: -2, h: 1.2, showStats: false, table: /oui/i.test(val(all[i + 4])), sx: 0, sy: 0, tx: 0, ty: -3, couleur: 0, couleur2: NUMD(val(all[i + 5])), ep: 2, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }); } }
   // stat 2 variables
   i = at('Données statistiques 2 variables');
   if (i >= 0) { const n = NUMD(val(all[i + 14] || '')); if (n > 0) { const FIT = { 'linéaire': 'lin', 'logarithmique': 'log', 'exponentielle': 'exp', 'puissance': 'pow', 'polynômiale de degré 2': 'par', 'polynômiale de degré 3': 'pol3', 'polynômiale de degré 4': 'pol4', 'aucune': 'none', 'droite de mayer': 'mayer' };
@@ -410,7 +410,8 @@ function deriveSqnExtras(d) {
   if (i >= 0) { const t = NUMD(val(all[i + 1])), ns = NUMD(val(all[i + 2])), g = o => val(all[i + o] || ''), smp = [], calc = [], s0 = i + 18 + ns * t, g0 = s0 + ns * 9;
     for (let k = 0; k < ns * t; k++) smp.push(num(all[i + 18 + k], NaN)); for (let q = 0; q < ns; q++) calc.push(all.slice(s0 + 9 * q, s0 + 9 * q + 9).map(v => num(v, NaN)));
     const gen = all.slice(g0, g0 + 9).map(v => num(v, NaN));
-    out.push({ type: 'simw', fromRaw: true, gtype: NUMD(g(12)), title: val(all[i + 17]), nbcl: NUMD(g(7)) || 10, dist: NUMD(g(8)) || 10, couleur: NUMD(g(13)), samples: smp.filter(Number.isFinite), calcs: calc, general: gen }); }
+    out.push({ type: 'simw', fromRaw: true, loi: NUMD(val(all[i])), auto: /Échelle automatique\s*:\s*oui/i.test(all.slice(i, i + 18).join('\n')), gtype: NUMD(g(12)), title: val(all[i + 17]), nbcl: NUMD(g(7)) || 10, dist: NUMD(g(8)) || 10, couleur: NUMD(g(13)), samples: smp.filter(Number.isFinite), calcs: calc, general: gen }); }
+  out.forEach(e => { if (e.type === 'simw' && e.auto) { try { simAutoScale(d, e); } catch (err) { } } });
   // table de valeurs de fonctions (marques)
   i = at('Table de valeurs de fonctions');
   if (i >= 0 && !/^Pas d/i.test(all[i])) { const ty = (all[i + 4] || '').split('\t'), mk = NUMD(ty[1]), sz = NUMD(ty[2]) || 3, col = NUMD(ty[3]), rows = [];
