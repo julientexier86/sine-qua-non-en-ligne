@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **Version 1.1.2.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.1.3.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -41,6 +41,10 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 - Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (les compléments pris en charge y sont écrits).
 
 ## Historique des versions
+
+**1.1.3**
+- Objets du schéma : ajout des figures « Point » (un point `x;y` par ligne) et « Segment » (`x1;y1;x2;y2`, un segment par ligne).
+- « Nouveau » crée un dessin réellement vide (sans la courbe d'exemple) et actualise le panneau de réglages.
 
 **1.1.2**
 - Boîte « À propos » complète : auteurs du logiciel d'origine, licence, appartenance à la Forge des communs numériques éducatifs, lien vers le dépôt, mention de l'usage d'une IA générative.

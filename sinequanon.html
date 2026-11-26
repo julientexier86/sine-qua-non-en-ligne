@@ -103,7 +103,7 @@ dialog td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
 <div id="toast"></div>
 <dialog id="about">
   <h2>À propos</h2>
-  <p><b>Sine qua non en ligne</b>, version 1.1.2 : réécriture en ligne, non officielle, du logiciel <b>Sine qua non</b> de <b>Patrice Rabiller</b> et <b>Patrick Pradeau</b>. Cette réécriture n’est ni validée ni soutenue par les auteurs ; pour la version de référence, utilisez leur logiciel.</p>
+  <p><b>Sine qua non en ligne</b>, version 1.1.3 : réécriture en ligne, non officielle, du logiciel <b>Sine qua non</b> de <b>Patrice Rabiller</b> et <b>Patrick Pradeau</b>. Cette réécriture n’est ni validée ni soutenue par les auteurs ; pour la version de référence, utilisez leur logiciel.</p>
   <p><b>Licence :</b> <a href="https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne/-/blob/main/LICENSE" target="_blank" rel="noopener">GNU AGPL v3</a> (code de cette réécriture).</p>
   <p><b>Auteur de la réécriture :</b> Julien Texier. Projet de la <b>Forge des communs numériques éducatifs</b> : <a href="https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne" target="_blank" rel="noopener">page du dépôt</a>.</p>
   <p style="color:#6b7785;font-size:12px">Cette réécriture a été réalisée avec l’aide d’une IA générative (Claude, d’Anthropic) ; le code a été testé sur des fichiers .sqn de la version Windows. Aucune donnée n’est envoyée : tout fonctionne dans votre navigateur.</p>
@@ -1789,9 +1789,9 @@ EX.pbp = { label: 'Courbe point par point', def: () => ({ data: '0;0\n1;2\n2;1\n
   } };
 
 /* --- figures géométriques --- */
-const SHAPES = [['cercle', 'Cercle  (cx;cy;r)'], ['ellipse', 'Ellipse  (cx;cy;a;b;angle°)'], ['vecteur', 'Vecteur  (x1;y1;x2;y2)'], ['demidroite', 'Demi-droite  (x1;y1;x2;y2)'],
+const SHAPES = [['point', 'Point  (x;y — un point par ligne)'], ['segment', 'Segment  (x1;y1;x2;y2 — un segment par ligne)'], ['cercle', 'Cercle  (cx;cy;r)'], ['ellipse', 'Ellipse  (cx;cy;a;b;angle°)'], ['vecteur', 'Vecteur  (x1;y1;x2;y2)'], ['demidroite', 'Demi-droite  (x1;y1;x2;y2)'],
   ['polygone', 'Polygone  (un sommet x;y par ligne)'], ['arc', 'Arc / angle  (cx;cy;r;angle1°;angle2°)'], ['bezier', 'Courbe de Bézier  (points de contrôle, un par ligne)'], ['segments', 'Ligne brisée  (un point par ligne)']];
-EX.shape = { label: 'Figure (cercle, polygone, vecteur…)', def: () => ({ kind: 'cercle', data: '0;0;2', couleur: 0, ep: 2, style: 0, fill: false, fillCol: 16776960, opa: 0.35, nom: '' }),
+EX.shape = { label: 'Figure (point, segment, cercle, polygone, vecteur…)', def: () => ({ kind: 'cercle', data: '0;0;2', couleur: 0, ep: 2, style: 0, fill: false, fillCol: 16776960, opa: 0.35, nom: '' }),
   fields: [['kind', 'figure', 'sel', 'grow', SHAPES], ['data', 'données', 'area', 'grow'], 'br', ['couleur', 'trait', 'color'], ['ep', 'épaisseur', 'num', 'w3'], ['style', 'style', 'sel', 'w3', STY],
     ['fill', 'remplir', 'chk'], ['fillCol', 'fond', 'color'], ['opa', 'opacité', 'num', 'w3', { step: 0.05, min: 0, max: 1 }], ['nom', 'nom', 'text', 'w3']],
   render(e, d, g) {
@@ -1799,7 +1799,10 @@ EX.shape = { label: 'Figure (cercle, polygone, vecteur…)', def: () => ({ kind:
     const fill = e.fill ? `fill="${tcolor(e.fillCol)}" fill-opacity="${e.opa}"` : 'fill="none"';
     const r0 = R[0] || [], K = e.kind; let s = '', label = null;
     const sx = g.lx / g.ux, sy = g.ly / g.uy;
-    if (K === 'cercle') { const [cx, cy, r] = r0; s = `<ellipse cx="${f2(g.X(cx))}" cy="${f2(g.Y(cy))}" rx="${f2(Math.abs(r * sx))}" ry="${f2(Math.abs(r * sy))}" ${fill} stroke="${col}" stroke-width="${f2(w)}"${dash}/>`; label = [g.X(cx), g.Y(cy)]; }
+    if (K === 'point') { const P = R.filter(r => r.length >= 2 && r.every(Number.isFinite)).map(r => [g.X(r[0]), g.Y(r[1])]), rr = Math.max(0.9, w * 1.1);
+      s = P.map(p => `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="${f2(rr)}" fill="${col}" stroke="none"/>`).join(''); label = P[0]; }
+    else if (K === 'segment') { const S = R.filter(r => r.length >= 4 && r.every(Number.isFinite)); s = S.map(r => lineSeg([g.X(r[0]), g.Y(r[1])], [g.X(r[2]), g.Y(r[3])], col, w, dash ? (st.style === 1 ? '2 1' : '0.5 1') : '')).join(''); label = S[0] ? [(g.X(S[0][0]) + g.X(S[0][2])) / 2, (g.Y(S[0][1]) + g.Y(S[0][3])) / 2] : null; }
+    else if (K === 'cercle') { const [cx, cy, r] = r0; s = `<ellipse cx="${f2(g.X(cx))}" cy="${f2(g.Y(cy))}" rx="${f2(Math.abs(r * sx))}" ry="${f2(Math.abs(r * sy))}" ${fill} stroke="${col}" stroke-width="${f2(w)}"${dash}/>`; label = [g.X(cx), g.Y(cy)]; }
     else if (K === 'ellipse') { const [cx, cy, a, b, ang = 0] = r0; s = `<ellipse cx="${f2(g.X(cx))}" cy="${f2(g.Y(cy))}" rx="${f2(Math.abs(a * sx))}" ry="${f2(Math.abs(b * sy))}" transform="rotate(${-ang} ${f2(g.X(cx))} ${f2(g.Y(cy))})" ${fill} stroke="${col}" stroke-width="${f2(w)}"${dash}/>`; label = [g.X(cx), g.Y(cy)]; }
     else if (K === 'vecteur') { const [x1, y1, x2, y2] = r0; s = arrowSvg([g.X(x1), g.Y(y1)], [g.X(x2), g.Y(y2)], col, w); label = [g.X(x2), g.Y(y2)]; }
     else if (K === 'demidroite') { const [x1, y1, x2, y2] = r0, A = [g.X(x1), g.Y(y1)], B = [g.X(x2), g.Y(y2)], L = (d.W + d.H) * 2, n = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
@@ -2852,11 +2855,11 @@ function initMouse() {
 /* --- fichiers --- */
 function newDocument() {
   if (state.dirty && !confirm('Le dessin en cours n’est pas enregistré. Continuer ?')) return;
-  loadDoc(defaultDoc(), 'sans titre');
+  loadDoc(newDoc(), 'sans titre'); toast('Nouveau dessin vide.');
 }
 function loadDoc(d, name) {
   d.name = name; state.doc = d; state.hist = []; state.histPos = -1; state.dirty = false;
-  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle();
+  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle(); try { buildPanel(); } catch (e) { /* panneau fermé */ }
 }
 function openFile(file) {
   const r = new FileReader();
