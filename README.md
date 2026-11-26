@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **Version 1.1.3.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.2.0.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -37,10 +37,16 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 
 **Fichiers**
 - Ouverture et enregistrement des dessins `.sqn` de la version Windows. Les objets pédagogiques suivants sont lus et affichés à l'ouverture : lois, statistiques, suites, intégrales, inéquations, courbes point par point, arbres, simulations (boîtes et histogrammes), dérivée, primitive, tableaux de variations ou de signes, table de valeurs.
-- Export PNG (300 ppp), SVG, impression ou PDF à l'échelle réelle.
+- Export PNG, JPEG, BMP, GIF, SVG, EMF, WMF, EPS (EMF, WMF et EPS contiennent une image), impression ou PDF à l'échelle réelle. « Réouvrir » (10 derniers dessins) et « Ouvrir exemple ».
 - Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (les compléments pris en charge y sont écrits).
 
 ## Historique des versions
+
+**1.2.0**
+- Schémas : objets nommés et dépendants comme dans la version Windows (points par intersection, barycentre, projeté, rotation, polaires ; segments, médianes, hauteurs ; vecteurs ; droites, médiatrices, bissectrices ; demi-droites ; cercles inscrit, circonscrit, tangent ; ellipses ; carrés ; polygones et 14 polygones prédéfinis ; coniques ; Bézier ; angles ; coloriage de zone), avec les mêmes chaînes dans le `.sqn`. Points déplaçables à la souris.
+- Lois de probabilité : p(X=k), p(X≤k), p(X≥k), p(a≤X≤b), intervalle de confiance centré, lecture inverse, paramètres, tableau des probabilités ; binomiale limitée à n ≤ 100.
+- Exports JPEG, BMP, GIF, EMF, WMF, EPS ; « Réouvrir » (10 derniers) ; « Ouvrir exemple » (15 exemples) ; marges déplaçables à la souris.
+- Textes : indices (`A1`, `Cf`) et inclinaison (`/45;texte`) ; Ctrl + molette = zoom, Maj + molette = unités.
 
 **1.1.3**
 - Objets du schéma : ajout des figures « Point » (un point `x;y` par ligne) et « Segment » (`x1;y1;x2;y2`, un segment par ligne).
