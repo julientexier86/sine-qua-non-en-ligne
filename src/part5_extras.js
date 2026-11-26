@@ -129,7 +129,7 @@ function stat1Data(e) { // renvoie {vals:[[x,eff]], classes:[[a,b,eff]], all:[va
 function quart(sorted, q) { const n = sorted.length; return sorted[Math.max(0, Math.ceil(n * q) - 1)]; }
 
 const CAT_COL = [16711680, 255, 32768, 65535, 16711935, 8421376, 33023, 8388736];
-function catData(e) { return linesOf(e.data).map(l => l.split(';')).map(a => [a[0].trim(), parseNum(a[1], 1)]).filter(a => Number.isFinite(a[1])); }
+function catData(e) { return linesOf(e.data).map(l => l.split(';')).map(a => [a[0].trim(), parseNum(a[1], 1), a[2] !== undefined && /^-?\d+$/.test(a[2].trim()) ? +a[2] : undefined]).filter(a => Number.isFinite(a[1])); }
 function boxSvg(v, y0, h, st, fillc, g) {
   v = v.slice().sort((a, b) => a - b); const q1 = quart(v, 0.25), q3 = quart(v, 0.75), md = median(v), mn = v[0], mx = v[v.length - 1];
   const y1 = g.Y(y0 - h / 2), y2 = g.Y(y0 + h / 2), ym = g.Y(y0), ya = Math.min(y1, y2), yb = Math.max(y1, y2), c = (ya + yb) / 2, q = (yb - ya) / 4;
@@ -180,10 +180,10 @@ EX.stat1 = { label: 'Statistique à une variable', def: () => ({ mode: 'batons',
     } else if (e.mode === 'barres' || e.mode === 'camem') {
       const C = catData(e), tot = C.reduce((t, c) => t + c[1], 0) || 1;
       if (e.mode === 'barres') C.forEach(([nom, n], i) => { const x0 = g.X(i * 1.5 + 0.2), x1 = g.X(i * 1.5 + 1.2), yy = g.Y(n * e.ky);
-        s += `<rect x="${f2(x0)}" y="${f2(yy)}" width="${f2(x1 - x0)}" height="${f2(g.Y(0) - yy)}" fill="${tcolor(CAT_COL[i % 8])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>` + T_((x0 + x1) / 2, g.Y(0) + 4, nom, { size: 9 }).replace('<text ', '<text text-anchor="middle" ') + T_((x0 + x1) / 2, yy - 1, String(n), { size: 9 }).replace('<text ', '<text text-anchor="middle" '); });
+        s += `<rect x="${f2(x0)}" y="${f2(yy)}" width="${f2(x1 - x0)}" height="${f2(g.Y(0) - yy)}" fill="${tcolor(C[i][2] ?? CAT_COL[i % 8])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="${f2(st.w * 0.5)}"/>` + T_((x0 + x1) / 2, g.Y(0) + 4, nom, { size: 9 }).replace('<text ', '<text text-anchor="middle" ') + T_((x0 + x1) / 2, yy - 1, String(n), { size: 9 }).replace('<text ', '<text text-anchor="middle" '); });
       else { const cx = g.X(e.sx), cy = g.Y(e.sy), r = Math.abs(g.X(e.h) - g.X(0)); let a0 = -Math.PI / 2;
         C.forEach(([nom, n], i) => { const a1 = a0 + 2 * Math.PI * n / tot, big = a1 - a0 > Math.PI ? 1 : 0;
-          s += C.length === 1 ? `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(r)}" fill="${tcolor(CAT_COL[0])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="0.3"/>` : `<path d="M${f2(cx)} ${f2(cy)}L${f2(cx + r * Math.cos(a0))} ${f2(cy + r * Math.sin(a0))}A${f2(r)} ${f2(r)} 0 ${big} 1 ${f2(cx + r * Math.cos(a1))} ${f2(cy + r * Math.sin(a1))}Z" fill="${tcolor(CAT_COL[i % 8])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="0.3"/>`;
+          s += C.length === 1 ? `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(r)}" fill="${tcolor(C[0][2] ?? CAT_COL[0])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="0.3"/>` : `<path d="M${f2(cx)} ${f2(cy)}L${f2(cx + r * Math.cos(a0))} ${f2(cy + r * Math.sin(a0))}A${f2(r)} ${f2(r)} 0 ${big} 1 ${f2(cx + r * Math.cos(a1))} ${f2(cy + r * Math.sin(a1))}Z" fill="${tcolor(C[i][2] ?? CAT_COL[i % 8])}" fill-opacity="0.55" stroke="${st.col}" stroke-width="0.3"/>`;
           const am = (a0 + a1) / 2; s += T_(cx + (r + 3) * Math.cos(am), cy + (r + 3) * Math.sin(am) + 1, `${nom} ${fmtC(100 * n / tot, 3)} %`, { size: 9 }).replace('<text ', `<text text-anchor="${Math.cos(am) < 0 ? 'end' : 'start'}" `); a0 = a1; }); }
       all = [];
     } else if (e.mode === 'cumulf') {

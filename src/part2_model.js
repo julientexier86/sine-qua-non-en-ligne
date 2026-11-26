@@ -314,7 +314,7 @@ function deriveSqnExtras(d) {
     for (let j = i + 1; j < L.length && /^\s/.test(L[j]); j++) { const t = L[j].trim(), m = t.match(/^([^:=]+?)\s*[:=]\s*(.*)$/); if (m) kv[m[1].trim().toLowerCase()] = m[2]; else flags.push(t); } return { kv, flags }; };
   const num = (v, dflt) => { const x = parseFloat(String(v).replace(',', '.')); return Number.isFinite(x) ? x : dflt; };
   const common = (b, def) => ({ fromRaw: true, title: b.kv['titre'] || '', couleur: num(b.kv["couleur de l'histogramme"] ?? b.kv['couleur de la courbe de gauss'], def), couleur2: num(b.kv['couleur de la zone à visualiser'], 255),
-    ep: num(b.kv['épaisseur des traits'], 1), ky: 1, lx: 0, ly: 0, label: b.flags.includes('Affichage des résultats'), params: b.flags.includes('Affichage des paramètres'), zone: true });
+    ep: 2.5 * (num(b.kv['épaisseur des traits'], 1) + 1) - 1.5, ky: 1, lx: 0, ly: 0, label: b.flags.includes('Affichage des résultats'), params: b.flags.includes('Affichage des paramètres'), zone: true });
   let b = block('Loi binômiale');
   if (b) { const n = num(b.kv['nombre de répétitions'], 10), k = num(b.kv['k'], 0), t = num(b.kv['type de calcul'], 0), A = num(b.kv['a'], 0), B = num(b.kv['b'], n);
     const [a, bb] = [[k, k], [0, k], [k, n], [A, B]][t] || [k, k];
@@ -328,6 +328,94 @@ function deriveSqnExtras(d) {
     let a = m - 10 * sg, bb = A;
     if (t === 1) { a = A; bb = m + 10 * sg; } else if (t === 2) { a = A; bb = B; } else if (t === 3) { let lo = 0, hi = 10; const tg = 0.5 + deg / 200; for (let q = 0; q < 60; q++) { const mid = (lo + hi) / 2; (0.5 * (1 + erf(mid / Math.SQRT2)) < tg ? lo = mid : hi = mid); } a = m - lo * sg; bb = m + lo * sg; }
     out.push(Object.assign({ type: 'loi', kind: 'nor', p1: m, p2: sg, a, b: bb }, common(b, 0))); }
+
+  // ---- lecteurs séquentiels (blocs non indentés) ----
+  const all = L.concat(d.rawTail), val = t => { const q = t.indexOf(':'); return (q < 0 ? t : t.slice(q + 1)).trim(); };
+  const at = pre => all.findIndex(l => l.trim().toLowerCase().startsWith(pre.toLowerCase()));
+  const NUMD = v => num(v, 0);
+  const MK = ['', 'dot', 'plus', 'x', 'star', 'sq', 'lo', 'circ', 'sq2', 'lo2'];
+  // stat 1 variable non numérique
+  let i = at('Données statistiques 1 variable non numérique');
+  if (i >= 0) { const n = NUMD(val(all[i + 4] || '')); if (n > 0) { const rows = []; for (let k = 0; k < n; k++) { const o = i + 5 + 4 * k; rows.push([all[o], all[o + 1], num(all[o + 3], '')].join(';').replace(/;NaN$/, '')); }
+    out.push({ type: 'stat1', fromRaw: true, mode: NUMD(val(all[i + 2])) === 0 ? 'camem' : 'barres', title: val(all[i + 1]), data: rows.join('\n'), ky: 1, y0: -2, h: 1.2, showStats: false, table: false, sx: 0, sy: 0, tx: 0, ty: -3, couleur: 0, couleur2: 16777181, ep: 2, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }); } }
+  // stat 1 variable, valeurs isolées
+  i = at('Données statistiques 1 variable (valeurs isolées)');
+  if (i >= 0) { const n = NUMD(val(all[i + 5] || '')); if (n > 0) { const S = NUMD(val(all[i + 2])), kk = Math.floor(S / 10) * 10, gg = S % 10, rows = [];
+    for (let k = 0; k < n; k++) rows.push([all[i + 6 + 2 * k], all[i + 7 + 2 * k]]);
+    let data, mode = 'batons'; if (gg === 0) data = rows.map(r => r[0] + ';' + r[1]).join('\n'); else { mode = 'boite'; const raw = []; rows.forEach(r => { const c = Math.min(2000, Math.max(1, Math.round(num(r[1], 1)))); for (let q = 0; q < c; q++) raw.push(r[0]); }); data = raw.join('\n'); }
+    const col = NUMD(val(all[i + 4]));
+    out.push({ type: 'stat1', fromRaw: true, mode, title: val(all[i + 1]), data, ky: 1, y0: -2, h: 1.2, showStats: kk > 0, table: false, sx: 0, sy: 0, tx: 0, ty: -3, couleur: 0, couleur2: col, ep: 2, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }); } }
+  // stat 1 variable, classes
+  i = at('Données statistiques 1 variable (valeurs regroupées en classes)');
+  if (i >= 0) { const n = NUMD(val(all[i + 7] || '')); if (n > 0) { const S = NUMD(val(all[i + 2])), st = S % 10, eff = Math.floor((S % 100) / 10) === 1, rows = [];
+    for (let k = 0; k < n; k++) rows.push([all[i + 8 + 3 * k], all[i + 9 + 3 * k], all[i + 10 + 3 * k]].join(';'));
+    const tot = rows.reduce((t, r) => t + num(r.split(';')[2], 0), 0) || 1;
+    if (st === 0 || (st >= 3 && st <= 5)) out.push({ type: 'stat1', fromRaw: true, mode: st === 0 ? 'histo' : 'cumulf', title: val(all[i + 1]), data: rows.join('\n'), ky: eff ? 1 : 100 / tot, y0: -2, h: 1.2, showStats: false, table: /oui/i.test(val(all[i + 4])), sx: 0, sy: 0, tx: 0, ty: -3, couleur: 0, couleur2: NUMD(val(all[i + 5])), ep: 2, sim: 'bin', simN: 50, simA: 10, simB: 0.5 }); } }
+  // stat 2 variables
+  i = at('Données statistiques 2 variables');
+  if (i >= 0) { const n = NUMD(val(all[i + 14] || '')); if (n > 0) { const FIT = { 'linéaire': 'lin', 'logarithmique': 'log', 'exponentielle': 'exp', 'puissance': 'pow', 'polynômiale de degré 2': 'par', 'polynômiale de degré 3': 'pol3', 'polynômiale de degré 4': 'pol4', 'aucune': 'none', 'droite de mayer': 'mayer' };
+    const rows = []; for (let k = 0; k < n; k++) { const x = all[i + 15 + 3 * k], y = all[i + 16 + 3 * k], c = Math.min(500, Math.max(1, Math.round(num(all[i + 17 + 3 * k], 1)))); for (let q = 0; q < c; q++) rows.push(x + ';' + y); }
+    out.push({ type: 'stat2', fromRaw: true, title: val(all[i + 1]), data: rows.join('\n'), fit: FIT[val(all[i + 2]).toLowerCase()] || 'lin', cloud: true, gpoint: /^Point moyen affiché/i.test((all[i + 12] || '').trim()), show: /^Équation affichée/i.test((all[i + 11] || '').trim()), tx: 0, ty: 0, couleur: NUMD(val(all[i + 4])), couleur2: NUMD(val(all[i + 5])), ep: NUMD(val(all[i + 7])) }); } }
+  // boîtes à moustaches multiples
+  i = at('Données statistiques 1 variable (boîtes à moustaches multiples');
+  if (i >= 0) { const n = NUMD(val(all[i + 9] || '')); if (n > 0) { const rows = []; for (let k = 0; k < n; k++) { const o = i + 10 + 8 * k; rows.push(all.slice(o, o + 8).join(';')); }
+    out.push({ type: 'boxq', fromRaw: true, title: val(all[i + 1]), horiz: /horizontaux/i.test(all[i + 2]), ep: NUMD(val(all[i + 3])) || 6, dist: NUMD(val(all[i + 4])) || 20, leg: NUMD(val(all[i + 5])), data: rows.join('\n'), couleur: NUMD(val(all[i + 7])), couleur2: NUMD(val(all[i + 6])), ep2: NUMD(val(all[i + 8])) + 1 }); } }
+  // suite numérique
+  i = at('Suite numérique');
+  if (i >= 0) { const g = k => val(all[i + k] || ''); const T = NUMD(g(1)), pt = (all[i + 5] || '').split('\t'), epS = NUMD(g(10)), stS = NUMD(g(12));
+    out.push({ type: 'suite', fromRaw: true, mode: T === 0 || T === 3 ? 'expl' : T === 1 ? 'rec' : 'toile', src: g(4), u0: num(pt[0].replace(/^[^:]*:/, ''), 1), n0: NUMD(g(3)), n1: NUMD((pt[1] || '').replace(/^[^:]*:/, '')) || 12,
+      couleur: NUMD(g(11)), couleur2: NUMD(g(7)), ep: epS % 10 + 1, curve: /^Courbe dessinée/i.test((all[i + 9] || '').trim()), link: stS % 10 !== 4, terms: /^Termes affichés/i.test((all[i + 14] || '').trim()) ? 12 : 0, tx: 0, ty: -2 }); }
+  // intégrale
+  i = at('Intégrale définie de type');
+  if (i >= 0) { const g = k => val(all[i + k] || ''), t2 = /type 2/i.test(all[i]);
+    out.push({ type: 'integ', fromRaw: true, src: g(3) || 'x', src2: t2 ? g(4) : '', a: evalConst(g(1), 0), b: evalConst(g(2), 1), mode: 'aire', n: 8, couleur: NUMD(g(5)), couleur2: NUMD(g(5)), opa: 0.4, ep: 2, label: /^Résultat affiché/i.test((all[i + 7] || '').trim()), lx: 0, ly: 0 }); }
+  // inéquations
+  i = at('Inéquations');
+  if (i >= 0 && !/^Pas d/i.test(all[i])) { const cells = {}, hach = /non hachur/i.test(all[i]) ? false : true; let k = i + 1;
+    for (; k < all.length && !/^Fin des inéquations/i.test(all[k]); k++) { const q = all[k].match(/^(\d+),(\d+),(.*)$/); if (q) cells[q[1] + ',' + q[2]] = q[3]; }
+    const rows = []; for (let z = 0; z < 10; z++) for (let y = 0; y < 10; y++) { const A = cells[7 * z + ',' + y], B = cells[(7 * z + 1) + ',' + y], C = cells[(7 * z + 2) + ',' + y]; if (A === undefined || B === undefined || C === undefined || A === '' && B === '' && C === '') continue;
+      const op = cells[(7 * z + 3) + ',' + y] || '<', col = cells[(7 * z + 4) + ',' + y];
+      const clr = col === undefined ? 0 : /^-?\d+$/.test(col) ? +col : 0;
+      rows.push([A || 0, B || 0, C || 0, op, clr, cells[(7 * z + 5) + ',' + y] || 0, cells[(7 * z + 6) + ',' + y] || 3].join(';')); }
+    if (rows.length) out.push({ type: 'ineqw', fromRaw: true, data: rows.join('\n'), hach }); }
+  // courbes point par point (pentes) et lissées (Bézier)
+  for (let k = 0; k < all.length; k++) {
+    if (/^Courbe définie point par point$/i.test(all[k].trim())) { const g = o => val(all[k + o] || ''), pts = []; for (let q = 0; q < 20; q++) { const x = all[k + 7 + 3 * q], y = all[k + 8 + 3 * q], m = all[k + 9 + 3 * q]; if (x === undefined || x.trim() === '') break; pts.push([x, y, m || 0].join(';')); }
+      const ep = NUMD(g(2)); out.push({ type: 'pbpw', fromRaw: true, mode: 'pentes', data: pts.join('\n'), tan: Math.floor(ep / 10), couleur: NUMD(g(1)), couleur2: NUMD(g(5)), ep: ep % 10, mk: MK[NUMD(g(3))] || 'x', marks: NUMD(g(3)) > 0, msz: 0.4 + 0.35 * (NUMD(g(4)) || 3), cote: g(6) === '1', coef: 100 }); }
+    if (/^Courbe définie point par point avec lissage/i.test(all[k].trim())) { const g = o => val(all[k + o] || ''), pts = []; for (let q = 0; q < 20; q++) { const x = all[k + 7 + 2 * q], y = all[k + 8 + 2 * q]; if (x === undefined || x.trim() === '') break; pts.push(x + ';' + y); }
+      out.push({ type: 'pbpw', fromRaw: true, mode: 'bez', data: pts.join('\n'), tan: 0, coef: NUMD((all[k + 47] || '').replace(/^[^:]*:/, '')) || 100, couleur: NUMD(g(1)), couleur2: NUMD(g(5)), ep: NUMD(g(2)), mk: MK[NUMD(g(3))] || 'x', marks: NUMD(g(3)) > 0, msz: 0.4 + 0.35 * (NUMD(g(4)) || 3), cote: g(6) === '1' }); }
+  }
+  // loi exponentielle
+  i = at('Loi exponentielle');
+  if (i >= 0 && !/^Pas d/i.test(all[i])) { const kv = {}; for (let k = i + 1; k < all.length && /^\s/.test(all[k]); k++) { const q = all[k].trim().match(/^([^=]+?)\s*=\s*(.*)$/); if (q) kv[q[1].toLowerCase()] = q[2]; }
+    const L4 = s => (s || '').split(';').map(x => num(x, 0));
+    out.push({ type: 'loiexp', fromRaw: true, lambda: num(kv['lambda'], 1), title: kv['titre'] || '', zc: L4(kv['bornes zones coloriées']), cc: L4(kv['couleurs zones']), zh: L4(kv['bornes zones hachurées']), sh: L4(kv['styles hachures']), couleur: num(kv['couleur courbe'], 0), ep: num(kv['épaisseur courbe'], 1), label: !all.some(l => /^\s*Pas d'affichage des résultats/.test(l)) }); }
+
+  // échelles logarithmiques
+  for (const [ax, re] of [['x', /^Échelle logarithmique sur l'axe Ox.*:\s*(\d+)/i], ['y', /^Échelle logarithmique sur l'axe Oy.*:\s*(\d+)/i]]) { const l = all.find(t => re.test(t)); if (l) { const q = l.match(re); d.log[ax] = true; d.log['m' + ax] = +q[1] || 40; } }
+  // dérivée et primitive
+  i = at('Courbe de la dérivée de y=');
+  if (i >= 0) out.push({ type: 'deriv', fromRaw: true, src: all[i].trim().replace(/^Courbe de la dérivée de y=/i, ''), couleur: NUMD(val(all[i + 1])), ep: NUMD(val(all[i + 2])) + 1, style: 0 });
+  i = at('Courbe de la primitive de y=');
+  if (i >= 0) { const pt = (all[i + 1] || '').replace(/^[^:]*:/, '').split('\t'); out.push({ type: 'prim', fromRaw: true, src: all[i].trim().replace(/^Courbe de la primitive de y=/i, ''), x0: evalConst(pt[0], 0), y0: evalConst(pt[1], 0), couleur: NUMD(val(all[i + 2])), ep: NUMD(val(all[i + 3])) + 1, style: 0 }); }
+  // arbre de probabilités
+  i = at('Arbre de probabilités');
+  if (i >= 0 && !/^Pas d/i.test(all[i])) { const nb = NUMD(val(all[i + 1])), br = []; for (let k = 0; k < nb; k++) { const q = (all[i + 4 + k] || '').split('\t'); br.push({ id: (q[1] || '').trim(), ev: (q[2] || '').trim(), p: (q[3] || '').trim() }); }
+    const j0 = i + 4 + nb, fnt = o => ({ size: NUMD(val(all[j0 + o + 1])), col: NUMD(val(all[j0 + o + 2])) });
+    br.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    const data = br.filter(b => b.id).map(b => '  '.repeat(Math.max(0, b.id.length - 1)) + (b.ev.startsWith('&') ? b.ev.slice(1).replace(/\s/g, '') + '̄' : b.ev.replace(/\s/g, '') || '?') + ' ' + (b.p || '?').replace(/\s/g, '')).join('\n');
+    out.push({ type: 'arbre', fromRaw: true, auto: /Taille automatique\s*:\s*oui/i.test(all.slice(j0).join('\n')), data, ox: 12, oy: 12, w: 110, h: 70, leaves: false, couleur: NUMD(val(all[j0])), couleur2: fnt(6).col, size: fnt(0).size || 11 }); }
+  // simulations statistiques
+  i = at('Loi statistique :');
+  if (i >= 0) { const t = NUMD(val(all[i + 1])), ns = NUMD(val(all[i + 2])), g = o => val(all[i + o] || ''), smp = [], calc = [], s0 = i + 18 + ns * t, g0 = s0 + ns * 9;
+    for (let k = 0; k < ns * t; k++) smp.push(num(all[i + 18 + k], NaN)); for (let q = 0; q < ns; q++) calc.push(all.slice(s0 + 9 * q, s0 + 9 * q + 9).map(v => num(v, NaN)));
+    const gen = all.slice(g0, g0 + 9).map(v => num(v, NaN));
+    out.push({ type: 'simw', fromRaw: true, gtype: NUMD(g(12)), title: val(all[i + 17]), nbcl: NUMD(g(7)) || 10, dist: NUMD(g(8)) || 10, couleur: NUMD(g(13)), samples: smp.filter(Number.isFinite), calcs: calc, general: gen }); }
+  // table de valeurs de fonctions (marques)
+  i = at('Table de valeurs de fonctions');
+  if (i >= 0 && !/^Pas d/i.test(all[i])) { const ty = (all[i + 4] || '').split('\t'), mk = NUMD(ty[1]), sz = NUMD(ty[2]) || 3, col = NUMD(ty[3]), rows = [];
+    for (let k = 0; k < 11; k++) rows.push((all[i + 6 + k] || '').split('\t'));
+    if (mk > 0) for (let c = 1; c <= 10; c++) { const pts = rows.map(r => [num(r[0], NaN), num(r[c], NaN)]).filter(a => Number.isFinite(a[0]) && Number.isFinite(a[1])); if (pts.length) out.push({ type: 'pbpw', fromRaw: true, mode: 'pentes', nocurve: true, data: pts.map(a => a.join(';')).join('\n'), tan: 0, coef: 100, couleur: col, couleur2: col, ep: 2, mk: MK[mk] || 'x', marks: true, msz: 0.4 + 0.35 * sz, cote: false }); } }
   return out;
 }
 
