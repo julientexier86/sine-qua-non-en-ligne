@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **Version 1.2.0.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.2.1.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -41,6 +41,11 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 - Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (les compléments pris en charge y sont écrits).
 
 ## Historique des versions
+
+**1.2.1**
+- Points des schémas : formes des marques corrigées (5 et 6 pleines, 7 à 9 à fond blanc), tailles d'après l'original, noms écrits avec la police « points » du dessin, centrés, dernier caractère en indice, option « aucun nom ».
+- À l'écran, comme dans la version Windows : grille et segments d'un pixel quel que soit le zoom, noms de points à taille fixe. À l'export : traits en millimètres, noms à la taille de la police.
+- Validé sur un fichier d'usage fourni par une enseignante et des captures de la version Windows à 100, 200 et 250 %.
 
 **1.2.0**
 - Schémas : objets nommés et dépendants comme dans la version Windows (points par intersection, barycentre, projeté, rotation, polaires ; segments, médianes, hauteurs ; vecteurs ; droites, médiatrices, bissectrices ; demi-droites ; cercles inscrit, circonscrit, tangent ; ellipses ; carrés ; polygones et 14 polygones prédéfinis ; coniques ; Bézier ; angles ; coloriage de zone), avec les mêmes chaînes dans le `.sqn`. Points déplaçables à la souris.

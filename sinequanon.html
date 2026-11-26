@@ -104,7 +104,7 @@ dialog.pick{border:1px solid #888;border-radius:8px;padding:0;min-width:340px;ma
 <div id="toast"></div>
 <dialog id="about">
   <h2>À propos</h2>
-  <p><b>Sine qua non en ligne</b>, version 1.2.0 : réécriture en ligne, non officielle, du logiciel <b>Sine qua non</b> de <b>Patrice Rabiller</b> et <b>Patrick Pradeau</b>. Cette réécriture n’est ni validée ni soutenue par les auteurs ; pour la version de référence, utilisez leur logiciel.</p>
+  <p><b>Sine qua non en ligne</b>, version 1.2.1 : réécriture en ligne, non officielle, du logiciel <b>Sine qua non</b> de <b>Patrice Rabiller</b> et <b>Patrick Pradeau</b>. Cette réécriture n’est ni validée ni soutenue par les auteurs ; pour la version de référence, utilisez leur logiciel.</p>
   <p><b>Licence :</b> <a href="https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne/-/blob/main/LICENSE" target="_blank" rel="noopener">GNU AGPL v3</a> (code de cette réécriture).</p>
   <p><b>Auteur de la réécriture :</b> Julien Texier. Projet de la <b>Forge des communs numériques éducatifs</b> : <a href="https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne" target="_blank" rel="noopener">page du dépôt</a>.</p>
   <p style="color:#6b7785;font-size:12px">Cette réécriture a été réalisée avec l’aide d’une IA générative (Claude, d’Anthropic) ; le code a été testé sur des fichiers .sqn de la version Windows. Aucune donnée n’est envoyée : tout fonctionne dans votre navigateur.</p>
@@ -1289,7 +1289,7 @@ function gridSvg(d, g) {
     return `<g fill="${col}">${s}</g>`;
   }
   const dash = gs === 2 ? 'stroke-dasharray="0.2 0.8" stroke-width="0.22"' : gs === 3 ? 'stroke-dasharray="0.5 1" stroke-width="0.3"' :
-    gs === 4 ? 'stroke-dasharray="1.5 1" stroke-width="0.2"' : 'stroke-width="0.2"';
+    gs === 4 ? 'stroke-dasharray="1.5 1" stroke-width="0.2"' : (SCH_UI ? 'stroke-width="1" vector-effect="non-scaling-stroke"' : 'stroke-width="0.2"'); // trait continu : 1 pixel à l'écran, 0,2 mm à l'export (uDessin.DessinerFondPetitsCarreaux)
   return `<path d="${vlines(sz)}${hlines(sz)}" stroke="${col}" fill="none" ${dash}/>`;
 }
 
@@ -1481,7 +1481,7 @@ function buildSvg(d, ctx, opts = {}) {
     if (pts && pts.every(p => Number.isFinite(p[0]) && Number.isFinite(p[1])))
       curves += `<path d="M${f2(pts[0][0])} ${f2(pts[0][1])}L${f2(pts[1][0])} ${f2(pts[1][1])}" stroke="${col}" stroke-width="${f2(st.w)}" fill="none"/>`;
   });
-  curves += schDraw(d, g);
+  SCH_UI = !!opts.ui; curves += schDraw(d, g);
   curves += extrasSvg(d, ctx);
 
   // textes
@@ -2397,6 +2397,8 @@ function schCtx(objs) {
 /* ----- dessin ----- */
 const schDash = st => st === 1 ? 'stroke-dasharray="2 1"' : st === 2 ? 'stroke-dasharray="0.5 1"' : '';
 const schW = ep => f2((ep + 1) / 4);
+// segments et vecteurs : à l'écran, trait d'un pixel (constaté sur Windows à 100, 200 et 250 %) ; à l'export, (ép+1)/4 mm comme l'original
+const schHair = (svg, ep) => !SCH_UI ? svg : svg.replace(/stroke-width="[^"]+"/g, `stroke-width="${Math.max(1, ep)}" vector-effect="non-scaling-stroke"`);
 function schBigLine(g, d, x0, y0, dx, dy, both, col, ep, st) {
   const A = [g.X(x0), g.Y(y0)], B = [g.X(x0 + dx), g.Y(y0 + dy)], L = Math.hypot(B[0] - A[0], B[1] - A[1]); if (!L) return '';
   const k = 2 * (d.W + d.H) / L, u = [(B[0] - A[0]) * k, (B[1] - A[1]) * k];
@@ -2407,21 +2409,34 @@ function schArrowHead(x2, y2, alpha, r, col, w, filled, lance) { // alpha : angl
   const pts = lance ? [[x2 + r / 2 * Math.cos(alpha + Math.PI), y2 + r / 2 * Math.sin(alpha + Math.PI)], a, [x2, y2], b] : [a, [x2, y2], b];
   return `<${filled ? 'polygon' : 'polyline'} points="${pts.map(p => f2(p[0]) + ',' + f2(p[1])).join(' ')}" fill="${filled ? col : 'none'}" stroke="${col}" stroke-width="${w}" stroke-linejoin="miter"/>`;
 }
-function schPointMark(X, Y, st, tl, col) {
-  const r = [0.8, 1.2, 1.8][tl] || 1.2, w = 0.3; let s = '';
-  const ln = (a, b, c, d) => `<path d="M${f2(X + a)} ${f2(Y + b)}L${f2(X + c)} ${f2(Y + d)}" stroke="${col}" stroke-width="${w}" fill="none"/>`;
+function schPointMark(X, Y, st, e, col) { // formes et tailles de uDessin.DessinerObjetPoint (e = taille 0..2)
+  e = +e || 0; const ln = (a, b, c, d, w) => `<path d="M${f2(X + a)} ${f2(Y + b)}L${f2(X + c)} ${f2(Y + d)}" stroke="${col}" stroke-width="${f2(w)}" fill="none"/>`;
+  const wl = (e + 1) / 4, rc = (2 * e + 3) / 10, ray = 0.5 * (e + 1), th = 0.26, wh = (e + 1) / 10;
+  const dia = (fill, w) => `<polygon points="${f2(X - 0.8 * ray)},${f2(Y)} ${f2(X)},${f2(Y - ray)} ${f2(X + 0.8 * ray)},${f2(Y)} ${f2(X)},${f2(Y + ray)}" fill="${fill}" stroke="${col}" stroke-width="${f2(w)}"/>`;
   switch (st) {
-    case 1: s = `<circle cx="${f2(X)}" cy="${f2(Y)}" r="${f2(r * 0.4)}" fill="${col}"/>`; break;
-    case 2: s = ln(-r, 0, r, 0) + ln(0, -r, 0, r); break;
-    case 3: s = ln(-r, -r, r, r) + ln(-r, r, r, -r); break;
-    case 4: s = ln(-r, 0, r, 0) + ln(0, -r, 0, r) + ln(-r * 0.7, -r * 0.7, r * 0.7, r * 0.7) + ln(-r * 0.7, r * 0.7, r * 0.7, -r * 0.7); break;
-    case 5: s = `<rect x="${f2(X - r)}" y="${f2(Y - r)}" width="${f2(2 * r)}" height="${f2(2 * r)}" fill="none" stroke="${col}" stroke-width="${w}"/>`; break;
-    case 6: s = `<polygon points="${f2(X)},${f2(Y - r * 1.2)} ${f2(X + r * 1.2)},${f2(Y)} ${f2(X)},${f2(Y + r * 1.2)} ${f2(X - r * 1.2)},${f2(Y)}" fill="none" stroke="${col}" stroke-width="${w}"/>`; break;
-    case 7: s = `<circle cx="${f2(X)}" cy="${f2(Y)}" r="${f2(r)}" fill="none" stroke="${col}" stroke-width="${w}"/>`; break;
-    case 8: s = `<rect x="${f2(X - r)}" y="${f2(Y - r)}" width="${f2(2 * r)}" height="${f2(2 * r)}" fill="${col}" stroke="${col}" stroke-width="${w}"/>`; break;
-    case 9: s = `<polygon points="${f2(X)},${f2(Y - r * 1.2)} ${f2(X + r * 1.2)},${f2(Y)} ${f2(X)},${f2(Y + r * 1.2)} ${f2(X - r * 1.2)},${f2(Y)}" fill="${col}" stroke="${col}" stroke-width="${w}"/>`; break;
+    case 1: return `<circle cx="${f2(X)}" cy="${f2(Y)}" r="${f2(rc)}" fill="${col}" stroke="${col}" stroke-width="${th}"/>`;
+    case 2: return ln(-1, 0, 1, 0, wl) + ln(0, -1, 0, 1, wl);
+    case 3: return ln(-0.8, -0.8, 0.8, 0.8, wl) + ln(0.8, -0.8, -0.8, 0.8, wl);
+    case 4: return ln(-0.8, -0.6, 0.8, 0.6, wl) + ln(0.8, -0.6, -0.8, 0.6, wl) + ln(0, -1, 0, 1, wl);
+    case 5: return `<rect x="${f2(X - rc)}" y="${f2(Y - rc)}" width="${f2(2 * rc)}" height="${f2(2 * rc)}" fill="${col}" stroke="${col}" stroke-width="${th}"/>`;
+    case 6: return dia(col, th);
+    case 7: return `<circle cx="${f2(X)}" cy="${f2(Y)}" r="${f2(rc)}" fill="#fff" stroke="${col}" stroke-width="${f2(wh)}"/>`;
+    case 8: return `<rect x="${f2(X - rc)}" y="${f2(Y - rc)}" width="${f2(2 * rc)}" height="${f2(2 * rc)}" fill="#fff" stroke="${col}" stroke-width="${f2(wh)}"/>`;
+    case 9: return dia('#fff', wh);
   }
-  return s;
+  return '';
+}
+// nom d'un point : police « points » du dessin, centré à 3 mm dans la direction pos·45°, dernier caractère en indice, rien si pos = 8
+let SCH_UI = false;
+// à l'écran, Windows garde la police des noms de points à sa taille réelle quel que soit le zoom (constaté à 100, 200 et 250 %) ; le décalage de 3 mm suit le zoom
+function schPointLabel(d, X, Y, nom, pos) {
+  if (!nom || pos >= 8) return '';
+  const a = pos * Math.PI / 4, cx = X + 3 * Math.cos(a), cy = Y - 3 * Math.sin(a), fs = d.gSize[1] * MM_PER_PT * (SCH_UI ? 100 / (d.zoom || 100) : 1), n = nom.length;
+  const at = `font-family="${FONT_STACK(d.gFont[1])}"${fontAttrs(d.gStyle[1])} fill="${tcolor(d.gCol[1])}"`;
+  let inner;
+  if (n < 2 || nom[n - 1] === "'") inner = esc(nom);
+  else inner = `${esc(nom.slice(0, -1))}<tspan font-size="${f2(Math.max(fs - 2 * MM_PER_PT * (SCH_UI ? 100 / (d.zoom || 100) : 1), 0.5))}" dy="${f2(0.6 * fs)}">${esc(nom[n - 1])}</tspan>`;
+  return `<text x="${f2(cx)}" y="${f2(cy + 0.35 * fs)}" font-size="${f2(fs)}" ${at} text-anchor="middle">${inner}</text>`;
 }
 function schLabel(X, Y, text, pos, col, off = 2.4) {
   const a = (pos || 0) * Math.PI / 4, dx = Math.cos(a), dy = -Math.sin(a), sz = 10 * MM_PER_PT, ax = Math.abs(dx) < 0.1 ? 'middle' : dx > 0 ? 'start' : 'end';
@@ -2440,7 +2455,7 @@ function schOne(k, p, C, g, d) {
   const X = g.X, Y = g.Y;
   if (k === 'Point') { const q = C.point(p.nom); if (!q) return ''; const x = X(q[0]), y = Y(q[1]), col = schCol(p.col); let s = '';
     if (p.cote) s += `<path d="M${f2(x)} ${f2(y)}L${f2(x)} ${f2(Y(0))}M${f2(x)} ${f2(y)}L${f2(X(0))} ${f2(y)}" stroke="${col}" stroke-width="0.2" stroke-dasharray="1 1" fill="none"/>`;
-    s += schPointMark(x, y, p.style, p.taille, col); if (p.nom) s += schLabel(x, y, p.nom, p.pos, col); return s; }
+    s += schPointMark(x, y, p.style, p.taille, col) + schPointLabel(d, x, y, p.nom, p.pos); return s; }
   if (k === 'Segment') { let A, B;
     if (p.nat === 0) { A = C.point(p.orig); B = C.point(p.extr); } else if (p.nat === 1) { A = [sNum(p.x1), sNum(p.y1)]; B = [sNum(p.x2), sNum(p.y2)]; }
     else { const a = C.point(p.A), b = C.point(p.B), c = C.point(p.C), s = C.point(p.som); if (p.nat === 2 && a && b && c && s) { const m = p.som === p.A ? [a, [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2]] : p.som === p.B ? [b, [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2]] : [c, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]]; A = m[0]; B = m[1]; }
@@ -2453,11 +2468,11 @@ function schOne(k, p, C, g, d) {
     if (p.format === 1) { const hd = (x, y, a, c) => schArrowHead(x, y, a, r, col, w, false); if (p.ferm === 0) s += hd(x2, y2, al) + hd(x1, y1, al + Math.PI); else if (p.ferm === 1) s += hd(x1, y1, al) + hd(x2, y2, al + Math.PI); else s += hd(x2, y2, al); }
     else if (p.format === 2) { const e = (x, y) => `<path d="M${f2(x - Math.sin(al) * r)} ${f2(y + Math.cos(al) * r)}L${f2(x + Math.sin(al) * r)} ${f2(y - Math.cos(al) * r)}" stroke="${col}" stroke-width="${w}" fill="none"/>`; s += e(x1, y1) + e(x2, y2); }
     else if (p.format === 3) { s += `<circle cx="${f2(x1)}" cy="${f2(y1)}" r="${f2(r / 2)}" fill="none" stroke="${col}" stroke-width="${w}"/><circle cx="${f2(x2)}" cy="${f2(y2)}" r="${f2(r / 2)}" fill="none" stroke="${col}" stroke-width="${w}"/>`; }
-    return s; }
+    return schHair(s, p.ep); }
   if (k === 'Vecteur') { if (!p.fleche) return ''; let A, B; if (p.nat === 0) { const a = sNum(p.xo), b = sNum(p.yo), u = sNum(p.ab), v = sNum(p.or); A = [a, b]; B = [a + u, b + v]; } else { A = C.point(p.orig); B = C.point(p.extr); }
     if (!A || !B || A.concat(B).some(isNaN)) return ''; const col = schCol(p.col), w = schW(p.ep), x1 = X(A[0]), y1 = Y(A[1]), x2 = X(B[0]), y2 = Y(B[1]), al = Math.atan2(y2 - y1, x2 - x1), r = p.taille / 2;
     let s = `<path d="M${f2(x1)} ${f2(y1)}L${f2(x2)} ${f2(y2)}" stroke="${col}" stroke-width="${w}" fill="none"/>` + schArrowHead(x2, y2, al, r, col, w, p.style >= 2, p.style === 3);
-    if (p.nom) s += schLabel((x1 + x2) / 2, (y1 + y2) / 2, p.nom, p.pos, col, 2.4); return s; }
+    s = schHair(s, p.ep); if (p.nom) s += schLabel((x1 + x2) / 2, (y1 + y2) / 2, p.nom, p.pos, col, 2.4); return s; }
   if (k === 'Droite') { const L = C.droite(p.nom) || (p.cx && !isNaN(sNum(p.cx)) ? { x: sNum(p.cx), y: sNum(p.cy), x0: sNum(p.cx0), y0: sNum(p.cy0) } : null); if (!L || (!L.x && !L.y)) return ''; return schBigLine(g, d, L.x0, L.y0, L.x, L.y, true, schCol(p.col), p.ep, p.style); }
   if (k === 'Demi-droite') { let O = p.orig[0] === '(' ? p.orig.slice(1, -1).split(';').map(sNum) : C.point(p.orig); if (!O || O.some(isNaN)) return ''; let dx, dy;
     if (p.nat === 0) { const Q = p.pt[0] === '(' ? p.pt.slice(1, -1).split(';').map(sNum) : C.point(p.pt); if (!Q || Q.some(isNaN)) return ''; dx = Q[0] - O[0]; dy = Q[1] - O[1]; }
@@ -2562,7 +2577,7 @@ const SCH_PREDEF = ['Triangle équilatéral', 'Triangle isocèle', 'Triangle rec
 const SCH_PREDEF_E = { 0: ['côté'], 1: ['base', 'hauteur (ou côté)'], 2: ['côté 1', 'côté 2'], 3: ['côté'], 4: ['côté 1', 'côté 2', 'côté 3'], 5: [], 6: ['côté'], 7: ['longueur', 'largeur'], 8: ['côté', 'hauteur', 'tangente de l’angle'], 9: ['largeur', 'hauteur'], 10: [], 11: ['grande base', 'petite base', 'hauteur'], 12: ['grande base', 'petite base', 'hauteur'], 13: [] };
 const SCH_PTEX = { 0: '1;1', 1: '0,5;A,B', 2: '(A,B),(C,D)', 3: '(A;1),(B;1)', 4: 'A,B,C', 5: 'A,B,C', 6: 'P,A,B', 7: 'P,C,90', 8: '2;45' };
 const SCH_PTHINT = { 0: 'x;y', 1: 'abscisse;A,B', 2: '(A,B),(C,D)  ou  (d1),(d2)', 3: '(A;coef),(B;coef)', 4: 'A,B,C', 5: 'A,B,C  (4e sommet)', 6: 'P,A,B  ou  P,d', 7: 'P,centre,angle°', 8: 'r;θ°' };
-const SCH_POS = [[0, 'à droite'], [1, 'en haut à droite'], [2, 'en haut'], [3, 'en haut à gauche'], [4, 'à gauche'], [5, 'en bas à gauche'], [6, 'en bas'], [7, 'en bas à droite']];
+const SCH_POS = [[0, 'à droite'], [1, 'en haut à droite'], [2, 'en haut'], [3, 'en haut à gauche'], [4, 'à gauche'], [5, 'en bas à gauche'], [6, 'en bas'], [7, 'en bas à droite'], [8, 'aucun nom']];
 const SCH_PALSEL = SCH_COLORS.map((n, i) => [i, n]);
 const SCH_STYLE = [[0, 'Continu'], [1, 'Tirets'], [2, 'Pointillés']], SCH_EP = [[0, 'Fin'], [1, 'Moyen'], [2, 'Épais']];
 function schEditor(o, k, idx, rebuild) {
@@ -2575,7 +2590,7 @@ function schEditor(o, k, idx, rebuild) {
   if (k === 'Point') {
     R(T('nom', 'nom', 'w3'), S('définition', 'nat', [[0, 'Coordonnées'], [1, 'Sur une droite (AB)'], [2, 'Intersection de 2 droites'], [3, 'Barycentre'], [4, 'Isobarycentre'], [5, '4e sommet d’un parallélogramme'], [6, 'Projeté orthogonal'], [7, 'Image par rotation'], [8, 'Coordonnées polaires']], 'grow', () => { p.def = SCH_PTEX[p.nat]; sync(); }));
     R(T(SCH_PTHINT[p.nat], 'def', 'grow'));
-    R(S('marque', 'style', [[0, 'aucune'], [1, 'point'], [2, '+'], [3, '×'], [4, '✳'], [5, '□'], [6, '◇'], [7, '○'], [8, '■'], [9, '◆']], 'w3'), S('position du nom', 'pos', SCH_POS, 'w4'), S('taille', 'taille', [[0, 'petit'], [1, 'moyen'], [2, 'gros']], 'w3'), S('couleur', 'col', SCH_PALSEL, 'w3'));
+    R(S('marque', 'style', [[0, 'aucune'], [1, 'point'], [2, '+'], [3, '×'], [4, '✳'], [5, '■'], [6, '◆'], [7, '○'], [8, '□'], [9, '◇']], 'w3'), S('position du nom', 'pos', SCH_POS, 'w4'), S('taille', 'taille', [[0, 'petit'], [1, 'moyen'], [2, 'gros']], 'w3'), S('couleur', 'col', SCH_PALSEL, 'w3'));
     R(fChk('lignes de cote', (p.cb = { v: !!p.cote }) && { get v() { return !!p.cote; }, set v(x) { p.cote = x ? 1 : 0; sync(); } }, 'v'));
   } else if (k === 'Segment') {
     R(S('définition', 'nat', [[0, 'Deux points nommés'], [1, 'Coordonnées'], [2, 'Médiane d’un triangle'], [3, 'Hauteur d’un triangle']], 'grow', () => {}));
@@ -2623,7 +2638,7 @@ function schEditor(o, k, idx, rebuild) {
     if (p.nat === 0) R(T('foyer (nom ou (x;y))', 'foyer', 'w4'), T('directrice (x=…, y=…, (AB), d)', 'dir', 'w4'), T('excentricité', 'exc', 'w3')); else R(...['A', 'B', 'C', 'D', 'E', 'F'].map(l => T(l, l, 'w2')));
     const FL = ['foyer', 'directrice', 'axes', 'sommets', 'centre', 'asymptotes', 'excentricité', 'mesures', 'coordonnées', 'équation', 'valeurs exactes'];
     R(...FL.map((l, i) => fChk(l, { get v() { return !!p.f[i]; }, set v(x) { p.f[i] = x ? 1 : 0; sync(); } }, 'v')));
-    R(S('épaisseur', 'ep', [1, 2, 3, 4, 5, 6].map(n => [n, n]), 'w2'), fColor('couleur', p, 'couleur', { after: sync }), fColor('droites', p, 'cd', { after: sync }), S('style droites', 'sd', [[1, 'continu'], [2, 'tirets'], [3, 'pointillés']], 'w3'), S('marque', 'sp', [[1, 'point'], [2, '+'], [3, '×'], [4, '✳'], [5, '□'], [6, '◇'], [7, '○'], [8, '■'], [9, '◆']], 'w3'));
+    R(S('épaisseur', 'ep', [1, 2, 3, 4, 5, 6].map(n => [n, n]), 'w2'), fColor('couleur', p, 'couleur', { after: sync }), fColor('droites', p, 'cd', { after: sync }), S('style droites', 'sd', [[1, 'continu'], [2, 'tirets'], [3, 'pointillés']], 'w3'), S('marque', 'sp', [[1, 'point'], [2, '+'], [3, '×'], [4, '✳'], [5, '■'], [6, '◆'], [7, '○'], [8, '□'], [9, '◇']], 'w3'));
   } else if (k === 'Courbe de Bézier') {
     R(S('type', 'nat', [[0, 'Bézier (extrémités et points de contrôle)'], [1, 'Polybézier (3k+1 points)']], 'grow')); R(T('points (A,B,C,…)', 'som', 'grow'));
     R(S('épaisseur', 'ep', [1, 2, 3, 4, 5, 6, 8, 10].map(n => [n, n]), 'w3'), S('couleur', 'col', SCH_PALSEL, 'w3'));
