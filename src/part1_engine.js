@@ -14,8 +14,13 @@ const f3 = n => (Math.round(n * 1000) / 1000).toString();
 
 function parseNum(s, dflt = 0) {
   if (typeof s === 'number') return s;
-  const v = Number(String(s).trim().replace(',', '.'));
-  return Number.isFinite(v) ? v : dflt;
+  const t = String(s).trim().replace(',', '.');
+  const v = Number(t);
+  if (Number.isFinite(v)) return v;
+  // fraction exacte écrite par Windows, éventuellement avec un signe doublé (« --6655/16 » = -6655/16)
+  const q = t.replace(/^--/, '-').match(/^(-?)(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/);
+  if (q && +q[3]) return (q[1] ? -1 : 1) * +q[2] / +q[3];
+  return dflt;
 }
 function fmtNum(n) { // nombre -> texte avec virgule décimale (format .sqn)
   if (!Number.isFinite(n)) return '0';

@@ -104,8 +104,8 @@ function parseCurveAttrs(lines, c) {
       continue;
     }
     if ((m = t.match(/^couleur\s*:\s*(-?\d+)/))) c.couleur = +m[1];
-    else if ((m = t.match(/^vitesse\s*:\s*(-?\d+)/))) c.vitesse = +m[1];
-    else if ((m = t.match(/^[ée]paisseur\s*:\s*(\d+)/i))) c.ep = +m[1];
+    else if ((m = t.match(/^vitesse\s*:\s*(-?\d+)/))) { c.vitesse = +m[1]; c._nv = true; }
+    else if ((m = t.match(/^[ée]paisseur\s*:\s*(\d+)/i))) { if (c._nv) c.ep = +m[1]; else { const o = oldEp(+m[1]); c.vitesse = o.vit; c.ep = o.ep; } }
     else if ((m = t.match(/^style\s*:\s*(-?\d+)/))) c.style = +m[1];
     else if ((m = t.match(/^TMin\s*:\s*(.*)$/i))) c.tmin = m[1].trim();
     else if ((m = t.match(/^TMax\s*:\s*(.*)$/i))) c.tmax = m[1].trim();
@@ -130,6 +130,7 @@ function readItems(L, i, headRe) {
   return { items, i };
 }
 
+const oldEp = v => { const e = v % 10; return { vit: v > 9 ? Math.floor(v / 10) : 5, ep: e === 3 ? 8 : e === 2 ? 5 : e <= 1 ? 2 : e }; };
 function parseSqn(text, name = 'sans titre') {
   const L = text.replace(/\r\n?/g, '\n').split('\n');
   while (L.length && L[L.length - 1].trim() === '') L.pop();
@@ -233,6 +234,7 @@ function parseSqn(text, name = 'sans titre') {
       else if ((q = l.match(/^P Maximum\s*=(.*)$/i))) f.pmax = q[1].trim();
       else if ((q = l.match(/^Delta P\s*=(.*)$/i))) f.dp = q[1].trim();
       else if ((q = l.match(/^Couleur\s*=\s*(-?\d+)/i))) f.couleur = +q[1];
+      else if ((q = l.match(/^Vitesse et [ÉE]paisseur\s*=\s*(\d+)/i))) { const o = oldEp(+q[1]); f.vitesse = o.vit; f.ep = o.ep; f._nv = true; }
       else if ((q = l.match(/^Vitesse\s*=\s*(-?\d+)/i))) f.vitesse = +q[1];
       else if ((q = l.match(/^[ÉE]paisseur\s*=\s*(\d+)/i))) f.ep = +q[1];
       else if ((q = l.match(/^Style\s*=\s*(\d+)/i))) f.style = +q[1];
@@ -274,7 +276,7 @@ function parseSqn(text, name = 'sans titre') {
   while (i < L.length && !/^(Pas d'expressions LaTeX|Expressions LaTeX)/i.test(L[i])) d.rawMiddle.push(L[i++]);
   // --- LaTeX ---
   if (/^Expressions LaTeX/i.test(L[i] || '')) {
-    d.latexOpaque = /opaque/i.test(L[i]); i++;
+    d.latexOpaque = /opaque/i.test(L[i]); d.latexPlain = !/opaque|transparent/i.test(L[i]); i++;
     while (i < L.length && !/^Fin des expressions LaTeX/i.test(L[i])) {
       const q = L[i++].match(/^(\s*(?:\d+\$)?\s?)(.*)\t([^\t]*)\t([^\t]*)$/);
       if (q) d.latex.push({ pre: q[1], size: (/(\d+)\$/.exec(q[1]) || [0, 3])[1] * 1, src: q[2], x: parseNum(q[3]), y: parseNum(q[4]) });
@@ -519,7 +521,7 @@ function serializeSqn(d, plain) {
   d.objs.forEach(ob => o.push(serializeObj(ob, '7,1,2,0,0')));
   o.push(...RW.mid);
   if (d.latex.length) {
-    o.push(`Expressions LaTeX (${d.latexOpaque ? 'opaques' : 'transparentes'})`);
+    o.push(d.latexPlain ? 'Expressions LaTeX' : `Expressions LaTeX (${d.latexOpaque ? 'opaques' : 'transparentes'})`);
     d.latex.forEach(l => o.push(`${l.pre !== undefined ? l.pre : '   ' + (l.size || 3) + '$ '}${l.src}\t${fmtNum(l.x)}\t${fmtNum(l.y)}`));
     o.push('Fin des expressions LaTeX');
   } else o.push("Pas d'expressions LaTeX");
