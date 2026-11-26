@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **Version 1.1.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.1.1.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -41,6 +41,11 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 - Format `.sqnw` pour les dessins contenant des compléments propres à cette version ; le bouton « ⤓ .sqn » produit un fichier pour la version Windows (les compléments pris en charge y sont écrits).
 
 ## Historique des versions
+
+**1.1.1**
+- Lecture des anciens fichiers `.sqn` (avant octobre 2012) : épaisseur et vitesse des courbes, qui étaient codées sur une seule valeur, sont converties comme dans le logiciel d'origine ; les traits ne sont plus démesurés.
+- Lecture des fractions à signe doublé écrites par Windows (`--6655/16`), qui plaçaient le point à l'origine.
+- L'en-tête « Expressions LaTeX » sans précision (transparent ou opaque) est conservé à l'export.
 
 **1.1**
 - Les objets lus à l'ouverture d'un `.sqn` Windows se modifient et sont réécrits dans le `.sqn` exporté.
