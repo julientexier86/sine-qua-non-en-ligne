@@ -246,7 +246,7 @@ function gridSvg(d, g) {
     return `<g fill="${col}">${s}</g>`;
   }
   const dash = gs === 2 ? 'stroke-dasharray="0.2 0.8" stroke-width="0.22"' : gs === 3 ? 'stroke-dasharray="0.5 1" stroke-width="0.3"' :
-    gs === 4 ? 'stroke-dasharray="1.5 1" stroke-width="0.2"' : 'stroke-width="0.2"';
+    gs === 4 ? 'stroke-dasharray="1.5 1" stroke-width="0.2"' : (SCH_UI ? 'stroke-width="1" vector-effect="non-scaling-stroke"' : 'stroke-width="0.2"'); // trait continu : 1 pixel à l'écran, 0,2 mm à l'export (uDessin.DessinerFondPetitsCarreaux)
   return `<path d="${vlines(sz)}${hlines(sz)}" stroke="${col}" fill="none" ${dash}/>`;
 }
 
@@ -438,7 +438,7 @@ function buildSvg(d, ctx, opts = {}) {
     if (pts && pts.every(p => Number.isFinite(p[0]) && Number.isFinite(p[1])))
       curves += `<path d="M${f2(pts[0][0])} ${f2(pts[0][1])}L${f2(pts[1][0])} ${f2(pts[1][1])}" stroke="${col}" stroke-width="${f2(st.w)}" fill="none"/>`;
   });
-  curves += schDraw(d, g);
+  SCH_UI = !!opts.ui; curves += schDraw(d, g);
   curves += extrasSvg(d, ctx);
 
   // textes
