@@ -382,11 +382,11 @@ function initMouse() {
 /* --- fichiers --- */
 function newDocument() {
   if (state.dirty && !confirm('Le dessin en cours n’est pas enregistré. Continuer ?')) return;
-  loadDoc(defaultDoc(), 'sans titre');
+  loadDoc(newDoc(), 'sans titre'); toast('Nouveau dessin vide.');
 }
 function loadDoc(d, name) {
   d.name = name; state.doc = d; state.hist = []; state.histPos = -1; state.dirty = false;
-  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle();
+  drawNow(); commit(); state.dirty = false; fitIfLarge(); updateTitle(); try { buildPanel(); } catch (e) { /* panneau fermé */ }
 }
 function openFile(file) {
   const r = new FileReader();
