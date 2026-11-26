@@ -2,7 +2,7 @@
 # Régénère ../sinequanon.html à partir des fichiers de src/ (nécessite Node.js et Python 3)
 cd "$(dirname "$0")" || exit 1
 B=$(mktemp /tmp/sqnXXXXXX.js)
-cat part1_engine.js part2_model.js part3_render.js part3b_tex.js part5_extras.js part5b_win.js part4_ui.js part6_chrome.js > "$B"
+cat part1_engine.js part2_model.js part2b_sqnwrite.js part3_render.js part3b_tex.js part5_extras.js part5b_win.js part4_ui.js part6_chrome.js > "$B"
 python3 - "$B" <<'PY'
 import sys
 s=open('shell.html',encoding='utf8').read()

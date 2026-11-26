@@ -40,9 +40,9 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 
 ## Ce qui n'est pas encore reproduit
 
-- Les **tableaux de variations ou de signes** enregistrés par la version Windows (leur code est un langage de formules propre au logiciel) ne s'affichent pas à l'ouverture ; les tableaux de cette version se créent depuis le menu.
-- La table de valeurs affichée à l'écran (seules ses marques sont lues), les statistiques en boîte ou en droite de Henry sur données groupées, les graphiques de simulation « points » et « histogrammes des échantillons », l'échelle automatique des simulations.
-- Les objets lus à l'ouverture d'un `.sqn` Windows se modifient dans l'application, mais **les modifications ne sont pas réécrites dans le `.sqn` exporté**, qui garde les blocs d'origine ; un objet supprimé réapparaît dans ce `.sqn`.
+- Les statistiques en boîte ou en droite de Henry sur données groupées, les graphiques de simulation « points » et « histogrammes des échantillons », l'échelle automatique des simulations.
+- Les objets lus à l'ouverture d'un `.sqn` Windows (lois, statistiques, suites, intégrales, inéquations, courbes, dérivées, primitives…) se modifient dans l'application et **sont réécrits dans le `.sqn` exporté**. Exception : les arbres de probabilités, les simulations, les tableaux de variations et les tables de valeurs ne sont pas réécrits (supprimés dans l'application, ils sont retirés du `.sqn` ; modifiés, ils gardent leur ancienne version dans le `.sqn`).
+- Les tableaux de variations ou de signes de Windows s'affichent à l'ouverture avec le même code ; la mise en page est proche mais pas identique.
 - Le rendu est fidèle aux couleurs, styles et valeurs du fichier, mais n'est pas identique pixel pour pixel à celui de Windows.
 
 Merci de signaler tout écart avec le logiciel d'origine via les *tickets* du projet, idéalement avec le fichier `.sqn` concerné.

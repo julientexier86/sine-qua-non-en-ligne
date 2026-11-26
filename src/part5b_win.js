@@ -133,3 +133,83 @@ EX.simw = { label: 'Simulation (format Windows)', def: () => ({ gtype: 4, title:
     if (e.title) s += T_(g.X(g.xOf(d.W / 2)), 8, e.title, { size: 12, anchor: 'middle' });
     return s;
   } };
+
+/* --- tableaux de variations ou de signes au format Windows : [g:m:d]sép[g:m:d]… séparés par \\ --- */
+function tabwDecode(code) {
+  const rows = String(code || '').replace(/\s+$/, '').split(/\]\\\\/).map((l, i, a) => (i < a.length - 1 ? l + ']' : l)).filter(l => l.trim());
+  return rows.map(l => { const t = []; let st = 1; for (let i = 1; i < l.length; i++) if ('[:]'.includes(l[i])) { t.push(l.slice(st, i)); st = i + 1; } return t; });
+}
+const TABW_RES = new Set(['', '//', '/>', '\\>', '_>', '|', '||', ':']);
+function tabwTex(s, sz) {
+  s = String(s || '');
+  if (s.length > 2 && s.startsWith('||') && !TABW_RES.has(s.slice(2))) s = s.slice(2);
+  if (s.length > 2 && s.endsWith('||') && !TABW_RES.has(s.slice(0, -2))) s = s.slice(0, -2);
+  if (s.length > 1 && s[0] === '|' && !TABW_RES.has(s.slice(1))) s = s.slice(1);
+  if (s.length > 1 && s.endsWith('|') && s[s.length - 2] !== 't' && !TABW_RES.has(s.slice(0, -1))) s = s.slice(0, -1);
+  if (TABW_RES.has(s)) return null;
+  s = s.replace(/\\hspace\{[^}]*\}/g, '').replace(/^\d\$\s*/, '').replace(/\\(black|blue|red|green|yellow|cyan|magenta|white|normalsize)\b/g, '');
+  try { return texLayout(texParse(s), sz, '#000'); } catch (err) { return null; }
+}
+EX.tabw = { label: 'Tableau de variations ou de signes (format Windows)', def: () => ({ code: "[:x:]|[-\\infty::]-3[::+\\infty]\\\\[:f'(x):]|[:-:]|0[:+:]\\\\[:f(x):]|[+\\infty:\\>:]2[:/>:+\\infty]", sz: 3.8, couleur: 0, gras: false }),
+  fields: [['code', 'code du tableau (une ligne par ligne du tableau, séparées par \\\\ )', 'area', 'grow'], 'br', ['sz', 'taille (mm)', 'num', 'w3', { step: 0.2 }], ['gras', 'traits épais', 'chk'], ['couleur', 'traits', 'color']],
+  render(e, d, g) {
+    const R = tabwDecode(e.code); if (R.length < 2) return ''; const sz = e.sz || 3.8, col = tcolor(e.couleur), wt = e.gras ? 0.33 : 0.22, GM = 1.4, PM = 0.7;
+    const L = R.length, c = R[0].length, cc = Math.floor((c + 1) / 4), arrow = t => t === '/>' || t === '\\>' || t === '_>';
+    const isVar = R.map(r => r.some(arrow)), F = R.map(r => r.map(t => tabwTex(t, sz)));
+    let hL = 5, hV = 14, wC = 7, wT = 7;
+    R.forEach((r, i) => { if (isVar[i]) return; for (let jj = 0; jj < cc; jj++) { let w = 0; for (let k = 0; k < 4; k++) { const b = F[i][4 * jj + k]; if (!b) continue; hL = Math.max(hL, b.a + b.dsc + 2 * GM); w += k < 3 ? b.w + 2 * GM : b.w / 2 + GM; } wC = Math.max(wC, w); } });
+    R.forEach((r, i) => isVar[i] && (() => { for (let jj = 1; jj < cc; jj++) { const wd = k => (F[i][4 * jj + k] ? F[i][4 * jj + k].w : 0); wC = Math.max(wC, wd(-1 + 4) / 2 + 10 + wd(3) / 2 + wd(0) / 2 + wd(2) / 2 + 2 * GM, 20); } })());
+    R.forEach((r, i) => { for (let k = 0; k < 3; k++) { const b = F[i][k]; if (b) wT = Math.max(wT, b.w + 2 * GM); } });
+    const rh = i => (isVar[i] ? hV : hL), H = R.reduce((t, r, i) => t + rh(i), 0), W = wT + (cc - 1) * wC, ox = (d.W - W) / 2, oy = (d.H - H) / 2;
+    const lnS = (x1, y1, x2, y2, w = wt) => lineSeg([ox + x1, oy + y1], [ox + x2, oy + y2], col, w); let s = `<rect x="${f2(ox)}" y="${f2(oy)}" width="${f2(W)}" height="${f2(H)}" fill="#fff" stroke="${col}" stroke-width="${wt}"/>`, defs = '';
+    const ys = [0]; R.forEach((r, i) => ys.push(ys[i] + rh(i))); for (let i = 1; i < L; i++) s += lnS(0, ys[i], W, ys[i]);
+    const draw = (b, x, yc, al) => { if (!b) return ''; const xx = al === 'l' ? x : al === 'r' ? x - b.w : x - b.w / 2; return b.draw(ox + xx, oy + yc + (b.a - b.dsc) / 2); };
+    // hachures
+    defs += hatchDefs('tw', 'b', col, 1.41, 0.2);
+    for (let jj = 1; jj < cc; jj++) for (let i = 1; i < L; i++) { const t = R[i], hz = [4 * jj, 4 * jj + 1, 4 * jj + 2].some(k => t[k] === '//'); if (hz) s += `<rect x="${f2(ox + wT + (jj - 1) * wC)}" y="${f2(oy + ys[i])}" width="${f2(wC)}" height="${f2(rh(i))}" fill="url(#tw)" stroke="none"/>`; }
+    R.forEach((r, i) => {
+      const yc = (ys[i] + ys[i + 1]) / 2; for (let k = 0; k < 3; k++) { const b = F[i][k]; if (!b) continue; s += draw(b, k === 0 ? GM : k === 1 ? wT / 2 : wT - GM, yc, k === 0 ? 'l' : k === 1 ? 'c' : 'r'); }
+      for (let jj = 1; jj < cc; jj++) {
+        const x1 = wT + (jj - 1) * wC, x2 = x1 + wC, sepL = r[4 * jj - 1] || '', lft = r[4 * jj] || '', rgt = r[4 * jj + 2] || '';
+        if (sepL.includes('|') && sepL !== '||' && !sepL.includes('||')) s += lnS(x1, ys[i], x1, ys[i + 1]);
+        if (sepL.includes('||')) { s += lnS(x1 - PM / 2, ys[i], x1 - PM / 2, ys[i + 1]) + lnS(x1 + PM / 2, ys[i], x1 + PM / 2, ys[i + 1]); }
+        if (lft.includes('||')) s += lnS(x1, ys[i], x1, ys[i + 1]) + lnS(x1 + PM, ys[i], x1 + PM, ys[i + 1]);
+        if (rgt.includes('||')) s += lnS(x2 - PM, ys[i], x2 - PM, ys[i + 1]) + lnS(x2 - 0.1, ys[i], x2 - 0.1, ys[i + 1]);
+        if (!isVar[i]) { s += draw(F[i][4 * jj - 1], x1, yc, 'c') + draw(F[i][4 * jj], x1 + GM, yc, 'l') + draw(F[i][4 * jj + 1], (x1 + x2) / 2, yc, 'c') + draw(F[i][4 * jj + 2], x2 - GM, yc, 'r'); }
+      }
+      if (isVar[i]) {
+        const y1 = ys[i], y2 = ys[i + 1], mid = (y1 + y2) / 2, ar = jj => r[4 * jj + 1], dir = t => (t === '/>' ? 1 : t === '\\>' ? -1 : 0);
+        const level = (jj, side) => { // niveau de la valeur de la frontière placée entre les cases jj-1 et jj ; side : 'a' arrivée, 'd' départ
+          const prev = jj > 1 ? dir(ar(jj - 1)) : null, next = jj < cc ? dir(ar(jj)) : null, hasP = jj > 1 && arrow(ar(jj - 1)), hasN = jj < cc && arrow(ar(jj));
+          const pa = side === 'a' ? hasP : false, pd = side === 'd' ? hasN : false; if (side === 'a' && hasP) return prev === 1 ? 1 : prev === -1 ? -1 : 0; if (side === 'd' && hasN) return next === 1 ? -1 : next === -1 ? 1 : 0;
+          const both = hasP && hasN; if (both) return 0; return hasP ? (prev === 1 ? 1 : -1) : hasN ? (next === 1 ? -1 : 1) : 0; };
+        const yAt = (lv, b) => (lv > 0 ? y1 + PM + (b ? b.a + b.dsc : 0) / 2 : lv < 0 ? y2 - PM - (b ? b.a + b.dsc : 0) / 2 : mid);
+        for (let jj = 1; jj <= cc; jj++) { // frontière gauche de la case jj
+          const x = wT + (jj - 1) * wC, edgeL = jj === 1, sepT = r[4 * jj - 1] || '';
+          const lt = edgeL ? F[i][4] : null; if (edgeL) { if (lt) s += draw(lt, x + GM, yAt(level(1, 'd'), lt), 'l'); continue; }
+          if (jj === cc) { const rv = F[i][4 * (cc - 1) + 2]; if (rv) s += draw(rv, x - GM, yAt(level(cc, 'a'), rv), 'r'); continue; }
+          const rv = F[i][4 * (jj - 1) + 2], lv = F[i][4 * jj], sp = F[i][4 * jj - 1];
+          if (rv || lv) { if (rv) s += draw(rv, x - GM / 2, yAt(level(jj, 'a'), rv), 'r'); if (lv) s += draw(lv, x + GM / 2, yAt(level(jj, 'd'), lv), 'l'); } else if (sp) s += draw(sp, x, yAt(level(jj, 'a'), sp), 'c');
+        }
+        for (let jj = 1; jj < cc; jj++) { const t = ar(jj), x1 = wT + (jj - 1) * wC, x2 = x1 + wC; if (!arrow(t)) continue;
+          let a, b; if (t === '/>') { a = [x1 + GM, y2 - PM]; b = [x2 - GM, y1 + PM]; } else if (t === '\\>') { a = [x1 + GM, y1 + PM]; b = [x2 - GM, y2 - PM]; } else { const pv = jj > 1 ? dir(ar(jj - 1)) : 0, yy = pv === 1 ? y1 + PM : pv === -1 ? y2 - PM : mid; a = [x1 + GM, yy]; b = [x2 - GM, yy]; }
+          s += arrowSvg([ox + a[0], oy + a[1]], [ox + b[0], oy + b[1]], col, wt); }
+      }
+    });
+    return `<defs>${defs}</defs>` + s;
+  } };
+
+/* --- table de valeurs affichée sous le dessin (12 lignes × 11 colonnes de 17 × 7 mm) --- */
+const TABV_H = 5 + 12 * 7 + 3;
+EX.tabv = { label: 'Table de valeurs (affichée sous le dessin)', below: true, def: () => ({ kind: 'f', rows: [], couleur: 0 }),
+  fields: [['kind', 'table', 'sel', 'w2', [['f', 'fonctions'], ['t', 'courbes paramétrées']]], ['couleur', 'traits', 'color']],
+  render(e, d) {
+    const cw = 17, rh = 7, x0 = 7, y0 = d.H + 5, col = tcolor(e.couleur || 0), head = [];
+    for (let i = 0; i < 11; i++) head.push(e.kind === 't' ? (i === 0 ? 't' : (i % 2 ? 'x' : 'y') + Math.ceil(i / 2) + '(t)') : (i === 0 ? 'x' : 'f' + i + '(x)'));
+    let s = '';
+    for (let r = 0; r < 12; r++) for (let c = 0; c < 11; c++) {
+      const txt = r === 0 ? head[c] : ((e.rows[r - 1] || [])[c] || '').trim(), X = x0 + c * cw, Y = y0 + r * rh;
+      s += `<rect x="${f2(X)}" y="${f2(Y)}" width="${cw}" height="${rh}" fill="${r * c === 0 ? '#f0f0f0' : 'none'}" stroke="${col}" stroke-width="0.2"/>`;
+      if (txt) s += T_(X + cw / 2, Y + rh / 2 + 1.2, txt, { size: 10, anchor: 'middle', font: 'Arial,Helvetica,sans-serif' });
+    }
+    return s; } };

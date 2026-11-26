@@ -303,7 +303,7 @@ function parseSqn(text, name = 'sans titre') {
   }
   if (!d.rawMiddle.length) d.rawMiddle = RAW_MIDDLE_DEFAULT.slice();
   if (!d.rawTail.length) d.rawTail = RAW_TAIL_DEFAULT.slice();
-  try { d.extras = deriveSqnExtras(d); } catch (err) { d.extras = []; }
+  try { d.extras = deriveSqnExtras(d); markOrig(d); } catch (err) { d.extras = []; }
   return d;
 }
 
@@ -416,6 +416,13 @@ function deriveSqnExtras(d) {
   if (i >= 0 && !/^Pas d/i.test(all[i])) { const ty = (all[i + 4] || '').split('\t'), mk = NUMD(ty[1]), sz = NUMD(ty[2]) || 3, col = NUMD(ty[3]), rows = [];
     for (let k = 0; k < 11; k++) rows.push((all[i + 6 + k] || '').split('\t'));
     if (mk > 0) for (let c = 1; c <= 10; c++) { const pts = rows.map(r => [num(r[0], NaN), num(r[c], NaN)]).filter(a => Number.isFinite(a[0]) && Number.isFinite(a[1])); if (pts.length) out.push({ type: 'pbpw', fromRaw: true, mode: 'pentes', nocurve: true, data: pts.map(a => a.join(';')).join('\n'), tan: 0, coef: 100, couleur: col, couleur2: col, ep: 2, mk: MK[mk] || 'x', marks: true, msz: 0.4 + 0.35 * sz, cote: false }); } }
+  // table de valeurs affichée sous le dessin (fonctions, sinon courbes paramétrées)
+  [['Table de valeurs de fonctions', 'f'], ['Table de valeurs de courbes paramétrées', 't']].some(([h, kind]) => {
+    const k = at(h); if (k < 0 || /^Pas d/i.test(all[k]) || !/oui/i.test(all[k + 5] || '')) return false;
+    out.push({ type: 'tabv', fromRaw: true, kind, couleur: 0, rows: all.slice(k + 6, k + 17).map(r => r.split('\t')) }); return true; });
+  // tableau de variations ou de signes (code Windows)
+  i = at('Tableau de variations ou de signes');
+  if (i >= 0 && !/^Pas d/i.test(all[i]) && all[i + 1]) out.push({ type: 'tabw', fromRaw: true, code: all[i + 1].trim(), sz: 3.8, couleur: 0, gras: false });
   return out;
 }
 
@@ -463,7 +470,8 @@ function serializeObj(o, tailDefault) {
   return `Segment,1,${o.e1 || '['},${o.e2 || ']'},${fmtNum(o.x1)};${fmtNum(o.y1)};${fmtNum(o.x2)};${fmtNum(o.y2)};${f.join(',')}`;
 }
 
-function serializeSqn(d) {
+function serializeSqn(d, plain) {
+  const RW = plain ? { mid: d.rawMiddle, tail: d.rawTail } : rawWith(d);
   const o = [];
   o.push('Sine qua non - version 2');
   o.push(`Cadre : ${d.cadre ? 'oui' : 'non'}`);
@@ -508,7 +516,7 @@ function serializeSqn(d) {
     `    Style :${r.styleStr}`, `    Type de droite :${r.type}`, `    Coef a :${r.a}`, `    Coef b :${r.b}`));
   o.push(`Nombre d'objets graphiques : ${d.objs.length}\t${d.objsTail || 1}`);
   d.objs.forEach(ob => o.push(serializeObj(ob, '7,1,2,0,0')));
-  o.push(...d.rawMiddle);
+  o.push(...RW.mid);
   if (d.latex.length) {
     o.push(`Expressions LaTeX (${d.latexOpaque ? 'opaques' : 'transparentes'})`);
     d.latex.forEach(l => o.push(`${l.pre !== undefined ? l.pre : '   ' + (l.size || 3) + '$ '}${l.src}\t${fmtNum(l.x)}\t${fmtNum(l.y)}`));
@@ -518,12 +526,12 @@ function serializeSqn(d) {
     o.push(`Nombre de courbes en coordonnées polaires : ${d.polars.length}`);
     d.polars.forEach((c, k) => o.push(`f${k + 1}(t)=${c.expr}`, ...serializeCurveAttrs(c, 'param')));
   } else o.push('Pas de courbes en coordonnées polaires.');
-  o.push(...tailWithRap(d));
+  o.push(...tailWithRap(d, RW.tail));
   return o.join('\r\n') + '\r\n';
 }
 
-function tailWithRap(d) {
-  const t = d.rawTail.slice();
+function tailWithRap(d, tl) {
+  const t = (tl || d.rawTail).slice();
   let i = t.findIndex(l => /^Rapporteur\s*$/i.test(l)), j = t.findIndex(l => /^Pas de rapporteur/i.test(l));
   const r = d.rap;
   const block = r ? ['Rapporteur', '   Type Lycée', `   Rayon du rapporteur    :${r.R}`, '   Repère en arrière plan :0', `   Cercle extérieur       :${r.ext}`,
@@ -536,11 +544,11 @@ function tailWithRap(d) {
 }
 const hasExtras = d => d.extras.some(e => !e.fromRaw) || d.log.x || d.log.y;
 /** Instantané complet (.sqn + compléments propres à la version en ligne) */
-function snapshotDoc(d) { return JSON.stringify({ format: 'sqnw', sqn: serializeSqn(d), extras: d.extras.filter(e => !e.fromRaw), log: d.log }); }
+function snapshotDoc(d) { return JSON.stringify({ format: 'sqnw', v: 2, sqn: serializeSqn(d, true), extras: d.extras, log: d.log }); }
 function docFromText(text, name) {
   if (text.trim().startsWith('{')) {
     const j = JSON.parse(text); if (j.format !== 'sqnw') throw new Error('Format de fichier inconnu.');
-    const d = parseSqn(j.sqn, name); d.extras = d.extras.concat(j.extras || []); d.log = Object.assign({ x: false, y: false, mx: 40, my: 40 }, j.log || {}); return d;
+    const d = parseSqn(j.sqn, name); d.extras = j.v === 2 ? (j.extras || []) : d.extras.concat(j.extras || []); d.log = Object.assign({ x: false, y: false, mx: 40, my: 40 }, j.log || {}); return d;
   }
   return parseSqn(text, name);
 }

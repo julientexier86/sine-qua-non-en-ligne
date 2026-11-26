@@ -495,7 +495,7 @@ function integrate(src, a, b, ctx) { const f = fnOf(src, ctx), M = 4000, h = (b 
 
 function extrasSvg(d, ctx) {
   let s = '';
-  d.extras.forEach(e => { e._err = ''; const T = EX[e.type]; if (!T) return;
+  d.extras.forEach(e => { e._err = ''; const T = EX[e.type]; if (!T || T.below) return;
     try { s += T.render(e, d, ctx.g, ctx) || ''; } catch (err) { e._err = err.message; } });
   return s;
 }

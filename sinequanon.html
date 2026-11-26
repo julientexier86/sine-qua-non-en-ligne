@@ -643,7 +643,7 @@ function parseSqn(text, name = 'sans titre') {
   }
   if (!d.rawMiddle.length) d.rawMiddle = RAW_MIDDLE_DEFAULT.slice();
   if (!d.rawTail.length) d.rawTail = RAW_TAIL_DEFAULT.slice();
-  try { d.extras = deriveSqnExtras(d); } catch (err) { d.extras = []; }
+  try { d.extras = deriveSqnExtras(d); markOrig(d); } catch (err) { d.extras = []; }
   return d;
 }
 
@@ -756,6 +756,13 @@ function deriveSqnExtras(d) {
   if (i >= 0 && !/^Pas d/i.test(all[i])) { const ty = (all[i + 4] || '').split('\t'), mk = NUMD(ty[1]), sz = NUMD(ty[2]) || 3, col = NUMD(ty[3]), rows = [];
     for (let k = 0; k < 11; k++) rows.push((all[i + 6 + k] || '').split('\t'));
     if (mk > 0) for (let c = 1; c <= 10; c++) { const pts = rows.map(r => [num(r[0], NaN), num(r[c], NaN)]).filter(a => Number.isFinite(a[0]) && Number.isFinite(a[1])); if (pts.length) out.push({ type: 'pbpw', fromRaw: true, mode: 'pentes', nocurve: true, data: pts.map(a => a.join(';')).join('\n'), tan: 0, coef: 100, couleur: col, couleur2: col, ep: 2, mk: MK[mk] || 'x', marks: true, msz: 0.4 + 0.35 * sz, cote: false }); } }
+  // table de valeurs affichée sous le dessin (fonctions, sinon courbes paramétrées)
+  [['Table de valeurs de fonctions', 'f'], ['Table de valeurs de courbes paramétrées', 't']].some(([h, kind]) => {
+    const k = at(h); if (k < 0 || /^Pas d/i.test(all[k]) || !/oui/i.test(all[k + 5] || '')) return false;
+    out.push({ type: 'tabv', fromRaw: true, kind, couleur: 0, rows: all.slice(k + 6, k + 17).map(r => r.split('\t')) }); return true; });
+  // tableau de variations ou de signes (code Windows)
+  i = at('Tableau de variations ou de signes');
+  if (i >= 0 && !/^Pas d/i.test(all[i]) && all[i + 1]) out.push({ type: 'tabw', fromRaw: true, code: all[i + 1].trim(), sz: 3.8, couleur: 0, gras: false });
   return out;
 }
 
@@ -803,7 +810,8 @@ function serializeObj(o, tailDefault) {
   return `Segment,1,${o.e1 || '['},${o.e2 || ']'},${fmtNum(o.x1)};${fmtNum(o.y1)};${fmtNum(o.x2)};${fmtNum(o.y2)};${f.join(',')}`;
 }
 
-function serializeSqn(d) {
+function serializeSqn(d, plain) {
+  const RW = plain ? { mid: d.rawMiddle, tail: d.rawTail } : rawWith(d);
   const o = [];
   o.push('Sine qua non - version 2');
   o.push(`Cadre : ${d.cadre ? 'oui' : 'non'}`);
@@ -848,7 +856,7 @@ function serializeSqn(d) {
     `    Style :${r.styleStr}`, `    Type de droite :${r.type}`, `    Coef a :${r.a}`, `    Coef b :${r.b}`));
   o.push(`Nombre d'objets graphiques : ${d.objs.length}\t${d.objsTail || 1}`);
   d.objs.forEach(ob => o.push(serializeObj(ob, '7,1,2,0,0')));
-  o.push(...d.rawMiddle);
+  o.push(...RW.mid);
   if (d.latex.length) {
     o.push(`Expressions LaTeX (${d.latexOpaque ? 'opaques' : 'transparentes'})`);
     d.latex.forEach(l => o.push(`${l.pre !== undefined ? l.pre : '   ' + (l.size || 3) + '$ '}${l.src}\t${fmtNum(l.x)}\t${fmtNum(l.y)}`));
@@ -858,12 +866,12 @@ function serializeSqn(d) {
     o.push(`Nombre de courbes en coordonnées polaires : ${d.polars.length}`);
     d.polars.forEach((c, k) => o.push(`f${k + 1}(t)=${c.expr}`, ...serializeCurveAttrs(c, 'param')));
   } else o.push('Pas de courbes en coordonnées polaires.');
-  o.push(...tailWithRap(d));
+  o.push(...tailWithRap(d, RW.tail));
   return o.join('\r\n') + '\r\n';
 }
 
-function tailWithRap(d) {
-  const t = d.rawTail.slice();
+function tailWithRap(d, tl) {
+  const t = (tl || d.rawTail).slice();
   let i = t.findIndex(l => /^Rapporteur\s*$/i.test(l)), j = t.findIndex(l => /^Pas de rapporteur/i.test(l));
   const r = d.rap;
   const block = r ? ['Rapporteur', '   Type Lycée', `   Rayon du rapporteur    :${r.R}`, '   Repère en arrière plan :0', `   Cercle extérieur       :${r.ext}`,
@@ -876,11 +884,11 @@ function tailWithRap(d) {
 }
 const hasExtras = d => d.extras.some(e => !e.fromRaw) || d.log.x || d.log.y;
 /** Instantané complet (.sqn + compléments propres à la version en ligne) */
-function snapshotDoc(d) { return JSON.stringify({ format: 'sqnw', sqn: serializeSqn(d), extras: d.extras.filter(e => !e.fromRaw), log: d.log }); }
+function snapshotDoc(d) { return JSON.stringify({ format: 'sqnw', v: 2, sqn: serializeSqn(d, true), extras: d.extras, log: d.log }); }
 function docFromText(text, name) {
   if (text.trim().startsWith('{')) {
     const j = JSON.parse(text); if (j.format !== 'sqnw') throw new Error('Format de fichier inconnu.');
-    const d = parseSqn(j.sqn, name); d.extras = d.extras.concat(j.extras || []); d.log = Object.assign({ x: false, y: false, mx: 40, my: 40 }, j.log || {}); return d;
+    const d = parseSqn(j.sqn, name); d.extras = j.v === 2 ? (j.extras || []) : d.extras.concat(j.extras || []); d.log = Object.assign({ x: false, y: false, mx: 40, my: 40 }, j.log || {}); return d;
   }
   return parseSqn(text, name);
 }
@@ -898,6 +906,132 @@ function encodeCp1252(s) {
   return b;
 }
 function decodeCp1252(buf) { return new TextDecoder('windows-1252').decode(buf); }
+/* ===== Réécriture dans le .sqn des objets lus nativement (modifiés, supprimés ou créés dans l'application) ===== */
+const SLOT_HDR = {
+  pbp: /^(Courbe définie point par point\s*$|Pas de courbe définie point par point)/i,
+  bez: /^(Courbe définie point par point avec lissage|Pas de courbe point par point lissée)/i,
+  nn: /^(Données statistiques 1 variable non numérique|Pas de données statistiques 1 variable non numérique)/i,
+  iso: /^(Données statistiques 1 variable \(valeurs isolées\)|Pas de données statistiques 1 variable \(valeurs isolées\))/i,
+  cl: /^(Données statistiques 1 variable \(valeurs regroupées en classes\)|Pas de données statistiques 1 variable \(valeurs regroupées en classes\))/i,
+  s2: /^(Données statistiques 2 variables|Pas de données statistiques 2 variables)/i,
+  bin: /^(Loi binômiale|Pas de loi binômiale)/i, poi: /^(Loi de Poisson|Pas de loi de Poisson)/i, nor: /^(Loi normale|Pas de loi normale)/i,
+  suite: /^(Suite numérique|Pas de suite numérique)/i, integ: /^(Intégrale définie de type|Pas d'intégrale)/i,
+  box: /^(Données statistiques 1 variable \(boîtes à moustaches multiples|Pas de boîtes à moustaches multiples)/i,
+  tv: /^(Table de valeurs de fonctions|Pas de table de valeurs de fonctions)/i, tvt: /^(Table de valeurs de courbes paramétrées|Pas de table de valeurs de courbes paramétrées)/i,
+  ineq: /^(Inéquations(\t|\s*$)|Pas d'inéquations)/i,
+  deriv: /^(Courbe de la dérivée de y=|Pas de courbe dérivée)/i, prim: /^(Courbe de la primitive de y=|Pas de courbe primitive)/i,
+  lgx: /^Échelle (logarithmique|linéaire) sur l'axe Ox/i, lgy: /^Échelle (logarithmique|linéaire) sur l'axe Oy/i,
+  sim: /^(Loi statistique :|Pas de simulations statistiques)/i, arb: /^(Arbre de probabilités|Pas d'arbre de probabilités)/i,
+  tab: /^(Tableau de variations ou de signes|Pas de tableau de variations)/i, exp: /^(Loi exponentielle|Pas de loi exponentielle)/i, rap: /^(Rapporteur\s*$|Pas de rapporteur)/i
+};
+const SLOT_PAS = { pbp: 'Pas de courbe définie point par point', bez: 'Pas de courbe point par point lissée', nn: 'Pas de données statistiques 1 variable non numérique',
+  iso: 'Pas de données statistiques 1 variable (valeurs isolées)', cl: 'Pas de données statistiques 1 variable (valeurs regroupées en classes)', s2: 'Pas de données statistiques 2 variables',
+  bin: 'Pas de loi binômiale', poi: 'Pas de loi de Poisson', nor: 'Pas de loi normale', suite: 'Pas de suite numérique', integ: "Pas d'intégrale", box: 'Pas de boîtes à moustaches multiples',
+  tv: 'Pas de table de valeurs de fonctions', ineq: "Pas d'inéquations", deriv: 'Pas de courbe dérivée.', prim: 'Pas de courbe primitive.', sim: 'Pas de simulations statistiques.',
+  arb: "Pas d'arbre de probabilités.", tab: 'Pas de tableau de variations ou de signes.', exp: 'Pas de loi exponentielle' };
+
+function slotOf(e) {
+  switch (e.type) {
+    case 'loi': return { bin: 'bin', poi: 'poi', nor: 'nor' }[e.kind] || null;
+    case 'loiexp': return 'exp'; case 'suite': return 'suite'; case 'integ': return 'integ'; case 'ineqw': return 'ineq'; case 'boxq': return 'box'; case 'stat2': return 's2';
+    case 'deriv': return 'deriv'; case 'prim': return 'prim'; case 'simw': return 'sim'; case 'arbre': return 'arb'; case 'tabw': return 'tab';
+    case 'tabv': return 'tv';
+    case 'pbpw': return e.nocurve ? 'tv' : e.mode === 'bez' ? 'bez' : 'pbp';
+    case 'stat1': return { camem: 'nn', barres: 'nn', batons: 'iso', boite: 'iso', histo: 'cl', cumulf: 'cl' }[e.mode] || null;
+  } return null;
+}
+const SLOT_GEN = {};   // clé -> (extras[]) => lignes ; absent : suppression seulement
+const extraSnap = e => JSON.stringify(e, (k, v) => (k[0] === '_' ? undefined : v));
+function markOrig(d) { d._origCount = {}; d.extras.forEach(e => { if (e.fromRaw) { e._orig = extraSnap(e); const k = slotOf(e); if (k) d._origCount[k] = (d._origCount[k] || 0) + 1; } }); }
+
+/** Applique les objets modifiés / supprimés / créés aux blocs bruts. Renvoie { mid, tail } (copies). */
+function rawWith(d) {
+  const arr = { mid: d.rawMiddle.slice(), tail: d.rawTail.slice() }, all = Object.values(SLOT_HDR);
+  const isHdr = l => all.some(r => r.test(l));
+  const by = {}; d.extras.forEach(e => { const k = slotOf(e); if (k) (by[k] = by[k] || []).push(e); });
+  for (const key of Object.keys(SLOT_PAS)) {
+    const items = by[key] || [], orig = (d._origCount || {})[key] || 0;
+    const unchanged = items.length === orig && items.every(e => e.fromRaw && e._orig === extraSnap(e));
+    if (unchanged) continue;
+    const gen = SLOT_GEN[key];
+    for (const part of ['mid', 'tail']) {
+      const R = arr[part]; let i = R.findIndex(l => SLOT_HDR[key].test(l)); if (i < 0) continue;
+      let newLines;
+      if (gen) { try { newLines = gen(items.slice(0, key === 'pbp' || key === 'bez' ? 10 : 1)); } catch (err) { newLines = null; } }
+      else newLines = items.length ? null : [SLOT_PAS[key]];
+      if (!newLines) break;
+      const out = []; let done = false;
+      for (let q = 0; q < R.length;) {
+        if (SLOT_HDR[key].test(R[q])) { let j = q + 1; while (j < R.length && !isHdr(R[j])) j++; if (!done) { out.push(...newLines); done = true; } q = j; } else out.push(R[q++]);
+      }
+      arr[part] = out; if (gen) items.forEach(e => { e._inSqn = true; });
+      break;
+    }
+  }
+  return arr;
+}
+
+/* ---------- générateurs ---------- */
+const WN = v => String(Math.round(+v * 1e9) / 1e9).replace('.', ','), WI = v => String(Math.round(+v) || 0);
+const wEp = ep => Math.max(0, Math.min(4, Math.round((+ep + 1.5) / 2.5 - 1)));
+const WMK = ['', 'dot', 'plus', 'x', 'star', 'sq', 'lo', 'circ', 'sq2', 'lo2'];
+const loiTail = (e, c1, c2) => ["   Couleur de l'histogramme : " + WI(c1), '   Couleur de la zone à visualiser : ' + WI(c2), '   Épaisseur des traits : ' + wEp(e.ep), e.label ? 'Affichage des résultats' : "Pas d'affichage des résultats", e.params ? 'Affichage des paramètres' : "Pas d'affichage des paramètres"];
+function genDiscrete(head, parLine, items, big) {
+  const e = items[0]; if (!e) return [SLOT_PAS[head === 'Loi binômiale' ? 'bin' : 'poi']];
+  const a = Math.round(e.a), b = Math.round(e.b), t = a === b ? 0 : 3;
+  return [head, '   Titre : ' + (e.title || ''), ...parLine(e), '   Type de calcul : ' + t, '   k = ' + a, '   a = ' + a, '   b = ' + b, ...loiTail(e, e.couleur, e.couleur2)];
+}
+SLOT_GEN.bin = it => genDiscrete('Loi binômiale', e => ['   Nombre de répétitions : ' + Math.round(e.p1), "   Probabilité d'un succès : " + WN(e.p2)], it);
+SLOT_GEN.poi = it => genDiscrete('Loi de Poisson', e => ['   Paramètre de la loi : ' + WN(e.p1)], it);
+SLOT_GEN.nor = it => { const e = it[0]; if (!e) return [SLOT_PAS.nor]; const m = e.p1, sg = e.p2; let t = 2, a = e.a, b = e.b;
+  if (a <= m - 9 * sg) { t = 0; a = b; } else if (b >= m + 9 * sg) t = 1;
+  return ['Loi normale', '   Titre : ' + (e.title || ''), '   Moyenne : ' + WN(m), '   Ecart type : ' + WN(sg), '   Type de calcul : ' + t, '   a = ' + WN(a), '   b = ' + WN(b), '   degré = 95', '   équation = 0,95',
+    '   Couleur de la courbe de Gauss : ' + WI(e.couleur), '   Couleur de la zone à visualiser : ' + WI(e.couleur2), '   Épaisseur des traits : ' + wEp(e.ep), e.label ? 'Affichage des résultats' : "Pas d'affichage des résultats"]; };
+SLOT_GEN.exp = it => { const e = it[0]; if (!e) return [SLOT_PAS.exp]; const J = a => a.map(WN).join(';');
+  return ['Loi exponentielle', '   Titre = ' + (e.title || ''), '   Lambda = ' + WN(e.lambda), '   Bornes zones coloriées = ' + J(e.zc), '   Couleurs Zones = ' + e.cc.map(WI).join(';'), '   Bornes zones hachurées = ' + J(e.zh),
+    '   Styles hachures = ' + e.sh.map(WI).join(';'), '   Épaisseur courbe = ' + WI(e.ep), '   Couleur courbe = ' + WI(e.couleur), e.label ? '   Affichage des résultats' : "   Pas d'affichage des résultats"]; };
+SLOT_GEN.suite = it => { const e = it[0]; if (!e) return [SLOT_PAS.suite]; const T = e.mode === 'expl' ? 0 : e.mode === 'rec' ? 1 : 2, ep = Math.max(0, WI(e.ep) - 1);
+  return ['Suite numérique', '   Type : ' + T, '   Nom de la suite : ' + (e.nom || 'u'), '   Indice de départ : ' + WI(e.n0), '   Fonction associée : ' + e.src, '   Premier terme : ' + WN(e.u0) + '\tDernier terme dessiné : ' + WI(e.n1),
+    '   Épaisseur de la courbe : ' + Math.min(4, ep), '   Couleur de la courbe : ' + WI(e.couleur2), '   Style de la courbe : 0', e.curve ? '   Courbe dessinée' : '   Courbe non dessinée',
+    '   Épaisseur de la suite : ' + (Math.min(4, ep) + 50), '   Couleur de la suite : ' + WI(e.couleur), '   Style de la suite : ' + (10 + (e.link ? 0 : 4)), '   Suite dessinée', e.terms > 0 ? '   Termes affichés' : '   Termes non affichés']; };
+SLOT_GEN.integ = it => { const e = it[0]; if (!e) return [SLOT_PAS.integ]; const two = !!(e.src2 && e.src2.trim());
+  return ['Intégrale définie de type ' + (two ? 2 : 1), '   Borne a : ' + WN(e.a), '   Borne b : ' + WN(e.b), '   Fonction f : ' + e.src, '   Fonction g : ' + (e.src2 || ''), '   Couleur : ' + WI(e.couleur2), '   Style : 2', e.label ? '   Résultat affiché' : '   Résultat non affiché']; };
+SLOT_GEN.ineq = it => { const e = it[0]; if (!e) return [SLOT_PAS.ineq]; const rows = linesOf(e.data).map(l => l.split(';')).filter(a => a.length >= 4).slice(0, 100), o = [`Inéquations\t${e.hach === false ? 'zone non hachurée' : 'zone hachurée'}`];
+  rows.forEach((r, n) => { const z = Math.floor(n / 10), y = n % 10, cell = (c, v) => o.push(`${7 * z + c},${y},${v}`); cell(0, r[0].trim()); cell(1, r[1].trim()); cell(2, r[2].trim()); cell(3, r[3].trim()); cell(4, r[4] ? r[4].trim() : '0'); cell(5, r[5] ? r[5].trim() : '0'); cell(6, r[6] ? r[6].trim() : '3'); });
+  o.push('Fin des inéquations'); return o; };
+const pbpHead = (e, pente) => { const mk = e.marks ? Math.max(0, WMK.indexOf(e.mk)) : 0, sz = Math.max(1, Math.round((e.msz - 0.4) / 0.35)); return { mk, sz }; };
+SLOT_GEN.pbp = it => { if (!it.length) return [SLOT_PAS.pbp]; const o = []; it.forEach(e => { const { mk, sz } = pbpHead(e), P = linesOf(e.data).map(l => l.split(';')).slice(0, 20);
+  o.push('Courbe définie point par point', '    Couleur :' + WI(e.couleur), '    Épaisseur :' + (WI(e.tan) * 10 + WI(e.ep) % 10), '    Style des points :' + mk, '    Taille des points :' + sz, '    Couleur des points :' + WI(e.couleur2), '    Lignes de cote :' + (e.cote ? 1 : 0));
+  for (let q = 0; q < 20; q++) { const p = P[q] || []; o.push((p[0] || '').trim(), (p[1] || '').trim(), p.length ? (p[2] || '0').trim() : ''); } }); return o; };
+SLOT_GEN.bez = it => { if (!it.length) return [SLOT_PAS.bez]; const o = []; it.forEach(e => { const { mk, sz } = pbpHead(e), P = linesOf(e.data).map(l => l.split(';')).slice(0, 20);
+  o.push('Courbe définie point par point avec lissage par courbes de Bézier', '    Couleur :' + WI(e.couleur), '    Épaisseur :' + WI(e.ep), '    Style des points :' + mk, '    Taille des points :' + sz, '    Couleur des points :' + WI(e.couleur2), '    Lignes de cote :' + (e.cote ? 1 : 0));
+  for (let q = 0; q < 20; q++) { const p = P[q] || []; o.push((p[0] || '').trim(), (p[1] || '').trim()); } o.push('    Coefficient de lissage :' + WI(e.coef)); }); return o; };
+SLOT_GEN.deriv = it => { const e = it[0]; return e ? ['Courbe de la dérivée de y=' + e.src, '   couleur   : ' + WI(e.couleur), '   épaisseur : ' + Math.max(0, WI(e.ep) - 1)] : [SLOT_PAS.deriv]; };
+SLOT_GEN.prim = it => { const e = it[0]; return e ? ['Courbe de la primitive de y=' + e.src, 'passant par le point de coordonnées :' + WN(e.x0) + '\t' + WN(e.y0), '   couleur   : ' + WI(e.couleur), '   épaisseur : ' + Math.max(0, WI(e.ep) - 1)] : [SLOT_PAS.prim]; };
+SLOT_GEN.box = it => { const e = it[0]; if (!e) return [SLOT_PAS.box]; const R = linesOf(e.data).map(l => l.split(';')).slice(0, 100);
+  const o = ['Données statistiques 1 variable (boîtes à moustaches multiples', '   Titre de la série : ' + (e.title || ''), '   Orientation : ' + (e.horiz ? 'axes horizontaux' : 'axes verticaux'), '   Épaisseur :' + WI(e.ep), '   Distance entre axes :' + WI(e.dist),
+    '   Position légendes :' + WI(e.leg), '   Couleur intérieure :' + WI(e.couleur2), '   Couleur traits :' + WI(e.couleur), '   Épaisseur des traits :' + Math.max(0, WI(e.ep2) - 1), '   Nombre de boîtes : ' + R.length];
+  R.forEach(r => { for (let c = 0; c < 8; c++) o.push((r[c] || '').trim()); }); return o; };
+/* statistiques à une variable */
+const aggregate = (txt, raw) => { const m = new Map(); linesOf(txt).forEach(l => { const a = l.split(';'), v = a[0].trim(); if (!v) return; const n = raw ? 1 : parseNum(a[1], 1); m.set(v, (m.get(v) || 0) + n); }); return [...m.entries()]; };
+SLOT_GEN.nn = it => { const e = it[0]; if (!e) return [SLOT_PAS.nn]; const C = catData(e), tot = C.reduce((t, c) => t + c[1], 0) || 1;
+  const o = ['Données statistiques 1 variable non numérique', '   Titre de la série : ' + (e.title || ''), '   Style du graphique : ' + (e.mode === 'camem' ? 0 : 1), 'Times New Roman', '   Nombre de lignes : ' + C.length];
+  C.forEach(([m, n, col], i) => o.push(m, WN(n), WN(Math.round(n / tot * 10000) / 100), WI(col !== undefined ? col : CAT_COL[i % 8]))); return o; };
+SLOT_GEN.iso = it => { const e = it[0]; if (!e) return [SLOT_PAS.iso]; const rows = aggregate(e.data, e.mode === 'boite'), k = e.showStats ? 20 : 0;
+  const o = ['Données statistiques 1 variable (valeurs isolées)', '   Titre de la série : ' + (e.title || ''), '   Style du graphique : ' + (k + (e.mode === 'boite' ? 1 : 0)), 'Times New Roman', '   Couleur : ' + WI(e.couleur2), '   Nombre de lignes : ' + rows.length];
+  rows.forEach(([v, n]) => o.push(v.replace('.', ','), WN(n))); return o; };
+SLOT_GEN.cl = it => { const e = it[0]; if (!e) return [SLOT_PAS.cl]; const rows = linesOf(e.data).map(l => l.split(';')).filter(a => a.length >= 3).slice(0, 100), k = Math.abs(e.ky - 1) < 1e-9 ? 10 : 0;
+  const o = ['Données statistiques 1 variable (valeurs regroupées en classes)', '   Titre de la série : ' + (e.title || ''), '   Style du graphique : ' + ((e.mode === 'histo' ? 0 : 3) + k), 'Times New Roman', '   Effectifs affichés : ' + (e.table ? 'oui' : 'non'),
+    '   Couleur : ' + WI(e.couleur2), '   Pourcentage représenté par 1 carreau (x10): 5', '   Nombre de lignes : ' + rows.length]; rows.forEach(r => o.push(r[0].trim().replace('.', ','), r[1].trim().replace('.', ','), r[2].trim().replace('.', ',')));
+  return o; };
+SLOT_GEN.s2 = it => { const e = it[0]; if (!e) return [SLOT_PAS.s2]; const FIT = { lin: 'linéaire', log: 'logarithmique', exp: 'exponentielle', pow: 'puissance', par: 'polynômiale de degré 2', pol3: 'polynômiale de degré 3', pol4: 'polynômiale de degré 4', none: 'aucune', mayer: 'Droite de Mayer' };
+  const m = new Map(); linesOf(e.data).forEach(l => { const a = l.split(';'); if (a.length < 2) return; const key = a[0].trim() + ';' + a[1].trim(); m.set(key, (m.get(key) || 0) + 1); });
+  const o = ['Données statistiques 2 variables', '   Titre de la série : ' + (e.title || ''), '   Type de régression : ' + (FIT[e.fit] || 'linéaire'), '   y en fonction de x', '   Couleur des points : ' + WI(e.couleur), '   Couleur de la courbe : ' + WI(e.couleur2),
+    '   Chiffres significatifs : 4', '   Épaisseur de la courbe : ' + WI(e.ep), '   Forme des points : x', '   Taille des points : 1', '   Lignes de cotes non tracées', e.show ? '   Équation affichée' : '   Équation non affichée',
+    e.gpoint ? '   Point moyen affiché' : '   Point moyen non affiché', 'Arial', '   Nombre de lignes : ' + m.size];
+  m.forEach((n, key) => { const [x, y] = key.split(';'); o.push(x.replace('.', ','), y.replace('.', ','), String(n)); }); return o; };
+
+SLOT_GEN.tab = it => { const e = it[0]; return e ? ['Tableau de variations ou de signes', '   ' + e.code.replace(/\r?\n/g, '')] : [SLOT_PAS.tab]; };
 /* ---------- 4. Rendu SVG (unités = millimètres) ---------- */
 const f2 = n => (Math.round(n * 100) / 100).toString();
 const FONT_STACK = name => {
@@ -1362,11 +1496,12 @@ function buildSvg(d, ctx, opts = {}) {
       <rect x="${f2(d.dOy + g.lx - 1.4)}" y="${f2(d.dOx - 1.4)}" width="2.8" height="2.8"/>
       <rect x="${f2(d.dOy - 1.4)}" y="${f2(d.dOx - g.ly - 1.4)}" width="2.8" height="2.8"/></g>`;
   }
+  const XH = (d.extras || []).some(e => e.type === 'tabv') ? TABV_H : 0, belowSvg = XH ? `<rect x="0" y="${f2(H)}" width="${f2(W)}" height="${XH}" fill="#fff"/>` + (d.extras.filter(e => e.type === 'tabv').map(e => EX.tabv.render(e, d)).join('')) : '';
   const bg = `<rect x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="${tcolor(d.fondCol)}"/>`;
   const frame = d.cadre ? `<rect x="0.15" y="0.15" width="${f2(W - 0.3)}" height="${f2(H - 0.3)}" fill="none" stroke="${tcolor(d.cadreCol)}" stroke-width="0.3"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f2(W)}mm" height="${f2(H)}mm" viewBox="0 0 ${f2(W)} ${f2(H)}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f2(W)}mm" height="${f2(H + XH)}mm" viewBox="0 0 ${f2(W)} ${f2(H + XH)}">
 <defs><clipPath id="${uid}"><rect x="0" y="0" width="${f2(W)}" height="${f2(H)}"/></clipPath></defs>
-${bg}<g clip-path="url(#${uid})">${gridSvg(d, g)}${axesSvg(d, g)}${rapSvg(d, g)}${curves}${tex}${texts}</g>${frame}${ui}</svg>`;
+${bg}<g clip-path="url(#${uid})">${gridSvg(d, g)}${axesSvg(d, g)}${rapSvg(d, g)}${curves}${tex}${texts}</g>${frame}${belowSvg}${ui}</svg>`;
 }
 function curveSvgFn(c, pts, fxy, x0, x1, g, d) {
   return curveSvg(Object.assign({}, c, { n: 400 }), pts, fxy, x0, x1, g, d, tcolor(c.couleur));
@@ -2037,7 +2172,7 @@ function integrate(src, a, b, ctx) { const f = fnOf(src, ctx), M = 4000, h = (b 
 
 function extrasSvg(d, ctx) {
   let s = '';
-  d.extras.forEach(e => { e._err = ''; const T = EX[e.type]; if (!T) return;
+  d.extras.forEach(e => { e._err = ''; const T = EX[e.type]; if (!T || T.below) return;
     try { s += T.render(e, d, ctx.g, ctx) || ''; } catch (err) { e._err = err.message; } });
   return s;
 }
@@ -2176,6 +2311,86 @@ EX.simw = { label: 'Simulation (format Windows)', def: () => ({ gtype: 4, title:
     if (e.title) s += T_(g.X(g.xOf(d.W / 2)), 8, e.title, { size: 12, anchor: 'middle' });
     return s;
   } };
+
+/* --- tableaux de variations ou de signes au format Windows : [g:m:d]sép[g:m:d]… séparés par \\ --- */
+function tabwDecode(code) {
+  const rows = String(code || '').replace(/\s+$/, '').split(/\]\\\\/).map((l, i, a) => (i < a.length - 1 ? l + ']' : l)).filter(l => l.trim());
+  return rows.map(l => { const t = []; let st = 1; for (let i = 1; i < l.length; i++) if ('[:]'.includes(l[i])) { t.push(l.slice(st, i)); st = i + 1; } return t; });
+}
+const TABW_RES = new Set(['', '//', '/>', '\\>', '_>', '|', '||', ':']);
+function tabwTex(s, sz) {
+  s = String(s || '');
+  if (s.length > 2 && s.startsWith('||') && !TABW_RES.has(s.slice(2))) s = s.slice(2);
+  if (s.length > 2 && s.endsWith('||') && !TABW_RES.has(s.slice(0, -2))) s = s.slice(0, -2);
+  if (s.length > 1 && s[0] === '|' && !TABW_RES.has(s.slice(1))) s = s.slice(1);
+  if (s.length > 1 && s.endsWith('|') && s[s.length - 2] !== 't' && !TABW_RES.has(s.slice(0, -1))) s = s.slice(0, -1);
+  if (TABW_RES.has(s)) return null;
+  s = s.replace(/\\hspace\{[^}]*\}/g, '').replace(/^\d\$\s*/, '').replace(/\\(black|blue|red|green|yellow|cyan|magenta|white|normalsize)\b/g, '');
+  try { return texLayout(texParse(s), sz, '#000'); } catch (err) { return null; }
+}
+EX.tabw = { label: 'Tableau de variations ou de signes (format Windows)', def: () => ({ code: "[:x:]|[-\\infty::]-3[::+\\infty]\\\\[:f'(x):]|[:-:]|0[:+:]\\\\[:f(x):]|[+\\infty:\\>:]2[:/>:+\\infty]", sz: 3.8, couleur: 0, gras: false }),
+  fields: [['code', 'code du tableau (une ligne par ligne du tableau, séparées par \\\\ )', 'area', 'grow'], 'br', ['sz', 'taille (mm)', 'num', 'w3', { step: 0.2 }], ['gras', 'traits épais', 'chk'], ['couleur', 'traits', 'color']],
+  render(e, d, g) {
+    const R = tabwDecode(e.code); if (R.length < 2) return ''; const sz = e.sz || 3.8, col = tcolor(e.couleur), wt = e.gras ? 0.33 : 0.22, GM = 1.4, PM = 0.7;
+    const L = R.length, c = R[0].length, cc = Math.floor((c + 1) / 4), arrow = t => t === '/>' || t === '\\>' || t === '_>';
+    const isVar = R.map(r => r.some(arrow)), F = R.map(r => r.map(t => tabwTex(t, sz)));
+    let hL = 5, hV = 14, wC = 7, wT = 7;
+    R.forEach((r, i) => { if (isVar[i]) return; for (let jj = 0; jj < cc; jj++) { let w = 0; for (let k = 0; k < 4; k++) { const b = F[i][4 * jj + k]; if (!b) continue; hL = Math.max(hL, b.a + b.dsc + 2 * GM); w += k < 3 ? b.w + 2 * GM : b.w / 2 + GM; } wC = Math.max(wC, w); } });
+    R.forEach((r, i) => isVar[i] && (() => { for (let jj = 1; jj < cc; jj++) { const wd = k => (F[i][4 * jj + k] ? F[i][4 * jj + k].w : 0); wC = Math.max(wC, wd(-1 + 4) / 2 + 10 + wd(3) / 2 + wd(0) / 2 + wd(2) / 2 + 2 * GM, 20); } })());
+    R.forEach((r, i) => { for (let k = 0; k < 3; k++) { const b = F[i][k]; if (b) wT = Math.max(wT, b.w + 2 * GM); } });
+    const rh = i => (isVar[i] ? hV : hL), H = R.reduce((t, r, i) => t + rh(i), 0), W = wT + (cc - 1) * wC, ox = (d.W - W) / 2, oy = (d.H - H) / 2;
+    const lnS = (x1, y1, x2, y2, w = wt) => lineSeg([ox + x1, oy + y1], [ox + x2, oy + y2], col, w); let s = `<rect x="${f2(ox)}" y="${f2(oy)}" width="${f2(W)}" height="${f2(H)}" fill="#fff" stroke="${col}" stroke-width="${wt}"/>`, defs = '';
+    const ys = [0]; R.forEach((r, i) => ys.push(ys[i] + rh(i))); for (let i = 1; i < L; i++) s += lnS(0, ys[i], W, ys[i]);
+    const draw = (b, x, yc, al) => { if (!b) return ''; const xx = al === 'l' ? x : al === 'r' ? x - b.w : x - b.w / 2; return b.draw(ox + xx, oy + yc + (b.a - b.dsc) / 2); };
+    // hachures
+    defs += hatchDefs('tw', 'b', col, 1.41, 0.2);
+    for (let jj = 1; jj < cc; jj++) for (let i = 1; i < L; i++) { const t = R[i], hz = [4 * jj, 4 * jj + 1, 4 * jj + 2].some(k => t[k] === '//'); if (hz) s += `<rect x="${f2(ox + wT + (jj - 1) * wC)}" y="${f2(oy + ys[i])}" width="${f2(wC)}" height="${f2(rh(i))}" fill="url(#tw)" stroke="none"/>`; }
+    R.forEach((r, i) => {
+      const yc = (ys[i] + ys[i + 1]) / 2; for (let k = 0; k < 3; k++) { const b = F[i][k]; if (!b) continue; s += draw(b, k === 0 ? GM : k === 1 ? wT / 2 : wT - GM, yc, k === 0 ? 'l' : k === 1 ? 'c' : 'r'); }
+      for (let jj = 1; jj < cc; jj++) {
+        const x1 = wT + (jj - 1) * wC, x2 = x1 + wC, sepL = r[4 * jj - 1] || '', lft = r[4 * jj] || '', rgt = r[4 * jj + 2] || '';
+        if (sepL.includes('|') && sepL !== '||' && !sepL.includes('||')) s += lnS(x1, ys[i], x1, ys[i + 1]);
+        if (sepL.includes('||')) { s += lnS(x1 - PM / 2, ys[i], x1 - PM / 2, ys[i + 1]) + lnS(x1 + PM / 2, ys[i], x1 + PM / 2, ys[i + 1]); }
+        if (lft.includes('||')) s += lnS(x1, ys[i], x1, ys[i + 1]) + lnS(x1 + PM, ys[i], x1 + PM, ys[i + 1]);
+        if (rgt.includes('||')) s += lnS(x2 - PM, ys[i], x2 - PM, ys[i + 1]) + lnS(x2 - 0.1, ys[i], x2 - 0.1, ys[i + 1]);
+        if (!isVar[i]) { s += draw(F[i][4 * jj - 1], x1, yc, 'c') + draw(F[i][4 * jj], x1 + GM, yc, 'l') + draw(F[i][4 * jj + 1], (x1 + x2) / 2, yc, 'c') + draw(F[i][4 * jj + 2], x2 - GM, yc, 'r'); }
+      }
+      if (isVar[i]) {
+        const y1 = ys[i], y2 = ys[i + 1], mid = (y1 + y2) / 2, ar = jj => r[4 * jj + 1], dir = t => (t === '/>' ? 1 : t === '\\>' ? -1 : 0);
+        const level = (jj, side) => { // niveau de la valeur de la frontière placée entre les cases jj-1 et jj ; side : 'a' arrivée, 'd' départ
+          const prev = jj > 1 ? dir(ar(jj - 1)) : null, next = jj < cc ? dir(ar(jj)) : null, hasP = jj > 1 && arrow(ar(jj - 1)), hasN = jj < cc && arrow(ar(jj));
+          const pa = side === 'a' ? hasP : false, pd = side === 'd' ? hasN : false; if (side === 'a' && hasP) return prev === 1 ? 1 : prev === -1 ? -1 : 0; if (side === 'd' && hasN) return next === 1 ? -1 : next === -1 ? 1 : 0;
+          const both = hasP && hasN; if (both) return 0; return hasP ? (prev === 1 ? 1 : -1) : hasN ? (next === 1 ? -1 : 1) : 0; };
+        const yAt = (lv, b) => (lv > 0 ? y1 + PM + (b ? b.a + b.dsc : 0) / 2 : lv < 0 ? y2 - PM - (b ? b.a + b.dsc : 0) / 2 : mid);
+        for (let jj = 1; jj <= cc; jj++) { // frontière gauche de la case jj
+          const x = wT + (jj - 1) * wC, edgeL = jj === 1, sepT = r[4 * jj - 1] || '';
+          const lt = edgeL ? F[i][4] : null; if (edgeL) { if (lt) s += draw(lt, x + GM, yAt(level(1, 'd'), lt), 'l'); continue; }
+          if (jj === cc) { const rv = F[i][4 * (cc - 1) + 2]; if (rv) s += draw(rv, x - GM, yAt(level(cc, 'a'), rv), 'r'); continue; }
+          const rv = F[i][4 * (jj - 1) + 2], lv = F[i][4 * jj], sp = F[i][4 * jj - 1];
+          if (rv || lv) { if (rv) s += draw(rv, x - GM / 2, yAt(level(jj, 'a'), rv), 'r'); if (lv) s += draw(lv, x + GM / 2, yAt(level(jj, 'd'), lv), 'l'); } else if (sp) s += draw(sp, x, yAt(level(jj, 'a'), sp), 'c');
+        }
+        for (let jj = 1; jj < cc; jj++) { const t = ar(jj), x1 = wT + (jj - 1) * wC, x2 = x1 + wC; if (!arrow(t)) continue;
+          let a, b; if (t === '/>') { a = [x1 + GM, y2 - PM]; b = [x2 - GM, y1 + PM]; } else if (t === '\\>') { a = [x1 + GM, y1 + PM]; b = [x2 - GM, y2 - PM]; } else { const pv = jj > 1 ? dir(ar(jj - 1)) : 0, yy = pv === 1 ? y1 + PM : pv === -1 ? y2 - PM : mid; a = [x1 + GM, yy]; b = [x2 - GM, yy]; }
+          s += arrowSvg([ox + a[0], oy + a[1]], [ox + b[0], oy + b[1]], col, wt); }
+      }
+    });
+    return `<defs>${defs}</defs>` + s;
+  } };
+
+/* --- table de valeurs affichée sous le dessin (12 lignes × 11 colonnes de 17 × 7 mm) --- */
+const TABV_H = 5 + 12 * 7 + 3;
+EX.tabv = { label: 'Table de valeurs (affichée sous le dessin)', below: true, def: () => ({ kind: 'f', rows: [], couleur: 0 }),
+  fields: [['kind', 'table', 'sel', 'w2', [['f', 'fonctions'], ['t', 'courbes paramétrées']]], ['couleur', 'traits', 'color']],
+  render(e, d) {
+    const cw = 17, rh = 7, x0 = 7, y0 = d.H + 5, col = tcolor(e.couleur || 0), head = [];
+    for (let i = 0; i < 11; i++) head.push(e.kind === 't' ? (i === 0 ? 't' : (i % 2 ? 'x' : 'y') + Math.ceil(i / 2) + '(t)') : (i === 0 ? 'x' : 'f' + i + '(x)'));
+    let s = '';
+    for (let r = 0; r < 12; r++) for (let c = 0; c < 11; c++) {
+      const txt = r === 0 ? head[c] : ((e.rows[r - 1] || [])[c] || '').trim(), X = x0 + c * cw, Y = y0 + r * rh;
+      s += `<rect x="${f2(X)}" y="${f2(Y)}" width="${cw}" height="${rh}" fill="${r * c === 0 ? '#f0f0f0' : 'none'}" stroke="${col}" stroke-width="0.2"/>`;
+      if (txt) s += T_(X + cw / 2, Y + rh / 2 + 1.2, txt, { size: 10, anchor: 'middle', font: 'Arial,Helvetica,sans-serif' });
+    }
+    return s; } };
 /* ---------- 5. Interface ---------- */
 const state = { doc: null, ctx: null, scale: 3.78, hist: [], histPos: -1, dirty: false };
 const PAPER = { portrait: [210, 297], paysage: [297, 210] };
@@ -2580,7 +2795,7 @@ function saveSqn() {
 function exportSqnOnly(clean) {
   download(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn');
   if (clean) { state.dirty = false; updateTitle(); }
-  toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments (stats, probabilités, etc.) n’y figurent pas.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
+  toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments pris en charge y sont écrits (stats, lois, suites, inéquations…) ; arbres, simulations et tableaux ne sont pas modifiables dans le .sqn.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
 }
 function exportSvg() { download(new Blob([buildSvg(state.doc, buildCtx(state.doc), {})], { type: 'image/svg+xml' }), fileBase() + '.svg'); }
 function exportPng() {

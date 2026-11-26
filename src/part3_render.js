@@ -462,11 +462,12 @@ function buildSvg(d, ctx, opts = {}) {
       <rect x="${f2(d.dOy + g.lx - 1.4)}" y="${f2(d.dOx - 1.4)}" width="2.8" height="2.8"/>
       <rect x="${f2(d.dOy - 1.4)}" y="${f2(d.dOx - g.ly - 1.4)}" width="2.8" height="2.8"/></g>`;
   }
+  const XH = (d.extras || []).some(e => e.type === 'tabv') ? TABV_H : 0, belowSvg = XH ? `<rect x="0" y="${f2(H)}" width="${f2(W)}" height="${XH}" fill="#fff"/>` + (d.extras.filter(e => e.type === 'tabv').map(e => EX.tabv.render(e, d)).join('')) : '';
   const bg = `<rect x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="${tcolor(d.fondCol)}"/>`;
   const frame = d.cadre ? `<rect x="0.15" y="0.15" width="${f2(W - 0.3)}" height="${f2(H - 0.3)}" fill="none" stroke="${tcolor(d.cadreCol)}" stroke-width="0.3"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f2(W)}mm" height="${f2(H)}mm" viewBox="0 0 ${f2(W)} ${f2(H)}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f2(W)}mm" height="${f2(H + XH)}mm" viewBox="0 0 ${f2(W)} ${f2(H + XH)}">
 <defs><clipPath id="${uid}"><rect x="0" y="0" width="${f2(W)}" height="${f2(H)}"/></clipPath></defs>
-${bg}<g clip-path="url(#${uid})">${gridSvg(d, g)}${axesSvg(d, g)}${rapSvg(d, g)}${curves}${tex}${texts}</g>${frame}${ui}</svg>`;
+${bg}<g clip-path="url(#${uid})">${gridSvg(d, g)}${axesSvg(d, g)}${rapSvg(d, g)}${curves}${tex}${texts}</g>${frame}${belowSvg}${ui}</svg>`;
 }
 function curveSvgFn(c, pts, fxy, x0, x1, g, d) {
   return curveSvg(Object.assign({}, c, { n: 400 }), pts, fxy, x0, x1, g, d, tcolor(c.couleur));

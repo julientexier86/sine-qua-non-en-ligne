@@ -402,7 +402,7 @@ function saveSqn() {
 function exportSqnOnly(clean) {
   download(new Blob([encodeCp1252(serializeSqn(state.doc))], { type: 'application/octet-stream' }), fileBase() + '.sqn');
   if (clean) { state.dirty = false; updateTitle(); }
-  toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments (stats, probabilités, etc.) n’y figurent pas.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
+  toast(hasExtras(state.doc) ? 'Fichier .sqn pour la version Windows : les compléments pris en charge y sont écrits (stats, lois, suites, inéquations…) ; arbres, simulations et tableaux ne sont pas modifiables dans le .sqn.' : 'Dessin enregistré (.sqn) dans vos téléchargements.', 5000);
 }
 function exportSvg() { download(new Blob([buildSvg(state.doc, buildCtx(state.doc), {})], { type: 'image/svg+xml' }), fileBase() + '.svg'); }
 function exportPng() {
