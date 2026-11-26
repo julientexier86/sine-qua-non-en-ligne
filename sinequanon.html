@@ -45,6 +45,10 @@ main{flex:1;display:flex;min-height:0}
 #stage{flex:1;overflow:auto;padding:22px;background:#cfd4da;touch-action:none}
 #paper{margin:0 auto;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.28);position:relative;line-height:0}
 #paper svg{display:block}
+/* adaptation tablette / téléphone */
+.dd{max-height:calc(100vh - 44px);max-height:calc(100dvh - 44px);overflow-y:auto}
+@media (pointer:coarse){.ib{min-width:38px;height:40px}.mt{padding:10px 14px}.mi{padding:11px 18px}.hdr button,.btn,button.t{min-height:38px}#zoomsel{height:34px}.sw{width:24px;height:24px}input:not([type=checkbox]):not([type=radio]),select{min-height:34px}}
+@media (max-width:760px){#menubar{overflow-x:auto;white-space:nowrap}.dd{position:fixed;left:6px;right:6px;top:auto;min-width:0}#iconbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}#iconbar>*{flex:none}#stage{padding:8px}#coords{min-width:0;font-size:12px}}
 aside#panel{width:370px;max-width:46vw;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:6px 8px 60px}
 details.sec{border:1px solid var(--line);border-radius:8px;margin:7px 0;background:#fafbfc}
 details.sec>summary{cursor:pointer;padding:8px 10px;font-weight:600;list-style:none}
@@ -2795,15 +2799,27 @@ function hitTest(e) {
 function snapMm(v, d, fine) { return d.gradGrille && !fine ? Math.round(v / d.gridSize) * d.gridSize : Math.round(v * 2) / 2; }
 function initMouse() {
   const stage = $('#stage');
+  const fingers = new Map(); let pinch = null, pan = null;
+  const two = () => { const [a, b] = [...fingers.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
   stage.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') {
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingers.size === 2) { drag = null; pan = null; const t = two(); pinch = { d: t.d, z: state.doc.zoom, x: t.x, y: t.y, sl: stage.scrollLeft, st: stage.scrollTop }; return; }
+    }
     if (e.button !== 0) return;
-    const hit = hitTest(e); if (!hit) return;
+    const hit = hitTest(e);
+    if (!hit) { if (e.pointerType === 'touch' && fingers.size === 1) pan = { x: e.clientX, y: e.clientY, sl: stage.scrollLeft, st: stage.scrollTop }; return; }
     const g = geom(state.doc); drag = Object.assign({ fine: e.shiftKey }, hit);
     if (hit.mode === 'text') { const t = state.doc.texts[hit.idx], [mx, my] = mmFromEvent(e); drag.ox = mx - g.X(t.x); drag.oy = my - g.Y(t.y); }
     stage.setPointerCapture(e.pointerId); e.preventDefault();
   });
   stage.addEventListener('pointermove', e => {
     const d = state.doc;
+    if (e.pointerType === 'touch' && fingers.has(e.pointerId)) {
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && fingers.size >= 2) { const t = two(); setZoom(pinch.z * t.d / pinch.d); stage.scrollLeft = pinch.sl - (t.x - pinch.x); stage.scrollTop = pinch.st - (t.y - pinch.y); return; }
+      if (pan && !drag) { stage.scrollLeft = pan.sl - (e.clientX - pan.x); stage.scrollTop = pan.st - (e.clientY - pan.y); return; }
+    }
     if (!drag) { const hit = $('#paper').firstElementChild && hitTest(e); $('#paper').style.cursor = hit ? hit.cur : 'default'; return; }
     const [mx, my] = mmFromEvent(e), fine = e.shiftKey;
     if (drag.mode === 'origin') { d.dOy = snapMm(clamp(mx, 0, d.W), d, fine); d.dOx = snapMm(clamp(my, 0, d.H), d, fine); }
@@ -2814,7 +2830,7 @@ function initMouse() {
     else if (drag.mode === 'text') { const g = geom(d), t = d.texts[drag.idx]; t.x = Math.round(g.xOf(mx - drag.ox) * 1000) / 1000; t.y = Math.round(g.yOf(my - drag.oy) * 1000) / 1000; }
     drawNow(); drag.moved = true;
   });
-  const end = () => { if (drag && drag.moved) { buildPanel(); commit(); } drag = null; };
+  const end = e => { if (e && e.pointerType === 'touch') { fingers.delete(e.pointerId); if (fingers.size < 2) pinch = null; if (!fingers.size) pan = null; } if (drag && drag.moved) { buildPanel(); commit(); } drag = null; };
   stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
 }
 

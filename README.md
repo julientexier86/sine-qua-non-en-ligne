@@ -11,6 +11,8 @@ Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour q
 
 Les menus et la barre d'icônes reprennent l'organisation de la version Windows, pour ne pas dérouter les utilisateurs habituels.
 
+**Tablette et téléphone** : l'interface s'adapte aux petits écrans (menus défilants, barre d'icônes sur une ligne, boutons plus grands au doigt). Sur l'écran tactile : deux doigts pour zoomer, un doigt sur le fond pour déplacer la feuille, glisser pour déplacer l'origine, les unités et les textes.
+
 ## Hommage
 
 Ce projet n'existerait pas sans **Sine qua non**, logiciel de **Patrice Rabiller** et **Patrick Pradeau**, qui accompagne depuis de nombreuses années les enseignants de mathématiques par la qualité de ses figures.
