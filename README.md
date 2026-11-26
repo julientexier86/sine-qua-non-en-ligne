@@ -2,7 +2,7 @@
 
 Version **en ligne** du logiciel de traçage de courbes **Sine qua non**, pour que les enseignants puissent continuer à l'utiliser depuis un simple navigateur (Chromebook, Linux léger, postes sans aucun logiciel installé).
 
-> **Version 1.1.1.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
+> **Version 1.1.2.** Utilisable en classe, y compris sur tablette ; quelques éléments restent à reproduire : voir [Ce qui n'est pas encore reproduit](#ce-qui-nest-pas-encore-reproduit).
 
 ## Utiliser
 
@@ -42,6 +42,10 @@ Cette réécriture **n'est pas un produit officiel** et n'est ni validée ni sou
 
 ## Historique des versions
 
+**1.1.2**
+- Boîte « À propos » complète : auteurs du logiciel d'origine, licence, appartenance à la Forge des communs numériques éducatifs, lien vers le dépôt, mention de l'usage d'une IA générative.
+- README : section « Forge des communs et IA générative ».
+
 **1.1.1**
 - Lecture des anciens fichiers `.sqn` (avant octobre 2012) : épaisseur et vitesse des courbes, qui étaient codées sur une seule valeur, sont converties comme dans le logiciel d'origine ; les traits ne sont plus démesurés.
 - Lecture des fractions à signe doublé écrites par Windows (`--6655/16`), qui plaçaient le point à l'origine.
@@ -79,6 +83,12 @@ Rien de cela n'est encore réalisé : le mécanisme reste à définir avec l'ét
 ## Développement
 
 Les sources sont dans `src/` (JavaScript sans dépendance). Pour régénérer `sinequanon.html` : `sh src/build.sh` (Node.js et Python 3 requis).
+
+## Forge des communs et IA générative
+
+Ce projet est hébergé sur la **Forge des communs numériques éducatifs** (<https://forge.apps.education.fr/texierjulien/sine-qua-non-en-ligne>) et en fait partie. Il est publié en logiciel libre, sans dépendance externe : tout tient dans un seul fichier, sans police ni bibliothèque chargée depuis un autre site.
+
+La réécriture a été réalisée **avec l'aide d'une IA générative** (Claude, d'Anthropic) : écriture du code, tests, documentation. Le code et les rendus ont été vérifiés sur des fichiers `.sqn` de la version Windows et par des tests automatiques ; ils restent à valider par les utilisateurs (voir ci-dessus).
 
 ## Licence
 
